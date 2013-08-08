@@ -1,0 +1,531 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.tuberlin.uebb.jdae</groupId>
+  <artifactId>jbop</artifactId>
+  <packaging>jar</packaging>
+  <name>jBOP</name>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <licenses>
+    <license>
+      <name>The GNU Lesser General Public License</name>
+      <url>file://${jbop.source.basedir}etc/license.txt</url>
+    </license>
+  </licenses>
+
+  <properties>
+    <!-- dependency-versions -->
+    <asm.version>4.1</asm.version>
+
+    <!-- general properties -->
+
+    <!-- developpers -->
+    <jbop.developper>Christopher Ewest</jbop.developper>
+    <!-- Parameter für Quellverzeichnisse -->
+    <jbop.source.basedir>${basedir}/src/</jbop.source.basedir>
+    <jbop.source>${jbop.source.basedir}main/java</jbop.source>
+    <jbop.test.source>${jbop.source.basedir}test/java</jbop.test.source>
+    <jbop.test.resource>${jbop.source.basedir}test/resources</jbop.test.resource>
+
+    <!-- Encoding der Quell-Dateien (UTF-8) -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Konfiguration für den Namen der Anwendung. -->
+    <jbop.distribution.name>${project.name}</jbop.distribution.name>
+    <jbop.distribution.version>${project.version}</jbop.distribution.version>
+    <jbop.distribution.project.name>${jbop.distribution.name}-${jbop.distribution.version}-${build.timestamp}</jbop.distribution.project.name>
+
+    <!-- Konfiguration für das Verzeichnis in dem Distributionen erstellt 
+      werden. -->
+    <jbop.distribution.directory>${project.build.directory}/distribution</jbop.distribution.directory>
+    <jbop.distribution.destination>${jbop.distribution.directory}/${jbop.distribution.project.name}</jbop.distribution.destination>
+
+    <!-- Konfiguration für zusätzlichen Pfad innerhalb der Distribution. -->
+    <jbop.distribution.subfolder>.</jbop.distribution.subfolder>
+
+    <!-- Konfiguration für Verzeichnis mit zusätzlichen Ressourcen. -->
+    <jbop.distribution.dependencies>${project.build.directory}/distribution-dependencies</jbop.distribution.dependencies>
+
+    <!-- Konfiguration für Verzeichnis mit zusätzlichen Libraries. -->
+    <jbop.distribution.dependencies.jre>${jbop.distribution.dependencies}/jre</jbop.distribution.dependencies.jre>
+    <jbop.distribution.dependencies.lib>${jbop.distribution.dependencies}/lib</jbop.distribution.dependencies.lib>
+
+    <!-- Konfiguration für die Bezeichnung der externen Bibliotheken (innerhalb 
+      der assemblies) -->
+    <jbop.assembly.artifact.extern>${artifact.artifactId}-${artifact.version}.${artifact.extension}</jbop.assembly.artifact.extern>
+    <!-- Konfiguration für die Bezeichnung der internen Bibliotheken (innerhalb 
+      der assemblies) -->
+    <jbop.assembly.artifact.intern>${artifact.artifactId}.${artifact.extension}</jbop.assembly.artifact.intern>
+
+    <!-- Konfiguration der Schwelle für die Findbugs-Erkennung (High, Default, 
+      Low). -->
+    <findbugs.configuration.threshold>Low</findbugs.configuration.threshold>
+    <findbugs.configuration.effort>Max</findbugs.configuration.effort>
+
+    <!-- Java version -->
+    <java.verison>1.7</java.verison>
+
+    <!-- plugin-versions -->
+    <clean.version> 2.5</clean.version>
+    <compiler.version>3.0</compiler.version>
+    <deploy.version>2.7</deploy.version>
+    <install.version>2.4</install.version>
+    <jar.version>2.4</jar.version>
+    <javadoc.version>2.9</javadoc.version>
+    <resources.version>2.6</resources.version>
+    <site.version>3.2</site.version>
+    <source.version>2.2.1</source.version>
+    <surefire.version>2.14</surefire.version>
+    <jacoco.version>0.6.2.201302030002</jacoco.version>
+
+    <!-- plugin managment version -->
+    <antrun.version>1.7</antrun.version>
+    <assembly.version>2.4</assembly.version>
+    <dependency.version>3.5</dependency.version>
+    <release.version>2.4</release.version>
+    <mapping.version>1.0.0</mapping.version>
+
+    <!-- report versions -->
+    <findbugs.version>2.5.2</findbugs.version>
+    <checkstyle.version>2.10</checkstyle.version>
+    <projectinfo.version>2.6</projectinfo.version>
+    <versions.version>2.0</versions.version>
+    <jxr.version>2.3</jxr.version>
+  </properties>
+
+  <dependencies>
+    <!-- ASM -->
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-debug-all</artifactId>
+      <version>${asm.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-tree</artifactId>
+      <version>${asm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-analysis</artifactId>
+      <version>${asm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-util</artifactId>
+      <version>${asm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>${asm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-commons</artifactId>
+      <version>${asm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-xml</artifactId>
+      <version>${asm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Apache commons -->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.collections</groupId>
+      <artifactId>collections-generic</artifactId>
+      <version>4.01</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math3</artifactId>
+      <version>3.1.1</version>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.9.5</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <!-- Standard Konfiguration für die Projekt-Struktur. -->
+    <sourceDirectory>${jbop.source}</sourceDirectory>
+    <testSourceDirectory>${jbop.test.source}</testSourceDirectory>
+
+    <!-- Standard Konfiguration für die zusätzlichen Ressourcen im (Test-)JAR. 
+      Es werden alle Dateien aus dem (Test-)Source-Ordner aufgenommen. -->
+    <resources>
+      <resource>
+        <directory>${project.build.sourceDirectory}</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>${jbop.test.source}</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </testResource>
+      <testResource>
+        <directory>${jbop.test.resource}</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </testResource>
+    </testResources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>${clean.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler.version}</version>
+        <configuration>
+          <source>${java.verison}</source>
+          <target>${java.verison}</target>
+          <testSource>${java.verison}</testSource>
+          <testTarget>${java.verison}</testTarget>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${deploy.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>${install.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>${jar.version}</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Implementation-Title>${project.artifactId}</Implementation-Title>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Implementation-Vendor>${jbop.develooper}</Implementation-Vendor>
+            </manifestEntries>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${javadoc.version}</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>${resources.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>${site.version}</version>
+        <configuration>
+          <outputDirectory>/usr/share/tomcat7/webapps/statistik/</outputDirectory>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>${source.version}</version>
+        <configuration>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar-no-fork</goal>
+              <goal>test-jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <parallel>none</parallel>
+          <threadCount>1</threadCount>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>jacoco-initialize</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>jacoco-site</id>
+            <phase>site</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>${antrun.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>${assembly.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>${dependency.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${release.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>${mapping.version}</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>
+                      jacoco-maven-plugin
+                    </artifactId>
+                    <versionRange>
+                      [${jacoco.version},)
+                    </versionRange>
+                    <goals>
+                      <goal>prepare-agent</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>${versions.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>${findbugs.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${checkstyle.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jxr-plugin</artifactId>
+          <version>${jxr.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>${projectinfo.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>${versions.version}</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>dependency-updates-report</report>
+              <report>plugin-updates-report</report>
+              <report>property-updates-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <configuration>
+          <formats>
+            <format>html</format>
+            <format>xml</format>
+          </formats>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>${findbugs.version}</version>
+        <configuration>
+          <threshold>${findbugs.configuration.threshold}</threshold>
+          <xmlOutput>true</xmlOutput>
+          <effort>${findbugs.configuration.effort}</effort>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.version}</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>checkstyle</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+        <configuration>
+          <linkXRef>false</linkXRef>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>false</failsOnError>
+          <headerLocation>file://${jbop.source.basedir}etc/checkstyleheader.txt</headerLocation>
+          <outputFileFormat>xml</outputFileFormat>
+          <configLocation>file://${jbop.source.basedir}etc/checkstyle.xml</configLocation>
+          <propertyExpansion>severity.codeformatter=error
+            severity.eclipsewarnings=error
+            checkstyle.suppression.file=${basedir}/src/etc/checkstyle-filter.xml
+          </propertyExpansion>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${javadoc.version}</version>
+        <configuration>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>${jxr.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>${projectinfo.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>${surefire.version}</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <organization>
+    <name>uebb.tu-berlin.de</name>
+    <url>www.uebb.tu-berlin.de</url>
+  </organization>
+  <description>jBOP (Java Bytecode OPtimizer) is a library for Runtime Optimization of Java Classes.</description>
+  <developers>
+    <developer>
+      <id>tookar</id>
+      <name>Christopher Ewest</name>
+      <email>christookar@web.de</email>
+      <url></url>
+      <organization>uebb.tu-berlin.de</organization>
+      <organizationUrl>http://tookar.dyndns-home.com/statistik</organizationUrl>
+      <roles>
+        <role>reporter</role>
+        <role>developer</role>
+        <role>manager</role>
+      </roles>
+      <timezone>Europe/Berlin</timezone>
+      <properties>
+        <picUrl>avatar.png</picUrl>
+      </properties>
+    </developer>
+  </developers>
+
+<!--   <issueManagement>
+    <system>redmine</system>
+    <url>https://mlcontrol.uebb.tu-berlin.de/redmine/projects/jdae</url>
+  </issueManagement>
+ -->
+  <scm>
+    <connection>scm:git:https://github.com/tookar/jBOP.git</connection>
+    <developerConnection>scm:git:https://github.com/tookar/jBOP.git</developerConnection>
+    <url>https://github.com/tookar/jBOP/</url>
+  </scm>
+</project>

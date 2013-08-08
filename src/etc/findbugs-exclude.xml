@@ -1,0 +1,10 @@
+<FindBugsFilter>
+	<Match>
+		<Bug pattern="NP_ALWAYS_NULL" />
+		<Field name="System.out" />
+	</Match>
+	<Match>
+		<Bug pattern="NP_ALWAYS_NULL" />
+		<Field name="System.err" />
+	</Match>
+</FindBugsFilter>

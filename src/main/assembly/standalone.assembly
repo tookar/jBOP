@@ -1,0 +1,33 @@
+<assembly>
+  <id>standalone</id>
+  <formats>
+    <format>dir</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+    <fileSet>    
+      <directory>${basedir}/target/</directory>
+      <outputDirectory>lib</outputDirectory>
+      <includes>
+      	<include>*.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>    
+      <directory>${basedir}/src/main/resources</directory>
+      <outputDirectory>lib/</outputDirectory>
+      <includes>
+        <include>**/*.*</include>
+      </includes>
+      <excludes>
+      	<exclude>theme/*.*</exclude>
+      </excludes>
+    </fileSet>
+  </fileSets>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>lib</outputDirectory>
+      <unpack>false</unpack>
+      <scope>runtime</scope>      
+     </dependencySet>
+  </dependencySets>
+</assembly>
