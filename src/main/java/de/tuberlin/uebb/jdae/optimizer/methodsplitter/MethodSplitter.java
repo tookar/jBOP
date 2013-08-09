@@ -201,7 +201,7 @@ public class MethodSplitter implements IOptimizer {
   }
   
   /** Default Max-Length for methods. */
-  private static final int MAX_LENGTH = (1024 * 8) - 1;
+  public static final int MAX_LENGTH = (1024 * 8) - 1;
   
   private final ClassNode classNode;
   private final int maxInsns;

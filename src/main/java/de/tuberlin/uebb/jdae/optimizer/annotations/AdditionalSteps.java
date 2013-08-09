@@ -30,6 +30,9 @@ import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
  * optimizer-Steps when processing the annotated method.
  * 
  * The provided IOptimizers must have a no args constructor.
+ * But they can implement {@link de.tuberlin.uebb.jdae.optimizer.IClassNodeAware} and
+ * {@link de.tuberlin.uebb.jdae.optimizer.IInputObjectAware} to be initialized
+ * with the current Objects.
  * 
  * @author Christopher Ewest
  */

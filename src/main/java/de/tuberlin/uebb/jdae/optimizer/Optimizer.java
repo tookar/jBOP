@@ -86,6 +86,7 @@ public class Optimizer {
       return false;
     }
   };
+  private int methodLength = MethodSplitter.MAX_LENGTH;
   
   /**
    * Optimize.
@@ -149,7 +150,7 @@ public class Optimizer {
       }
       canOptimize = optimized;
     }
-    final MethodSplitter methodSplitter = new MethodSplitter(classNode);
+    final MethodSplitter methodSplitter = new MethodSplitter(classNode, methodLength);
     methodNode.instructions = methodSplitter.optimize(list, methodNode);
     return methodSplitter.getAdditionalMethods();
   }
@@ -162,31 +163,46 @@ public class Optimizer {
     
     final List<IOptimizer> optimizers = new ArrayList<>();
     
-    final String additionalSteps = Type.getType(AdditionalSteps.class).getDescriptor();
-    for (final AnnotationNode annotation : methodNode.visibleAnnotations) {
-      if (additionalSteps.equals(annotation.desc)) {
-        final List<Object> values = annotation.values;
-        if (values.size() != 2) {
-          continue;
-        }
-        final List<Type> additionalOptimizers = (List<Type>) values.get(1);
-        for (final Type additionalOptimizerType : additionalOptimizers) {
-          try {
-            final Class<? extends IOptimizer> additionalOptimizerClass = (Class<? extends IOptimizer>) Class
-                .forName(additionalOptimizerType.getClassName());
-            optimizers.add(additionalOptimizerClass.newInstance());
-          } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
-            throw new JBOPClassException("Additional optimizationstep ('" + additionalOptimizerType.getClassName()
-                + "') couldn't be instantiated.", e);
-          }
-        }
-        break;
-      }
-    }
+    initAdditionalSteps(methodNode, optimizers, classNode, input);
     
     final IOptimizer localArrayLengthInliner = new LocalArrayLengthInliner(input);
     optimizers.add(localArrayLengthInliner);
     
+    final FieldArrayValueInliner arrayValue = initFieldArrayOptimizers(classNode, input, optimizers);
+    
+    initLoopOptimizers(methodNode, optimizers);
+    
+    final IOptimizer localVars = new LocalVarInliner();
+    optimizers.add(localVars);
+    
+    final IOptimizer unusedLocals = new RemoveUnusedLocalVars();
+    optimizers.add(unusedLocals);
+    
+    final IOptimizer constantIf = new ConstantIfInliner(arrayValue);
+    optimizers.add(constantIf);
+    
+    final IOptimizer arithmeticInterpreter = new ArithmeticExpressionInterpreter();
+    optimizers.add(arithmeticInterpreter);
+    
+    final LocalArrayValueInliner localArrayValue = new LocalArrayValueInliner(input);
+    optimizers.add(localArrayValue);
+    
+    return optimizers;
+  }
+  
+  private void initLoopOptimizers(final MethodNode methodNode, final List<IOptimizer> optimizers) {
+    final String strictLoops = Type.getType(StrictLoops.class).getDescriptor();
+    for (final AnnotationNode annotation : methodNode.visibleAnnotations) {
+      if (strictLoops.equals(annotation.desc)) {
+        final IOptimizer forLoop = new ForLoopUnroller();
+        optimizers.add(forLoop);
+        break;
+      }
+    }
+  }
+  
+  private FieldArrayValueInliner initFieldArrayOptimizers(final ClassNode classNode, final Object input,
+      final List<IOptimizer> optimizers) throws JBOPClassException {
     final List<String> immutableArrayNames = new ArrayList<>();
     final List<String> finalArrayNames = new ArrayList<>();
     final String immutableArray = Type.getType(ImmutableArray.class).getDescriptor();
@@ -207,34 +223,52 @@ public class Optimizer {
     final IOptimizer arrayLength = new FieldArrayLengthInliner(finalArrayNames, input);
     optimizers.add(arrayLength);
     
-    final String strictLoops = Type.getType(StrictLoops.class).getDescriptor();
+    final FieldArrayValueInliner arrayValue = new FieldArrayValueInliner(immutableArrayNames, input);
+    optimizers.add(arrayValue);
+    return arrayValue;
+  }
+  
+  private void initAdditionalSteps(final MethodNode methodNode, final List<IOptimizer> optimizers,
+      final ClassNode classNode, final Object input) throws JBOPClassException {
+    final String additionalSteps = Type.getType(AdditionalSteps.class).getDescriptor();
     for (final AnnotationNode annotation : methodNode.visibleAnnotations) {
-      if (strictLoops.equals(annotation.desc)) {
-        final IOptimizer forLoop = new ForLoopUnroller();
-        optimizers.add(forLoop);
+      if (additionalSteps.equals(annotation.desc)) {
+        final List<Object> values = annotation.values;
+        if (values.size() != 2) {
+          continue;
+        }
+        final List<Type> additionalOptimizers = (List<Type>) values.get(1);
+        for (final Type additionalOptimizerType : additionalOptimizers) {
+          try {
+            final Class<? extends IOptimizer> additionalOptimizerClass = (Class<? extends IOptimizer>) Class
+                .forName(additionalOptimizerType.getClassName());
+            final IOptimizer optimizer = additionalOptimizerClass.newInstance();
+            init(optimizer, classNode, input);
+            optimizers.add(optimizer);
+          } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
+            throw new JBOPClassException("Additional optimizationstep ('" + additionalOptimizerType.getClassName()
+                + "') couldn't be instantiated.", e);
+          }
+        }
         break;
       }
     }
-    
-    final IOptimizer localVars = new LocalVarInliner();
-    optimizers.add(localVars);
-    
-    final IOptimizer unusedLocals = new RemoveUnusedLocalVars();
-    optimizers.add(unusedLocals);
-    
-    final FieldArrayValueInliner arrayValue = new FieldArrayValueInliner(immutableArrayNames, input);
-    optimizers.add(arrayValue);
-    
-    final IOptimizer constantIf = new ConstantIfInliner(arrayValue);
-    optimizers.add(constantIf);
-    
-    final IOptimizer arithmeticInterpreter = new ArithmeticExpressionInterpreter();
-    optimizers.add(arithmeticInterpreter);
-    
-    final LocalArrayValueInliner localArrayValue = new LocalArrayValueInliner(input);
-    optimizers.add(localArrayValue);
-    
-    return optimizers;
+  }
+  
+  private void init(final IOptimizer optimizer, final ClassNode classNode, final Object input) {
+    if (optimizer instanceof IClassNodeAware) {
+      ((IClassNodeAware) optimizer).setClassNode(classNode);
+    }
+    if (optimizer instanceof IInputObjectAware) {
+      ((IInputObjectAware) optimizer).setInputObject(input);
+    }
+  }
+  
+  /**
+   * sets the maximum Length for generated methods in kilobytes.
+   */
+  public void setMethodLength(final int methodLength) {
+    this.methodLength = methodLength;
   }
   
 }
