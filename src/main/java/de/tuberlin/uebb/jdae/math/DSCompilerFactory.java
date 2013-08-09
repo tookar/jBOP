@@ -86,17 +86,17 @@ public class DSCompilerFactory {
               derivativeCompiler, lowerIndirection);
           final int[][][] compositionIndirection = compileCompositionIndirection(p, o, valueCompiler,
               derivativeCompiler, sizes, derivativesIndirection);
-          final IDSCompiler IDSCompiler = new DSCompiler(p, o, sizes, derivativesIndirection, lowerIndirection,
+          final IDSCompiler dsCompiler = new DSCompiler(p, o, sizes, derivativesIndirection, lowerIndirection,
               multiplicationIndirection, compositionIndirection);
           final Optimizer optimizer = new Optimizer();
-          IDSCompiler optimize;
+          IDSCompiler optimized;
           try {
             System.out.println("Creating DSCompiler" + p + "x" + o);
-            optimize = optimizer.optimize(IDSCompiler, "__" + p + "x" + o);
+            optimized = optimizer.optimize(dsCompiler, "__" + p + "x" + o);
           } catch (final JBOPClassException e) {
             throw new RuntimeException("IDSCompiler couldn't be created.", e);
           }
-          newCache[p][o] = optimize;
+          newCache[p][o] = optimized;
         }
       }
     }
