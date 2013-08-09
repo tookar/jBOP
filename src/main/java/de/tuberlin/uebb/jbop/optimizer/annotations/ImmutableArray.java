@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.annotations;
+package de.tuberlin.uebb.jbop.optimizer.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,8 +29,8 @@ import java.lang.annotation.Target;
  * be 'final'
  * 
  * Fields that are annotated with this Annotation are processed by the
- * {@link de.tuberlin.uebb.jdae.optimizer.array.FieldArrayValueInliner} and the
- * {@link de.tuberlin.uebb.jdae.optimizer.array.LocalArrayValueInliner}.
+ * {@link de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner} and the
+ * {@link de.tuberlin.uebb.jbop.optimizer.array.LocalArrayValueInliner}.
  * 
  * @author Christopher Ewest
  */

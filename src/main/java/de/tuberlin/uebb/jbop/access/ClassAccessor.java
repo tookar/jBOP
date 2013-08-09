@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.access;
+package de.tuberlin.uebb.jbop.access;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -36,8 +36,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
-import de.tuberlin.uebb.jdae.optimizer.utils.rename.ClassRenamer;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.utils.rename.ClassRenamer;
 
 /**
  * The Class ClassAccessor.
@@ -107,8 +107,8 @@ public final class ClassAccessor {
    * @param clazz
    *          the clazz
    * @return the file
-   * @throws JDAEClassException
-   *           the jDAE class exception
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   static Path toPath(final Class<?> clazz) throws JBOPClassException {
     final CodeSource cs = clazz.getProtectionDomain().getCodeSource();

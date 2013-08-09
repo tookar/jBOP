@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer;
+package de.tuberlin.uebb.jbop.optimizer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -33,16 +33,16 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
-import de.tuberlin.uebb.jdae.optimizer.arithmetic.ArithmeticExpressionInterpreter;
-import de.tuberlin.uebb.jdae.optimizer.array.FieldArrayLengthInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.FieldArrayValueInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.LocalArrayLengthInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.LocalArrayValueInliner;
-import de.tuberlin.uebb.jdae.optimizer.controlflow.ConstantIfInliner;
-import de.tuberlin.uebb.jdae.optimizer.loop.ForLoopUnroller;
-import de.tuberlin.uebb.jdae.optimizer.var.LocalVarInliner;
-import de.tuberlin.uebb.jdae.optimizer.var.RemoveUnusedLocalVars;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.arithmetic.ArithmeticExpressionInterpreter;
+import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayLengthInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayValueInliner;
+import de.tuberlin.uebb.jbop.optimizer.controlflow.ConstantIfInliner;
+import de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller;
+import de.tuberlin.uebb.jbop.optimizer.var.LocalVarInliner;
+import de.tuberlin.uebb.jbop.optimizer.var.RemoveUnusedLocalVars;
 
 /**
  * Tests for {@link Optimizer}.
@@ -78,7 +78,7 @@ public class OptimizerTest {
   @Before
   public void before() throws IOException {
     classNode = new ClassNode(Opcodes.ASM4);
-    new ClassReader("de.tuberlin.uebb.jdae.optimizer.OptimizerTestTestClass")
+    new ClassReader("de.tuberlin.uebb.jbop.optimizer.OptimizerTestTestClass")
         .accept(classNode, ClassReader.SKIP_FRAMES);
   }
   

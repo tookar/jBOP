@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.methodsplitter;
+package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,6 +30,8 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
+
+import de.tuberlin.uebb.jbop.optimizer.methodsplitter.Block;
 
 /**
  * Test for {@link Block}.

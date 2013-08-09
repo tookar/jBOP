@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.array;
+package de.tuberlin.uebb.jbop.optimizer.array;
 
 import java.lang.reflect.Field;
 import java.security.AccessController;
@@ -36,11 +36,11 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
-import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
-import de.tuberlin.uebb.jdae.optimizer.utils.NodeHelper;
-import de.tuberlin.uebb.jdae.optimizer.utils.predicates.GetFieldPredicate;
-import de.tuberlin.uebb.jdae.optimizer.utils.predicates.Predicates;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
+import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
+import de.tuberlin.uebb.jbop.optimizer.utils.predicates.Predicates;
 
 /**
  * Inlines the value of an array (class field) at position i, so that further optimizationsteps

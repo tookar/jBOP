@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.loop;
+package de.tuberlin.uebb.jbop.optimizer.loop;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jdae.optimizer.LabelMap;
+import de.tuberlin.uebb.jbop.optimizer.LabelMap;
 
 /**
  * The Class ForLoopBody.

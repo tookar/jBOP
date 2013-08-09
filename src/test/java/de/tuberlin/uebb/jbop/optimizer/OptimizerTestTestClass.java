@@ -16,16 +16,16 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer;
+package de.tuberlin.uebb.jbop.optimizer;
 
-import de.tuberlin.uebb.jdae.optimizer.annotations.AdditionalSteps;
-import de.tuberlin.uebb.jdae.optimizer.annotations.Optimizable;
-import de.tuberlin.uebb.jdae.optimizer.annotations.StrictLoops;
-import de.tuberlin.uebb.jdae.optimizer.loop.ForLoopUnroller;
+import de.tuberlin.uebb.jbop.optimizer.annotations.AdditionalSteps;
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
+import de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller;
 
 /**
  * The Class OptimizerTestTestClass.
- * This is a Testclass used in {@link de.tuberlin.uebb.jdae.optimizer.OptimizerTest}.
+ * This is a Testclass used in {@link de.tuberlin.uebb.jbop.optimizer.OptimizerTest}.
  * 
  * @author Christopher Ewest
  */

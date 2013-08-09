@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.methodsplitter;
+package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,9 +37,9 @@ import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jdae.optimizer.loop.SplitMarkNode;
-import de.tuberlin.uebb.jdae.optimizer.methodsplitter.Var.VarType;
-import de.tuberlin.uebb.jdae.optimizer.utils.NodeHelper;
+import de.tuberlin.uebb.jbop.optimizer.loop.SplitMarkNode;
+import de.tuberlin.uebb.jbop.optimizer.methodsplitter.Var.VarType;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * The Class Block.

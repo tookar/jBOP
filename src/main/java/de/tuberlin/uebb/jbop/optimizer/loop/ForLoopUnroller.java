@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.loop;
+package de.tuberlin.uebb.jbop.optimizer.loop;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,11 +29,11 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
-import de.tuberlin.uebb.jdae.optimizer.utils.NodeHelper;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
- * Unrolls strict loops (see {@link de.tuberlin.uebb.jdae.modifier.annotations.StrictLoops}). <br>
+ * Unrolls strict loops (see {@link de.tuberlin.uebb.jbop.modifier.annotations.StrictLoops}). <br>
  * eg:
  * 
  * <pre>
@@ -95,7 +95,7 @@ import de.tuberlin.uebb.jdae.optimizer.utils.NodeHelper;
  * where x1, x2, x3 are new local variables.
  * 
  * Additionally after every Loop a special NOP-Node ({@link SplitMarkNode}) is inserted.
- * These are used in the {@link de.tuberlin.uebb.jdae.optimizer.methodsplitter.MethodSplitter}.
+ * These are used in the {@link de.tuberlin.uebb.jbop.optimizer.methodsplitter.MethodSplitter}.
  * 
  * @author Christopher Ewest
  */

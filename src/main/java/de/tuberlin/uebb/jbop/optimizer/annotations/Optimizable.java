@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.annotations;
+package de.tuberlin.uebb.jbop.optimizer.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

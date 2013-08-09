@@ -16,22 +16,22 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.annotations;
+package de.tuberlin.uebb.jbop.optimizer.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 
 /**
  * This annotation can be used, to use additional
  * optimizer-Steps when processing the annotated method.
  * 
  * The provided IOptimizers must have a no args constructor.
- * But they can implement {@link de.tuberlin.uebb.jdae.optimizer.IClassNodeAware} and
- * {@link de.tuberlin.uebb.jdae.optimizer.IInputObjectAware} to be initialized
+ * But they can implement {@link de.tuberlin.uebb.jbop.optimizer.IClassNodeAware} and
+ * {@link de.tuberlin.uebb.jbop.optimizer.IInputObjectAware} to be initialized
  * with the current Objects.
  * 
  * @author Christopher Ewest

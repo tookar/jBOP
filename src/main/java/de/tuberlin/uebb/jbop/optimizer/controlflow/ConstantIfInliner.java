@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.controlflow;
+package de.tuberlin.uebb.jbop.optimizer.controlflow;
 
 import java.math.BigDecimal;
 import java.util.Iterator;
@@ -28,10 +28,10 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
-import de.tuberlin.uebb.jdae.optimizer.array.FieldArrayValueInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.NonNullArrayValue;
-import de.tuberlin.uebb.jdae.optimizer.utils.NodeHelper;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.NonNullArrayValue;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * Evaluates if conditions where possible and choose only

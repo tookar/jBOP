@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.tuberlin.uebb.jdae.math;
+package de.tuberlin.uebb.jbop.math;
 
 import java.util.Arrays;
 
@@ -24,9 +24,9 @@ import org.apache.commons.math3.util.ArithmeticUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.MathArrays;
 
-import de.tuberlin.uebb.jdae.optimizer.annotations.ImmutableArray;
-import de.tuberlin.uebb.jdae.optimizer.annotations.Optimizable;
-import de.tuberlin.uebb.jdae.optimizer.annotations.StrictLoops;
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 
 /**
  * This is a modified copy of {@link org.apache.commons.math3.analysis.differentiation.DSCompiler}.

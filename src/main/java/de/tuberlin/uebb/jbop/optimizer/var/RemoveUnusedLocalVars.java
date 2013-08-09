@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.var;
+package de.tuberlin.uebb.jbop.optimizer.var;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +31,8 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
-import de.tuberlin.uebb.jdae.optimizer.utils.NodeHelper;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * Removes unused local variables. <br>

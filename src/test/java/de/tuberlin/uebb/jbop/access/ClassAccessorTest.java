@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.access;
+package de.tuberlin.uebb.jbop.access;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +30,7 @@ import java.nio.file.Path;
 
 import org.junit.Test;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 
 /**
  * Tests for {@link ClassAccessor}.
@@ -45,7 +45,7 @@ public class ClassAccessorTest {
   @Test
   public void testStringToClasspath() {
     // INIT
-    final String internalName = "de.tuberlin.uebb.jdae.access.ClassAccessorTest";
+    final String internalName = "de.tuberlin.uebb.jbop.access.ClassAccessorTest";
     
     // RUN
     final String classPath = ClassAccessor.toClassPath(internalName);
@@ -61,7 +61,7 @@ public class ClassAccessorTest {
   @Test
   public void testClassToClasspath() {
     // INIT
-    final Class<?> clazz = de.tuberlin.uebb.jdae.access.ClassAccessorTest.class;
+    final Class<?> clazz = de.tuberlin.uebb.jbop.access.ClassAccessorTest.class;
     
     // RUN
     final String classPath = ClassAccessor.toClassPath(clazz);
@@ -82,7 +82,7 @@ public class ClassAccessorTest {
   @Test
   public void testClassToFile() throws JBOPClassException, IOException {
     // INIT
-    final Class<?> clazz = de.tuberlin.uebb.jdae.access.ClassAccessorTest.class;
+    final Class<?> clazz = de.tuberlin.uebb.jbop.access.ClassAccessorTest.class;
     
     // RUN
     final Path file = ClassAccessor.toPath(clazz);
@@ -108,7 +108,7 @@ public class ClassAccessorTest {
       getClass().getResource("/access.jar")
     });
     
-    final Class<?> clazz = Class.forName("de.tuberlin.uebb.jdae.testdata.TestClass", true, cl);
+    final Class<?> clazz = Class.forName("de.tuberlin.uebb.jbop.testdata.TestClass", true, cl);
     
     // RUN
     final Path file = ClassAccessor.toPath(clazz);
@@ -130,7 +130,7 @@ public class ClassAccessorTest {
   @Test
   public void testGetClassDescriptor() throws JBOPClassException, IOException {
     // INIT
-    final Class<?> clazz = de.tuberlin.uebb.jdae.access.ClassAccessorTest.class;
+    final Class<?> clazz = de.tuberlin.uebb.jbop.access.ClassAccessorTest.class;
     
     // RUN
     final ClassDescriptor descriptor = ClassAccessor.getClassDescriptor(clazz);
@@ -180,7 +180,7 @@ public class ClassAccessorTest {
   public void testRenameAndStore() throws JBOPClassException, ClassNotFoundException, IOException {
     
     // INIT
-    final Class<?> clazz = de.tuberlin.uebb.jdae.access.ClassAccessorTest.class;
+    final Class<?> clazz = de.tuberlin.uebb.jbop.access.ClassAccessorTest.class;
     final ClassDescriptor descriptor = ClassAccessor.getClassDescriptor(clazz);
     
     // RUN
@@ -224,7 +224,7 @@ public class ClassAccessorTest {
       getClass().getResource("/access.jar")
     });
     
-    final Class<?> clazz = Class.forName("de.tuberlin.uebb.jdae.testdata.TestClass", true, cl);
+    final Class<?> clazz = Class.forName("de.tuberlin.uebb.jbop.testdata.TestClass", true, cl);
     final ClassDescriptor descriptor = ClassAccessor.getClassDescriptor(clazz);
     
     // RUN

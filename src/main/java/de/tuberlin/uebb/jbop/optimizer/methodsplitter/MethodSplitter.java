@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.methodsplitter;
+package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,9 +41,9 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
-import de.tuberlin.uebb.jdae.optimizer.IOptimizer;
-import de.tuberlin.uebb.jdae.optimizer.loop.SplitMarkNode;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.loop.SplitMarkNode;
 
 /**
  * The Class MethodSplitter.<br/>
@@ -51,7 +51,7 @@ import de.tuberlin.uebb.jdae.optimizer.loop.SplitMarkNode;
  * This Class can split methods that are longer than a given threshold<br>
  * in submethods (default is {@link #MAX_LENGTH}: {@value #MAX_LENGTH} kb).
  * <p>
- * Currently only methods that are preprocessed with the {@link de.tuberlin.uebb.jdae.optimizer.loop.ForLoopUnroller}<br>
+ * Currently only methods that are preprocessed with the {@link de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller}<br>
  * can be splitted (and only if they were not to long before this preprocessing).
  * <p>
  * The Limit for Java-Methods is 64 kilobytes, therefore classes that contains methods longer than<br>

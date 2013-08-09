@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.access;
+package de.tuberlin.uebb.jbop.access;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 
 /**
  * The Class OptimizerUtils.
@@ -71,8 +71,8 @@ public final class OptimizerUtils {
    *          the class node
    * @param input
    *          the input
-   * @throws JDAEClassException
-   *           the jDAE class exception
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   public static <T> T createInstance(final ClassNode classNode, final T input, final String suffix)
       throws JBOPClassException {

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer;
+package de.tuberlin.uebb.jbop.optimizer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,29 +30,29 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
-import de.tuberlin.uebb.jdae.access.OptimizerUtils;
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
-import de.tuberlin.uebb.jdae.optimizer.annotations.AdditionalSteps;
-import de.tuberlin.uebb.jdae.optimizer.annotations.ImmutableArray;
-import de.tuberlin.uebb.jdae.optimizer.annotations.Optimizable;
-import de.tuberlin.uebb.jdae.optimizer.annotations.StrictLoops;
-import de.tuberlin.uebb.jdae.optimizer.arithmetic.ArithmeticExpressionInterpreter;
-import de.tuberlin.uebb.jdae.optimizer.array.FieldArrayLengthInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.FieldArrayValueInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.LocalArrayLengthInliner;
-import de.tuberlin.uebb.jdae.optimizer.array.LocalArrayValueInliner;
-import de.tuberlin.uebb.jdae.optimizer.controlflow.ConstantIfInliner;
-import de.tuberlin.uebb.jdae.optimizer.loop.ForLoopUnroller;
-import de.tuberlin.uebb.jdae.optimizer.methodsplitter.MethodSplitter;
-import de.tuberlin.uebb.jdae.optimizer.var.FinalFieldInliner;
-import de.tuberlin.uebb.jdae.optimizer.var.LocalVarInliner;
-import de.tuberlin.uebb.jdae.optimizer.var.RemoveUnusedLocalVars;
+import de.tuberlin.uebb.jbop.access.OptimizerUtils;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.annotations.AdditionalSteps;
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
+import de.tuberlin.uebb.jbop.optimizer.arithmetic.ArithmeticExpressionInterpreter;
+import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayLengthInliner;
+import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayValueInliner;
+import de.tuberlin.uebb.jbop.optimizer.controlflow.ConstantIfInliner;
+import de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller;
+import de.tuberlin.uebb.jbop.optimizer.methodsplitter.MethodSplitter;
+import de.tuberlin.uebb.jbop.optimizer.var.FinalFieldInliner;
+import de.tuberlin.uebb.jbop.optimizer.var.LocalVarInliner;
+import de.tuberlin.uebb.jbop.optimizer.var.RemoveUnusedLocalVars;
 
 /**
  * The Main class for optimizing.
  * <ol>
  * <li>reads a classfile</li>
- * <li>analyzes the annotations ({@link de.tuberlin.uebb.jdae.optimizer.annotations})</li>
+ * <li>analyzes the annotations ({@link de.tuberlin.uebb.jbop.optimizer.annotations})</li>
  * <li>initializes optimization steps</li>
  * <li>run optimization steps</li>
  * <li>split methods</li>
@@ -117,7 +117,7 @@ public class Optimizer {
         methodNode.instructions = finalFieldInliner.optimize(methodNode.instructions, methodNode);
         
         final List<IOptimizer> optimizers = initOptimizers(classNode, methodNode, input);
-        // stores newly created Methods (see de.tuberlin.uebb.jdae.optimizer.methodsplitter.MethodSplitter)
+        // stores newly created Methods (see de.tuberlin.uebb.jbop.optimizer.methodsplitter.MethodSplitter)
         // for later usage.
         // Direct adding to classNode.methods would cause a concurrentModification-Exception
         additionalMethods.addAll(runOptimization(optimizers, methodNode, classNode));

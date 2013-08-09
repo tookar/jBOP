@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.utils.rename;
+package de.tuberlin.uebb.jbop.optimizer.utils.rename;
 
 import java.util.HashSet;
 import java.util.Set;

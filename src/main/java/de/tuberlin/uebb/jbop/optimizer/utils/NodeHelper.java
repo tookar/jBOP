@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer.utils;
+package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import org.apache.commons.math3.exception.NotANumberException;
 import org.objectweb.asm.Opcodes;

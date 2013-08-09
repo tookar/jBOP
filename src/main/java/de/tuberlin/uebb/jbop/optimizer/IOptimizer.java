@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.optimizer;
+package de.tuberlin.uebb.jbop.optimizer;
 
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
-import de.tuberlin.uebb.jdae.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 
 /**
  * The Interface IOptimizer.

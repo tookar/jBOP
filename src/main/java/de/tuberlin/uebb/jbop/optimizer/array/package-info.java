@@ -7,4 +7,4 @@
  * </ol>
  * of method-local / class-global arrays.
  */
-package de.tuberlin.uebb.jdae.optimizer.array;
+package de.tuberlin.uebb.jbop.optimizer.array;

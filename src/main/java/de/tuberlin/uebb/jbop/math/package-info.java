@@ -5,4 +5,4 @@
  * 
  * This is meant to be an example for the usage of this library.
  */
-package de.tuberlin.uebb.jdae.math;
+package de.tuberlin.uebb.jbop.math;

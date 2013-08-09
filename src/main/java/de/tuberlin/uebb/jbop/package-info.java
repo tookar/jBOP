@@ -1,4 +1,4 @@
 /**
  * This is the main package of JBOP.
  */
-package de.tuberlin.uebb.jdae;
+package de.tuberlin.uebb.jbop;

@@ -4,4 +4,4 @@
  * 
  * It is the 'userinterface' for this library.
  */
-package de.tuberlin.uebb.jdae.optimizer.annotations;
+package de.tuberlin.uebb.jbop.optimizer.annotations;
