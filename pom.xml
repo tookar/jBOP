@@ -528,4 +528,8 @@
     <developerConnection>scm:git:https://github.com/tookar/jBOP.git</developerConnection>
     <url>https://github.com/tookar/jBOP/</url>
   </scm>
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/tookar/jBOP/issues</url>
+  </issueManagement>
 </project>
