@@ -32,6 +32,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jdae.access.OptimizerUtils;
 import de.tuberlin.uebb.jdae.exception.JBOPClassException;
+import de.tuberlin.uebb.jdae.optimizer.annotations.AdditionalSteps;
 import de.tuberlin.uebb.jdae.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jdae.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jdae.optimizer.annotations.StrictLoops;
@@ -156,10 +157,32 @@ public class Optimizer {
   /**
    * Init the Optimizersteps that could / should be performed.
    */
-  private List<IOptimizer> initOptimizers(final ClassNode classNode, final MethodNode methodNode, final Object input)
+  List<IOptimizer> initOptimizers(final ClassNode classNode, final MethodNode methodNode, final Object input)
       throws JBOPClassException {
     
     final List<IOptimizer> optimizers = new ArrayList<>();
+    
+    final String additionalSteps = Type.getType(AdditionalSteps.class).getDescriptor();
+    for (final AnnotationNode annotation : methodNode.visibleAnnotations) {
+      if (additionalSteps.equals(annotation.desc)) {
+        final List<Object> values = annotation.values;
+        if (values.size() != 2) {
+          continue;
+        }
+        final List<Type> additionalOptimizers = (List<Type>) values.get(1);
+        for (final Type additionalOptimizerType : additionalOptimizers) {
+          try {
+            final Class<? extends IOptimizer> additionalOptimizerClass = (Class<? extends IOptimizer>) Class
+                .forName(additionalOptimizerType.getClassName());
+            optimizers.add(additionalOptimizerClass.newInstance());
+          } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
+            throw new JBOPClassException("Additional optimizationstep ('" + additionalOptimizerType.getClassName()
+                + "') couldn't be instantiated.", e);
+          }
+        }
+        break;
+      }
+    }
     
     final IOptimizer localArrayLengthInliner = new LocalArrayLengthInliner(input);
     optimizers.add(localArrayLengthInliner);
