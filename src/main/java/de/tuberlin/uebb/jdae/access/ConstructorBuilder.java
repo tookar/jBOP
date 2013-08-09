@@ -62,12 +62,12 @@ final class ConstructorBuilder {
     final MethodNode constructor = createMethodNode(node);
     final List<Object> params = new ArrayList<>();
     for (final FieldNode field : node.fields) {
-      final InsnList instructions = createInstructions(param, field, node);
+      final InsnList instructions = new InsnList();
+      param = createInstructions(param, field, node, instructions);
       final Object value = getValue(clazz, field, object);
       params.add(value);
       constructor.instructions.add(instructions);
       desc.append(field.desc);
-      param++;
     }
     constructor.instructions.add(new InsnNode(Opcodes.RETURN));
     desc.append(")V");
@@ -104,28 +104,31 @@ final class ConstructorBuilder {
     return value;
   }
   
-  private static InsnList createInstructions(final int param, final FieldNode field, final ClassNode node) {
+  private static int createInstructions(final int param, final FieldNode field, final ClassNode node,
+      final InsnList instructions) {
     final AbstractInsnNode nThis = new VarInsnNode(Opcodes.ALOAD, 0);
     int opcode = Opcodes.ALOAD;
+    int nextParam = param + 1;
     final int sort = Type.getType(field.desc).getSort();
     if (sort == Type.INT) {
       opcode = Opcodes.ILOAD;
     } else if (sort == Type.LONG) {
+      nextParam++;
       opcode = Opcodes.LLOAD;
     } else if (sort == Type.FLOAT) {
       opcode = Opcodes.FLOAD;
     } else if (sort == Type.DOUBLE) {
+      nextParam++;
       opcode = Opcodes.DLOAD;
     } else {
       opcode = Opcodes.ALOAD;
     }
     final AbstractInsnNode nParam = new VarInsnNode(opcode, param);
     final AbstractInsnNode nPut = new FieldInsnNode(Opcodes.PUTFIELD, node.name, field.name, field.desc);
-    final InsnList instructions = new InsnList();
     instructions.add(nThis);
     instructions.add(nParam);
     instructions.add(nPut);
-    return instructions;
+    return nextParam;
   }
   
   private static MethodNode createMethodNode(final ClassNode node) {
