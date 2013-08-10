@@ -50,8 +50,15 @@ final class ConstructorBuilder {
   }
   
   /**
-   * Creates the constructor.
+   * Creates a constructor with all fields of <code>object</code> as parameters
+   * and adds it to the method-List of <code>node</code>.
+   * A List with all Values (in order of the parameters) is returned.
    * 
+   * @param node
+   *          the ClassNode
+   * @param object
+   *          the input Object
+   * @return the value list
    * @throws JBOPClassException
    *           if the Constructor couldn't be created.
    */
