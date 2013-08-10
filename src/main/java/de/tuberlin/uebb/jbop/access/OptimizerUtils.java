@@ -65,12 +65,19 @@ public final class OptimizerUtils {
   }
   
   /**
-   * Write class.
+   * Write class and instantiate the Object.
+   * The new class (classNode) has to be a subclass of the Type of input.
+   * The new class is renamed to "Input name" + "suffix".
    * 
+   * @param <T>
+   *          the generic type
    * @param classNode
    *          the class node
    * @param input
    *          the input
+   * @param suffix
+   *          the suffix
+   * @return the newe Class-instance
    * @throws JBOPClassException
    *           the jBOP class exception
    */
@@ -103,7 +110,7 @@ public final class OptimizerUtils {
   }
   
   /**
-   * Exists instance.
+   * Exists already a specialized instance for input?.
    * 
    * @param input
    *          the input
@@ -117,11 +124,11 @@ public final class OptimizerUtils {
   }
   
   /**
-   * Gets the instance for.
+   * Gets the specialized instance for input.
    * 
    * @param input
    *          the input
-   * @return the instance for
+   * @return the instance
    */
   public static <T> T getInstanceFor(final T input) {
     return (T) CACHE.get(input);
