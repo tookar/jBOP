@@ -20,6 +20,7 @@ package de.tuberlin.uebb.jbop.access;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
@@ -30,6 +31,7 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
@@ -54,6 +56,9 @@ final class ConstructorBuilder {
    * and adds it to the method-List of <code>node</code>.
    * A List with all Values (in order of the parameters) is returned.
    * 
+   * If such a constructor already exists, only the parameters are returned,
+   * no change is made to to the classNode.
+   * 
    * @param node
    *          the ClassNode
    * @param object
@@ -74,7 +79,7 @@ final class ConstructorBuilder {
       final Object value = getValue(clazz, field, object);
       params.add(value);
       constructor.instructions.add(instructions);
-      desc.append(field.desc);
+      desc.append(expand(field.desc, false));
     }
     constructor.instructions.add(new InsnNode(Opcodes.RETURN));
     desc.append(")V");
@@ -88,6 +93,43 @@ final class ConstructorBuilder {
     }
     node.methods.add(constructor);
     return params;
+  }
+  
+  private static String expand(final String desc, final boolean isArray) {
+    if (desc.startsWith("L")) {
+      return desc;
+    }
+    if (desc.startsWith("[")) {
+      return Type.getType("[" + expand(desc.substring(1), true)).getDescriptor();
+    }
+    if (isArray) {
+      return desc;
+    }
+    if ("I".equals(desc)) {
+      return Type.getDescriptor(Integer.class);
+    }
+    if ("F".equals(desc)) {
+      return Type.getDescriptor(Float.class);
+    }
+    if ("J".equals(desc)) {
+      return Type.getDescriptor(Long.class);
+    }
+    if ("D".equals(desc)) {
+      return Type.getDescriptor(Double.class);
+    }
+    if ("S".equals(desc)) {
+      return Type.getDescriptor(Short.class);
+    }
+    if ("B".equals(desc)) {
+      return Type.getDescriptor(Byte.class);
+    }
+    if ("C".equals(desc)) {
+      return Type.getDescriptor(Character.class);
+    }
+    if ("Z".equals(desc)) {
+      return Type.getDescriptor(Boolean.class);
+    }
+    return Type.getDescriptor(Object.class);
   }
   
   private static Object getValue(final Class<? extends Object> clazz, final FieldNode field, final Object object)
@@ -114,27 +156,49 @@ final class ConstructorBuilder {
   private static int createInstructions(final int param, final FieldNode field, final ClassNode node,
       final InsnList instructions) {
     final AbstractInsnNode nThis = new VarInsnNode(Opcodes.ALOAD, 0);
-    int opcode = Opcodes.ALOAD;
-    int nextParam = param + 1;
+    final int opcode = Opcodes.ALOAD;
+    final int nextParam = param + 1;
+    AbstractInsnNode unboxing = null;
     final int sort = Type.getType(field.desc).getSort();
     if (sort == Type.INT) {
-      opcode = Opcodes.ILOAD;
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Integer.class), "intValue", "()I");
+      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.LONG) {
-      nextParam++;
-      opcode = Opcodes.LLOAD;
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Long.class), "longValue", "()J");
+      // opcode = Opcodes.LLOAD;
     } else if (sort == Type.FLOAT) {
-      opcode = Opcodes.FLOAD;
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Float.class), "intValue", "()F");
+      // opcode = Opcodes.FLOAD;
     } else if (sort == Type.DOUBLE) {
-      nextParam++;
-      opcode = Opcodes.DLOAD;
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Double.class), "doubleValue", "()D");
+      // opcode = Opcodes.DLOAD;
+    } else if (sort == Type.BOOLEAN) {
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Boolean.class), "booleanValue", "()Z");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.SHORT) {
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Short.class), "shortValue", "()S");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.CHAR) {
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Character.class), "charValue", "()C");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.BYTE) {
+      unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Byte.class), "byteValue", "()B");
+      // opcode = Opcodes.ILOAD;
     } else {
-      opcode = Opcodes.ALOAD;
+      // opcode = Opcodes.ALOAD;
     }
-    final AbstractInsnNode nParam = new VarInsnNode(opcode, param);
-    final AbstractInsnNode nPut = new FieldInsnNode(Opcodes.PUTFIELD, node.name, field.name, field.desc);
+    
     instructions.add(nThis);
+    final AbstractInsnNode nParam = new VarInsnNode(opcode, param);
     instructions.add(nParam);
+    
+    if (unboxing != null) {
+      instructions.add(unboxing);
+    }
+    
+    final AbstractInsnNode nPut = new FieldInsnNode(Opcodes.PUTFIELD, node.name, field.name, field.desc);
     instructions.add(nPut);
+    
     return nextParam;
   }
   
@@ -142,12 +206,14 @@ final class ConstructorBuilder {
     final MethodNode constructor = new MethodNode();
     constructor.access = Opcodes.ACC_PUBLIC;
     constructor.name = "<init>";
+    constructor.exceptions = Collections.emptyList();
     final InsnList list = new InsnList();
-    // final AbstractInsnNode nThis = new VarInsnNode(Opcodes.ALOAD, 0);
-    // final AbstractInsnNode nSuperConstructor = new MethodInsnNode(Opcodes.INVOKESPECIAL, node.superName, "<init>",
-    // "()V");
-    // list.add(nThis);
-    // list.add(nSuperConstructor);
+    // currently only call to noarg super constructor is supported
+    final AbstractInsnNode nThis = new VarInsnNode(Opcodes.ALOAD, 0);
+    final AbstractInsnNode nSuperConstructor = new MethodInsnNode(Opcodes.INVOKESPECIAL, node.superName, "<init>",
+        "()V");
+    list.add(nThis);
+    list.add(nSuperConstructor);
     constructor.instructions = list;
     return constructor;
   }

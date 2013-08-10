@@ -95,7 +95,7 @@ public final class OptimizerUtils {
     
     try {
       final Class<?> forName = Class.forName(renamedClass.getName(), true, ClassAccessor.getClassloader());
-      return (T) ConstructorUtils.invokeConstructor(forName, params.toArray());
+      return (T) ConstructorUtils.invokeConstructor(forName, params.toArray(new Object[params.size()]));
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException
         | InvocationTargetException e) {
       throw new JBOPClassException("Optimized class could not be instantiated.", e);

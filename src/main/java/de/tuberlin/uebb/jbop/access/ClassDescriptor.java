@@ -35,7 +35,7 @@ public class ClassDescriptor {
   /** The name. */
   private final String name;
   /** the file */
-  private final String file;
+  private String file;
   /** The class data. */
   private byte[] classData;
   
@@ -126,5 +126,15 @@ public class ClassDescriptor {
    */
   void setClassData(final byte[] classData) {
     this.classData = classData.clone();
+  }
+  
+  /**
+   * Sets the file where the classData can be found.
+   * 
+   * @param file
+   *          the classFile
+   */
+  void setFile(final String file) {
+    this.file = file;
   }
 }

@@ -158,6 +158,7 @@ public final class ClassAccessor {
     try {
       Files.createDirectories(packageDir);
       Files.write(classFile, classDescriptor.getClassData(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+      classDescriptor.setFile(classFile.toString());
       return classFile;
     } catch (final IOException e) {
       throw new JBOPClassException("Data of Class " + classDescriptor.getName() + " could not be written to file.", e);
