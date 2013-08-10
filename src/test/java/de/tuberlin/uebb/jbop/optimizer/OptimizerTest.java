@@ -81,13 +81,13 @@ public class OptimizerTest {
   public void before() throws Exception {
     final ClassNodeBuilder builder = ClassNodeBuilder
         .createClass("de.tuberlin.uebb.jbop.optimizer.OptimizerTestTestClass").//
-        addMethod("unmodified", "()V").//
-        addMethod("simpleOptimization", "()V").//
+        addEmptyMethod("unmodified").//
+        addEmptyMethod("simpleOptimization").//
         withAnnotation(Optimizable.class).//
-        addMethod("simpleOptimizationWithLoops", "()V").//
+        addEmptyMethod("simpleOptimizationWithLoops").//
         withAnnotation(Optimizable.class).//
         withAnnotation(StrictLoops.class).//
-        addMethod("additionalOptimization", "()V").//
+        addEmptyMethod("additionalOptimization").//
         withAnnotation(Optimizable.class).//
         withAnnotation(AdditionalSteps.class, "steps", Arrays.asList(Type.getType(ForLoopUnroller.class)));
     classNode = builder.getClassNode();

@@ -82,7 +82,7 @@ public final class ClassNodeBuilder {
   public static ClassNodeBuilder createClass(final String className) {
     final ClassNodeBuilder builder = new ClassNodeBuilder();
     builder.classNode = new ClassNode(Opcodes.ASM4);
-    builder.classNode.name = className;
+    builder.classNode.name = className.replace(".", "/");
     builder.classNode.superName = Type.getInternalName(Object.class);
     builder.classNode.version = Opcodes.V1_7;
     builder.addMethod("<init>", "()V").addInsn(new VarInsnNode(Opcodes.ALOAD, 0))
@@ -126,6 +126,15 @@ public final class ClassNodeBuilder {
    */
   public ClassNodeBuilder withGetterAndSetter() {
     withGetter().withSetter();
+    return this;
+  }
+  
+  /**
+   * adds a new empty void-method containing only the returnstatement.
+   */
+  public ClassNodeBuilder addEmptyMethod(final String methodName) {
+    addMethod(methodName, "()V");
+    addInsn(new InsnNode(Opcodes.RETURN));
     return this;
   }
   
@@ -432,9 +441,10 @@ public final class ClassNodeBuilder {
   public ClassNodeBuilder toClass() throws Exception {
     final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
     classNode.accept(writer);
-    final ClassDescriptor descriptor = new ClassDescriptor(classNode.name, writer.toByteArray(), "NoFile");
+    final ClassDescriptor descriptor = new ClassDescriptor(classNode.name.replace("/", "."), writer.toByteArray(),
+        "NoFile");
     ClassAccessor.store(descriptor);
-    buildedClass = ClassAccessor.getClassloader().loadClass(classNode.name);
+    buildedClass = ClassAccessor.getClassloader().loadClass(descriptor.getName());
     return this;
   }
   

@@ -24,7 +24,7 @@ public class ConstructorBuilderTest {
         .createClass("de.tuberlin.uebb.jbop.access.ConstructorBuilderTestClass").//
         addField("doubleValue", "D").initWith(2.0).withGetter().//
         addField("intValue", "I").initWith(1).withGetter().//
-        addField("stringValue", Type.getDescriptor(String.class)).initWith("string").withGetter().//
+        addField("stringValue", Type.getDescriptor(String.class)).initWith("String").withGetter().//
         addField("doubleArrayValue", "[D").initArrayWith(1.0, 2.0, 3.0).withGetter();
     final ClassNode classNode = builder.getClassNode();
     final Object testClass = builder.toClass().instance();
