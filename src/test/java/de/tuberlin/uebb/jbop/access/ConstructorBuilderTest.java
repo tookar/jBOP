@@ -8,22 +8,26 @@ import java.util.List;
 
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 
 public class ConstructorBuilderTest {
   
   @Test
   public void testConstructorBuilder() throws Exception {
     // INIT
-    final ConstructorBuilderTestClass testClass = new ConstructorBuilderTestClass();
-    final ClassNode classNode = new ClassNode(Opcodes.ASM4);
-    new ClassReader("de.tuberlin.uebb.jbop.access.ConstructorBuilderTestClass").accept(classNode,
-        ClassReader.SKIP_FRAMES);
+    final ClassNodeBuilder builder = ClassNodeBuilder
+        .createClass("de.tuberlin.uebb.jbop.access.ConstructorBuilderTestClass").//
+        addField("doubleValue", "D").initWith(2.0).withGetter().//
+        addField("intValue", "I").initWith(1).withGetter().//
+        addField("stringValue", Type.getDescriptor(String.class)).initWith("string").withGetter().//
+        addField("doubleArrayValue", "[D").initArrayWith(1.0, 2.0, 3.0).withGetter();
+    final ClassNode classNode = builder.getClassNode();
+    final Object testClass = builder.toClass().instance();
     
     // RUN
     final List<Object> parameterValues = ConstructorBuilder.createConstructor(classNode, testClass);

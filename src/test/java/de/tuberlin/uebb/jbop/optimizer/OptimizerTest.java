@@ -21,19 +21,21 @@ package de.tuberlin.uebb.jbop.optimizer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.annotations.AdditionalSteps;
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jbop.optimizer.arithmetic.ArithmeticExpressionInterpreter;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthInliner;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
@@ -53,7 +55,7 @@ public class OptimizerTest {
   
   private ClassNode classNode;
   private final Optimizer optimizer = new Optimizer();
-  private final OptimizerTestTestClass input = new OptimizerTestTestClass();
+  private Object input;
   
   private static final List<Class<? extends IOptimizer>> DEFAULT_OPTIMIZER_STEPS;
   static {
@@ -76,10 +78,20 @@ public class OptimizerTest {
    *           Signals that an I/O exception has occurred.
    */
   @Before
-  public void before() throws IOException {
-    classNode = new ClassNode(Opcodes.ASM4);
-    new ClassReader("de.tuberlin.uebb.jbop.optimizer.OptimizerTestTestClass")
-        .accept(classNode, ClassReader.SKIP_FRAMES);
+  public void before() throws Exception {
+    final ClassNodeBuilder builder = ClassNodeBuilder
+        .createClass("de.tuberlin.uebb.jbop.optimizer.OptimizerTestTestClass").//
+        addMethod("unmodified", "()V").//
+        addMethod("simpleOptimization", "()V").//
+        withAnnotation(Optimizable.class).//
+        addMethod("simpleOptimizationWithLoops", "()V").//
+        withAnnotation(Optimizable.class).//
+        withAnnotation(StrictLoops.class).//
+        addMethod("additionalOptimization", "()V").//
+        withAnnotation(Optimizable.class).//
+        withAnnotation(AdditionalSteps.class, "steps", Arrays.asList(Type.getType(ForLoopUnroller.class)));
+    classNode = builder.getClassNode();
+    input = builder.toClass().instance();
   }
   
   /**

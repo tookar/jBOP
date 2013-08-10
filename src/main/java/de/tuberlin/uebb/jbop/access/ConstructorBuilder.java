@@ -45,7 +45,7 @@ import de.tuberlin.uebb.jbop.exception.JBOPClassException;
  * 
  * @author Christopher Ewest
  */
-final class ConstructorBuilder {
+public final class ConstructorBuilder {
   
   private ConstructorBuilder() {
     //
@@ -158,8 +158,26 @@ final class ConstructorBuilder {
     final AbstractInsnNode nThis = new VarInsnNode(Opcodes.ALOAD, 0);
     final int opcode = Opcodes.ALOAD;
     final int nextParam = param + 1;
+    final AbstractInsnNode unboxing = getUnboxingNode(field);
+    
+    instructions.add(nThis);
+    final AbstractInsnNode nParam = new VarInsnNode(opcode, param);
+    instructions.add(nParam);
+    
+    if (unboxing != null) {
+      instructions.add(unboxing);
+    }
+    
+    final AbstractInsnNode nPut = new FieldInsnNode(Opcodes.PUTFIELD, node.name, field.name, field.desc);
+    instructions.add(nPut);
+    
+    return nextParam;
+  }
+  
+  public static AbstractInsnNode getUnboxingNode(final FieldNode field) {
     AbstractInsnNode unboxing = null;
-    final int sort = Type.getType(field.desc).getSort();
+    final Type type = Type.getType(field.desc);
+    final int sort = type.getSort();
     if (sort == Type.INT) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Integer.class), "intValue", "()I");
       // opcode = Opcodes.ILOAD;
@@ -187,19 +205,52 @@ final class ConstructorBuilder {
     } else {
       // opcode = Opcodes.ALOAD;
     }
-    
-    instructions.add(nThis);
-    final AbstractInsnNode nParam = new VarInsnNode(opcode, param);
-    instructions.add(nParam);
-    
-    if (unboxing != null) {
-      instructions.add(unboxing);
+    return unboxing;
+  }
+  
+  public static AbstractInsnNode getBoxingNode(final FieldNode field) {
+    AbstractInsnNode boxing = null;
+    Type type = Type.getType(field.desc);
+    if (field.desc.startsWith("[")) {
+      type = type.getElementType();
     }
-    
-    final AbstractInsnNode nPut = new FieldInsnNode(Opcodes.PUTFIELD, node.name, field.name, field.desc);
-    instructions.add(nPut);
-    
-    return nextParam;
+    final int sort = type.getSort();
+    if (sort == Type.INT) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+          "(D)Ljava/lang/Integer;");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.LONG) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Long.class), "valueOf",
+          "(D)Ljava/lang/Long;");
+      // opcode = Opcodes.LLOAD;
+    } else if (sort == Type.FLOAT) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Float.class), "valueOf",
+          "(D)Ljava/lang/Float;");
+      // opcode = Opcodes.FLOAD;
+    } else if (sort == Type.DOUBLE) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+          "(D)Ljava/lang/Double;");
+      // opcode = Opcodes.DLOAD;
+    } else if (sort == Type.BOOLEAN) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+          "(D)Ljava/lang/Boolean;");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.SHORT) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+          "(D)Ljava/lang/Short;");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.CHAR) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+          "(D)Ljava/lang/Character;");
+      // opcode = Opcodes.ILOAD;
+    } else if (sort == Type.BYTE) {
+      boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+          "(D)Ljava/lang/Byte;");
+      // opcode = Opcodes.ILOAD;
+    } else {
+      // opcode = Opcodes.ALOAD;
+    }
+    return boxing;
   }
   
   private static MethodNode createMethodNode(final ClassNode node) {

@@ -27,8 +27,9 @@ import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+
+import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 
 /**
  * Tests for {@link ArithmeticExpressionInterpreter}.
@@ -38,12 +39,11 @@ import org.objectweb.asm.tree.VarInsnNode;
 public class ArithmeticExpressionInterpreterTest {
   
   private final ArithmeticExpressionInterpreter interpreter = new ArithmeticExpressionInterpreter();
-  private final MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, "testMethod", "()V", null, new String[] {});
-  private final InsnList methodInstructions = new InsnList();
+  private ClassNodeBuilder builder;
   
   @Before
   public void before() {
-    methodNode.instructions = methodInstructions;
+    builder = ClassNodeBuilder.createClass("TestClass").addMethod("testMethod", "()V");
   }
   
   /**
@@ -55,7 +55,8 @@ public class ArithmeticExpressionInterpreterTest {
     // INIT
     
     // RUN
-    final InsnList optimized = interpreter.optimize(methodInstructions, methodNode);
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
     
     // ASSERT
     assertFalse(interpreter.isOptimized());
@@ -69,15 +70,16 @@ public class ArithmeticExpressionInterpreterTest {
   @Test
   public void testArithmeticExpressionInterpreterNoArithmeticInstructions() {
     // INIT
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_1));
-    methodInstructions.add(new VarInsnNode(Opcodes.ISTORE, 1));
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_2));
-    methodInstructions.add(new VarInsnNode(Opcodes.ISTORE, 2));
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_3));
-    methodInstructions.add(new VarInsnNode(Opcodes.ISTORE, 3));
-    methodInstructions.add(new InsnNode(Opcodes.RETURN));
+    builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new VarInsnNode(Opcodes.ISTORE, 1)).//
+        addInsn(new InsnNode(Opcodes.ICONST_2)).//
+        addInsn(new VarInsnNode(Opcodes.ISTORE, 2)).//
+        addInsn(new InsnNode(Opcodes.ICONST_3)).//
+        addInsn(new VarInsnNode(Opcodes.ISTORE, 3)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
     // RUN
-    final InsnList optimized = interpreter.optimize(methodInstructions, methodNode);
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
     
     // ASSERT
     assertFalse(interpreter.isOptimized());
@@ -91,16 +93,18 @@ public class ArithmeticExpressionInterpreterTest {
   @Test
   public void testArithmeticExpressionInterpreter() {
     // INIT
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_1));
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_2));
-    methodInstructions.add(new InsnNode(Opcodes.IADD));
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_1));
-    methodInstructions.add(new InsnNode(Opcodes.ICONST_1));
-    methodInstructions.add(new InsnNode(Opcodes.IADD));
-    methodInstructions.add(new InsnNode(Opcodes.IADD));
-    methodInstructions.add(new InsnNode(Opcodes.RETURN));
+    builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new InsnNode(Opcodes.ICONST_2)).//
+        addInsn(new InsnNode(Opcodes.IADD)).//
+        addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new InsnNode(Opcodes.IADD)).//
+        addInsn(new InsnNode(Opcodes.IADD)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
     // RUN STEP1
-    final InsnList optimized = interpreter.optimize(methodInstructions, methodNode);
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
     
     // ASSERT STEP 1
     assertTrue(interpreter.isOptimized());
@@ -109,7 +113,8 @@ public class ArithmeticExpressionInterpreterTest {
     assertEquals(Opcodes.ICONST_2, optimized.getFirst().getNext().getOpcode());
     
     // RUN STEP 2
-    final InsnList optimized2 = interpreter.optimize(methodInstructions, methodNode);
+    final InsnList optimized2 = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
     
     // ASSERT STEP 2
     assertTrue(interpreter.isOptimized());
@@ -117,7 +122,8 @@ public class ArithmeticExpressionInterpreterTest {
     assertEquals(Opcodes.ICONST_5, optimized2.getFirst().getOpcode());
     
     // RUN STEP 3
-    final InsnList optimized3 = interpreter.optimize(methodInstructions, methodNode);
+    final InsnList optimized3 = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
     
     // ASSERT STEP 3
     assertFalse(interpreter.isOptimized());
