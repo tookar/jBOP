@@ -322,7 +322,13 @@ public final class ClassNodeBuilder {
     final AbstractInsnNode returnNode = constructor.instructions.getLast();
     constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
     constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(Integer.valueOf(length)));
-    final IntInsnNode node = new IntInsnNode(Opcodes.NEWARRAY, getSort());
+    final AbstractInsnNode node;
+    final Type elementType = Type.getType(lastField.desc).getElementType();
+    if (elementType.getDescriptor().startsWith("L")) {
+      node = new TypeInsnNode(Opcodes.ANEWARRAY, elementType.getInternalName());
+    } else {
+      node = new IntInsnNode(Opcodes.NEWARRAY, getSort());
+    }
     constructor.instructions.insertBefore(returnNode, node);
     constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ASTORE, constructorVarIndex));
     constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, constructorVarIndex));
@@ -369,6 +375,32 @@ public final class ClassNodeBuilder {
   public ClassNodeBuilder addInsn(final AbstractInsnNode node) {
     lastMethod.instructions.add(node);
     return this;
+  }
+  
+  /**
+   * adds a FieldInsnNode for the given Field.
+   * 
+   * @param node
+   *          the node
+   * @return the abstract optimizer test
+   */
+  public ClassNodeBuilder addGetField(final String field) {
+    final FieldNode fieldNode = getField(field);
+    final FieldInsnNode node = new FieldInsnNode(Opcodes.GETFIELD, classNode.name, field, fieldNode.desc);
+    return addInsn(node);
+  }
+  
+  /**
+   * adds a FieldInsnNode for the given Field.
+   * 
+   * @param node
+   *          the node
+   * @return the abstract optimizer test
+   */
+  public ClassNodeBuilder addPutField(final String field) {
+    final FieldNode fieldNode = getField(field);
+    final FieldInsnNode node = new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, field, fieldNode.desc);
+    return addInsn(node);
   }
   
   /**
