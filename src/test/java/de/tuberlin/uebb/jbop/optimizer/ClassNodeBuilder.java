@@ -94,6 +94,8 @@ public final class ClassNodeBuilder {
   
   /**
    * Creates a getter for the last added field.
+   * 
+   * @return the class node builder
    */
   public ClassNodeBuilder withGetter() {
     final String name = lastField.name;
@@ -108,6 +110,8 @@ public final class ClassNodeBuilder {
   
   /**
    * Creates a setter for the last added field.
+   * 
+   * @return the class node builder
    */
   public ClassNodeBuilder withSetter() {
     final String name = lastField.name;
@@ -123,6 +127,8 @@ public final class ClassNodeBuilder {
   
   /**
    * Creates a getter and setter for the last added field.
+   * 
+   * @return the class node builder
    */
   public ClassNodeBuilder withGetterAndSetter() {
     withGetter().withSetter();
@@ -131,6 +137,10 @@ public final class ClassNodeBuilder {
   
   /**
    * adds a new empty void-method containing only the returnstatement.
+   * 
+   * @param methodName
+   *          the method name
+   * @return the class node builder
    */
   public ClassNodeBuilder addEmptyMethod(final String methodName) {
     addMethod(methodName, "()V");
@@ -161,6 +171,12 @@ public final class ClassNodeBuilder {
   /**
    * Adds the given annotation to the last created element.
    * The values have to be key-value pairs
+   * 
+   * @param annotationClass
+   *          the annotation class
+   * @param values
+   *          the values
+   * @return the class node builder
    */
   public ClassNodeBuilder withAnnotation(final Class<?> annotationClass, final Object... values) {
     final AnnotationNode annotationNode = new AnnotationNode(Type.getDescriptor(annotationClass));
@@ -228,8 +244,6 @@ public final class ClassNodeBuilder {
    * Initializes a classField of type Array in the default Constructor.
    * The array is initialized with the given Numbers.
    * 
-   * @param fieldName
-   *          the field name
    * @param values
    *          the values
    * @return the abstract optimizer test
@@ -278,8 +292,6 @@ public final class ClassNodeBuilder {
    * Initializes a classField of type Array in the default Constructor.
    * The array is initialized with the given Strings.
    * 
-   * @param fieldName
-   *          the field name
    * @param values
    *          the values
    * @return the abstract optimizer test
@@ -312,8 +324,6 @@ public final class ClassNodeBuilder {
    * Initializes a classField of type Array in the default Constructor with the given length.
    * (eg: if fieldType of field "field" is "double[]", field = new double[length] is called).
    * 
-   * @param fieldName
-   *          the field name
    * @param length
    *          the length
    * @return the abstract optimizer test
@@ -380,12 +390,13 @@ public final class ClassNodeBuilder {
   /**
    * adds a FieldInsnNode for the given Field.
    * 
-   * @param node
-   *          the node
+   * @param field
+   *          the field
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addGetField(final String field) {
     final FieldNode fieldNode = getField(field);
+    addInsn(new VarInsnNode(Opcodes.ALOAD, 0));
     final FieldInsnNode node = new FieldInsnNode(Opcodes.GETFIELD, classNode.name, field, fieldNode.desc);
     return addInsn(node);
   }
@@ -393,8 +404,8 @@ public final class ClassNodeBuilder {
   /**
    * adds a FieldInsnNode for the given Field.
    * 
-   * @param node
-   *          the node
+   * @param field
+   *          the field
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addPutField(final String field) {
@@ -404,14 +415,44 @@ public final class ClassNodeBuilder {
   }
   
   /**
+   * Load field array value by getting the field and than loading the value.
+   * 
+   * @param field
+   *          the field
+   * @param index
+   *          the index
+   * @return the class node builder
+   */
+  public ClassNodeBuilder loadFieldArrayValue(final String field, final int index) {
+    addGetField(field);
+    return addArrayLoad(field, index);
+  }
+  
+  /**
+   * Adds the array load for the specific index.
+   * 
+   * @param field
+   *          the field
+   * @param index
+   *          the index
+   * @return the class node builder
+   */
+  public ClassNodeBuilder addArrayLoad(final String field, final int index) {
+    final FieldNode fieldNode = getField(field);
+    addInsn(NodeHelper.getInsnNodeFor(index));
+    return addInsn(new InsnNode(Type.getType(fieldNode.desc).getElementType().getOpcode(Opcodes.IALOAD)));
+  }
+  
+  /**
    * Inits the real class.
    * 
    * @param className
    *          the class name
    * @param methodName
    *          the method name
-   * @throws IOException
-   *           Signals that an I/O exception has occurred.
+   * @return the class node builder
+   * @throws Exception
+   *           the exception
    */
   public static ClassNodeBuilder initRealClass(final String className, final String methodName) throws Exception {
     final ClassNodeBuilder builder = new ClassNodeBuilder();
@@ -465,10 +506,8 @@ public final class ClassNodeBuilder {
    * Create the ClassObject.
    * 
    * @return the abstract optimizer test
-   * @throws JBOPClassException
-   *           the jBOP class exception
-   * @throws ClassNotFoundException
-   *           the class not found exception
+   * @throws Exception
+   *           the exception
    */
   public ClassNodeBuilder toClass() throws Exception {
     final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
@@ -484,10 +523,8 @@ public final class ClassNodeBuilder {
    * Instantiate the classObject.
    * 
    * @return the object
-   * @throws InstantiationException
-   *           the instantiation exception
-   * @throws IllegalAccessException
-   *           the illegal access exception
+   * @throws Exception
+   *           the exception
    */
   public Object instance() throws Exception {
     return ConstructorUtils.invokeConstructor(buildedClass);

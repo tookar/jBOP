@@ -28,7 +28,6 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
@@ -50,10 +49,8 @@ public class FieldArrayLengthInlinerTest {
         addField("doubleArray", "[D").initArray(15).//
         addField("objectArray", Type.getDescriptor(Object[].class)).initArray(23).//
         addMethod("sumArrayLength", "()I").withAnnotation(Optimizable.class).//
-        addInsn(new VarInsnNode(Opcodes.ALOAD, 0)).//
         addGetField("doubleArray").//
         addInsn(new InsnNode(Opcodes.ARRAYLENGTH)).//
-        addInsn(new VarInsnNode(Opcodes.ALOAD, 0)).//
         addGetField("objectArray").//
         addInsn(new InsnNode(Opcodes.ARRAYLENGTH)).//
         addInsn(new InsnNode(Opcodes.IADD)).//
