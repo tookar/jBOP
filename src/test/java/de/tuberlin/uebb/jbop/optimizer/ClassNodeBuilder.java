@@ -35,6 +35,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
@@ -67,6 +68,12 @@ public final class ClassNodeBuilder {
   private int constructorVarIndex = 1;
   
   private int lastConstructorVarIndex;
+  
+  private int methodVarIndex = 1;
+  
+  private int lastMethodVarIndex;
+  
+  private Type lastVarElementType;
   
   private ClassNodeBuilder() {
     //
@@ -116,7 +123,7 @@ public final class ClassNodeBuilder {
   public ClassNodeBuilder withSetter() {
     final String name = lastField.name;
     final String desc = lastField.desc;
-    addMethod("get" + Character.toUpperCase(name.charAt(0)) + name.substring(1), "()" + desc);
+    addMethod("set" + Character.toUpperCase(name.charAt(0)) + name.substring(1), "()" + desc);
     final Type type = Type.getType(desc);
     addInsn(new VarInsnNode(Opcodes.ALOAD, 0));
     addInsn(new VarInsnNode(type.getOpcode(Opcodes.ILOAD), 1));
@@ -155,10 +162,14 @@ public final class ClassNodeBuilder {
    *          the method name
    * @param descriptor
    *          the descriptor
+   * @param modifiers
+   *          the modifiers
    * @return the abstract optimizer test
    */
-  public ClassNodeBuilder addMethod(final String methodName, final String descriptor) {
-    final MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC, methodName, descriptor, null, new String[] {});
+  public ClassNodeBuilder addMethod(final String methodName, final String descriptor, final int... modifiers) {
+    methodVarIndex = 1;
+    final int modifier = getEffectiveModifier(modifiers);
+    final MethodNode method = new MethodNode(modifier, methodName, descriptor, null, new String[] {});
     method.exceptions = new ArrayList<>();
     method.invisibleAnnotations = new ArrayList<>();
     method.visibleAnnotations = new ArrayList<>();
@@ -166,6 +177,18 @@ public final class ClassNodeBuilder {
     lastMethod = method;
     lastElement = method;
     return this;
+  }
+  
+  private int getEffectiveModifier(final int... modifiers) {
+    int modifier = 0;
+    if ((modifiers == null) || (modifiers.length == 0)) {
+      modifier = Opcodes.ACC_PUBLIC;
+    } else {
+      for (int i = 0; i < modifiers.length; ++i) {
+        modifier |= modifiers[i];
+      }
+    }
+    return modifier;
   }
   
   /**
@@ -185,7 +208,7 @@ public final class ClassNodeBuilder {
     }
     if (lastElement instanceof MethodNode) {
       lastMethod.visibleAnnotations.add(annotationNode);
-    } else if (lastElement instanceof MethodNode) {
+    } else if (lastElement instanceof FieldNode) {
       lastField.visibleAnnotations.add(annotationNode);
     }
     return this;
@@ -209,6 +232,25 @@ public final class ClassNodeBuilder {
     classNode.fields.add(fieldNode);
     lastField = fieldNode;
     lastElement = fieldNode;
+    fieldNode.invisibleAnnotations = new ArrayList<>();
+    fieldNode.visibleAnnotations = new ArrayList<>();
+    return this;
+  }
+  
+  /**
+   * Sets the access modifier of the last added element.
+   * 
+   * @param modifiers
+   *          the modifiers
+   * @return the class node builder
+   */
+  public ClassNodeBuilder withModifiers(final int... modifiers) {
+    final int effectiveModifier = getEffectiveModifier(modifiers);
+    if (lastElement instanceof MethodNode) {
+      lastMethod.access = effectiveModifier;
+    } else {
+      lastField.access = effectiveModifier;
+    }
     return this;
   }
   
@@ -257,6 +299,28 @@ public final class ClassNodeBuilder {
     }
     final Type type = toPrimitive(elementType);
     initArrayInternal(type.getOpcode(Opcodes.IASTORE), (Object[]) values);
+    return this;
+  }
+  
+  public ClassNodeBuilder initMultiArrayWith(final Object value, final int... indexes) {
+    final AbstractInsnNode returnNode = constructor.instructions.getLast();
+    constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+    constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.GETFIELD, classNode.name,
+        lastField.name, lastField.desc));
+    for (int i = 0; i < (indexes.length - 1); ++i) {
+      constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(indexes[i]));
+      constructor.instructions.insertBefore(returnNode, new InsnNode(Opcodes.AALOAD));
+    }
+    constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(indexes[indexes.length - 1]));
+    constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(value));
+    final Type elementType = Type.getType(lastField.desc).getElementType();
+    if (elementType.getDescriptor().startsWith("L")) {
+      constructor.instructions.insertBefore(returnNode, new InsnNode(Opcodes.AASTORE));
+    } else {
+      constructor.instructions.insertBefore(returnNode, new InsnNode(toPrimitive(Type.getType(value.getClass()))
+          .getOpcode(Opcodes.IASTORE)));
+      
+    }
     return this;
   }
   
@@ -328,16 +392,23 @@ public final class ClassNodeBuilder {
    *          the length
    * @return the abstract optimizer test
    */
-  public ClassNodeBuilder initArray(final int length) {
+  public ClassNodeBuilder initArray(final int... length) {
     final AbstractInsnNode returnNode = constructor.instructions.getLast();
     constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
-    constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(Integer.valueOf(length)));
     final AbstractInsnNode node;
-    final Type elementType = Type.getType(lastField.desc).getElementType();
-    if (elementType.getDescriptor().startsWith("L")) {
-      node = new TypeInsnNode(Opcodes.ANEWARRAY, elementType.getInternalName());
+    if (length.length == 1) {
+      final Type elementType = Type.getType(lastField.desc).getElementType();
+      constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(Integer.valueOf(length[0])));
+      if (elementType.getDescriptor().startsWith("L")) {
+        node = new TypeInsnNode(Opcodes.ANEWARRAY, elementType.getInternalName());
+      } else {
+        node = new IntInsnNode(Opcodes.NEWARRAY, getSort(elementType));
+      }
     } else {
-      node = new IntInsnNode(Opcodes.NEWARRAY, getSort());
+      for (final int currentLength : length) {
+        constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(Integer.valueOf(currentLength)));
+      }
+      node = new MultiANewArrayInsnNode(lastField.desc, length.length);
     }
     constructor.instructions.insertBefore(returnNode, node);
     constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ASTORE, constructorVarIndex));
@@ -349,10 +420,65 @@ public final class ClassNodeBuilder {
     return this;
   }
   
-  private int getSort() {
-    final Type type = Type.getType(lastField.desc);
-    final Type elementType = type.getElementType();
-    final int sort = elementType.getSort();
+  /**
+   * Adds the array to the last created method.
+   * 
+   * @param desc
+   *          the desc
+   * @param length
+   *          the length
+   * @return the class node builder
+   */
+  public ClassNodeBuilder addArray(final String desc, final int... length) {
+    final Type elementType = Type.getType(desc).getElementType();
+    if (length.length == 1) {
+      
+      addInsn(NodeHelper.getInsnNodeFor(Integer.valueOf(length[0])));
+      if (elementType.getDescriptor().startsWith("L")) {
+        addInsn(new TypeInsnNode(Opcodes.ANEWARRAY, elementType.getInternalName()));
+      } else {
+        addInsn(new IntInsnNode(Opcodes.NEWARRAY, getSort(elementType)));
+      }
+    } else {
+      for (final int currentLength : length) {
+        addInsn(NodeHelper.getInsnNodeFor(Integer.valueOf(currentLength)));
+      }
+      addInsn(new MultiANewArrayInsnNode(desc, length.length));
+    }
+    addInsn(new VarInsnNode(Opcodes.ASTORE, methodVarIndex));
+    lastMethodVarIndex = methodVarIndex;
+    lastVarElementType = elementType;
+    methodVarIndex++;
+    return this;
+  }
+  
+  /**
+   * Stores the given value of type Number or String in the array created before at index indexes...
+   * 
+   * @param value
+   *          the value
+   * @param indexes
+   *          the indexes
+   * @return the class node builder
+   */
+  public ClassNodeBuilder withValue(final Object value, final int... indexes) {
+    addInsn(new VarInsnNode(Opcodes.ALOAD, lastMethodVarIndex));
+    for (int i = 0; i < (indexes.length - 1); ++i) {
+      addInsn(NodeHelper.getInsnNodeFor(indexes[i]));
+      addInsn(new InsnNode(Opcodes.AALOAD));
+    }
+    addInsn(NodeHelper.getInsnNodeFor(indexes[indexes.length - 1]));
+    addInsn(NodeHelper.getInsnNodeFor(value));
+    if (lastVarElementType.getDescriptor().startsWith("L")) {
+      addInsn(new InsnNode(Opcodes.AASTORE));
+    } else {
+      addInsn(new InsnNode(toPrimitive(Type.getType(value.getClass())).getOpcode(Opcodes.IASTORE)));
+    }
+    return this;
+  }
+  
+  private int getSort(final Type type) {
+    final int sort = type.getSort();
     switch (sort) {
       case Type.INT:
         return Opcodes.T_INT;

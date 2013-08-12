@@ -160,10 +160,11 @@ public class LocalArrayLengthInliner implements IOptimizer {
   
   private boolean registerValues(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
       throws JBOPClassException {
-    if (((currentNode.getOpcode() == Opcodes.NEWARRAY) || (currentNode.getOpcode() == Opcodes.MULTIANEWARRAY))) {
+    final int opcode = currentNode.getOpcode();
+    if ((opcode == Opcodes.NEWARRAY) || (opcode == Opcodes.ANEWARRAY) || (opcode == Opcodes.MULTIANEWARRAY)) {
       return registerNewArray(currentNode, knownArrays);
     }
-    if (currentNode.getOpcode() == Opcodes.ASTORE) {
+    if (opcode == Opcodes.ASTORE) {
       return registerGetArray(currentNode, knownArrays);
     }
     return false;
