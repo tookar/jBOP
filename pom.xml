@@ -77,8 +77,7 @@
     <site.version>3.2</site.version>
     <source.version>2.2.1</source.version>
     <surefire.version>2.14</surefire.version>
-    <jacoco.version>0.6.2.201302030002</jacoco.version>
-
+    <jacoco.version>0.6.3.201306030806</jacoco.version>
     <!-- plugin managment version -->
     <antrun.version>1.7</antrun.version>
     <assembly.version>2.4</assembly.version>
