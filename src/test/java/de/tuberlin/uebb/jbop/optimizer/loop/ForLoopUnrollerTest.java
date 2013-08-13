@@ -102,7 +102,7 @@ public class ForLoopUnrollerTest {
       assertEquals(Opcodes.IADD, optimized.get(node).getOpcode());
       node++;// skip label
       node++;
-      assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
+      assertEquals(Opcodes.NOP, optimized.get(node).getOpcode()); // this is the SkipMarkNode
       node++;
     }
   }
