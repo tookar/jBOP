@@ -87,6 +87,11 @@ public class ForLoopFooter {
     return ifNode;
   }
   
+  /**
+   * Gets the loop count.
+   * 
+   * @return the loop count
+   */
   public int getLoopCount() {
     return NodeHelper.getValue(biPushNode).intValue();
   }

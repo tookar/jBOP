@@ -178,9 +178,15 @@ public class ConstantIfInliner implements IOptimizer {
         if (!isNonNullArrayValue) {
           return false;
         }
-        list.remove(node2);
-        list.remove(node3);
-        list.remove(node4);
+        if (node2 != null) {
+          list.remove(node2);
+        }
+        if (node3 != null) {
+          list.remove(node3);
+        }
+        if (node4 != null) {
+          list.remove(node4);
+        }
         eval = evalSingleOpValue(NONNULL, currentNode.getOpcode());
       }
       removeNodes(currentNode, node1, null, null, list, iterator, eval);
