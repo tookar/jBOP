@@ -262,10 +262,16 @@ public class MethodSplitter implements IOptimizer {
     final String name = baseName + "__split__part__";
     while (iterator.hasNext()) {
       final Block block = iterator.next();
-      final String methodDescriptor = Type.getMethodDescriptor(block.getEndType(), block.getParameterTypes());
+      final Type endType;
+      if (isReturn(block.getLastStore())) {
+        endType = Type.getReturnType(methodNode.desc);
+      } else {
+        endType = block.getEndType();
+      }
+      final String methodDescriptor = Type.getMethodDescriptor(endType, block.getParameterTypes());
       
       final String newMethodName = name + block.num;
-      System.out.println("Creating " + newMethodName);
+      // System.out.println("Creating " + newMethodName);
       final MethodNode splitMethod = new MethodNode(Opcodes.ASM4, access, newMethodName, methodDescriptor, null,
           exceptions);
       
@@ -338,6 +344,11 @@ public class MethodSplitter implements IOptimizer {
   
   private void addWrite(final InsnList list, final AbstractInsnNode lastStore) {
     final int opcode;
+    if (isReturn(lastStore)) {
+      // copy returnstatement to "main"-method
+      list.add(new InsnNode(lastStore.getOpcode()));
+      return;
+    }
     if (lastStore == null) {
       opcode = Opcodes.RETURN;
     } else {
@@ -349,6 +360,9 @@ public class MethodSplitter implements IOptimizer {
   
   private void addLoadAndReturn(final InsnList instructions, final AbstractInsnNode lastStore) {
     if (isReturn(lastStore)) {
+      // final InsnNode write = getReturn(lastStore.getOpcode());
+      // instructions.remove(lastStore);
+      // instructions.add(write);
       return;
     }
     addLoad(instructions, lastStore);
