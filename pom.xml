@@ -17,6 +17,14 @@
   <properties>
     <!-- dependency-versions -->
     <asm.version>4.1</asm.version>
+    <commons-math.version>3.2</commons-math.version>
+    <commons-io.version>2.4</commons-io.version>
+    <commons-lang.version>3.1</commons-lang.version>
+    <collections-generic>4.01</collections-generic>
+    <!-- test dependencies -->
+    <hamcrest.version>1.3</hamcrest.version>
+    <mockito.version>1.9.5</mockito.version>
+    <junit.version>4.11</junit.version>
 
     <!-- general properties -->
 
@@ -142,36 +150,41 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.4</version>
+      <version>${commons-io.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.1</version>
+      <version>${commons-lang.version}</version>
     </dependency>
     <dependency>
       <groupId>net.sourceforge.collections</groupId>
       <artifactId>collections-generic</artifactId>
-      <version>4.01</version>
+      <version>${collections-generic}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-math3</artifactId>
-      <version>3.1.1</version>
+      <version>${commons-math.version}</version>
     </dependency>
 
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <version>1.9.5</version>
+      <version>${mockito.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <version>${hamcrest.version}</version>
     </dependency>
 
   </dependencies>
@@ -517,11 +530,8 @@
     </developer>
   </developers>
 
-<!--   <issueManagement>
-    <system>redmine</system>
-    <url>https://mlcontrol.uebb.tu-berlin.de/redmine/projects/jdae</url>
-  </issueManagement>
- -->
+  <!-- <issueManagement> <system>redmine</system> <url>https://mlcontrol.uebb.tu-berlin.de/redmine/projects/jdae</url> 
+    </issueManagement> -->
   <scm>
     <connection>scm:git:https://github.com/tookar/jBOP.git</connection>
     <developerConnection>scm:git:https://github.com/tookar/jBOP.git</developerConnection>
