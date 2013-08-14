@@ -213,7 +213,7 @@ public class ConstantIfInliner implements IOptimizer {
         node5 = node4;
         node4 = NodeHelper.getPrevious(node4);
       }
-      op1 = NodeHelper.getValue(node5);
+      op1 = NodeHelper.getNumberValue(node5);
     } catch (final NotANumberException nan) {
       return false;
     }
@@ -223,7 +223,7 @@ public class ConstantIfInliner implements IOptimizer {
         if (NodeHelper.isCast(node4)) {
           node6 = NodeHelper.getPrevious(node4);
         }
-        op2 = NodeHelper.getValue(node6);
+        op2 = NodeHelper.getNumberValue(node6);
       } catch (final NotANumberException nan) {
         return false;
       }

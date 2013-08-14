@@ -78,7 +78,7 @@ public class LocalArrayValueInlinerTest {
     // ASSERT STEP 1
     
     assertEquals(7, optimized.size());
-    assertEquals(2.0, NodeHelper.getValue(optimized.get(5)).doubleValue(), .0001);
+    assertEquals(2.0, NodeHelper.getNumberValue(optimized.get(5)).doubleValue(), .0001);
     
     // RUN STEP 2
     final InsnList optimized2 = inliner.optimize(method.instructions, method);

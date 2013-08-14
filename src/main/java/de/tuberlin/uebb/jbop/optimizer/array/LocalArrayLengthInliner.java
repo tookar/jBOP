@@ -240,7 +240,7 @@ public class LocalArrayLengthInliner implements IOptimizer {
       if (previous2.size() <= i) {
         index1 = 0;
       } else {
-        final Number arrIndex = NodeHelper.getValue(previous2.get(i));
+        final Number arrIndex = NodeHelper.getNumberValue(previous2.get(i));
         index1 = arrIndex.intValue();
       }
       array2 = Array.get(array2, index1);
@@ -263,7 +263,7 @@ public class LocalArrayLengthInliner implements IOptimizer {
         return false;
       }
       try {
-        final int value = NodeHelper.getValue(previous).intValue();
+        final int value = NodeHelper.getNumberValue(previous).intValue();
         sizes[i] = value;
       } catch (final NotANumberException nane) {
         return false;

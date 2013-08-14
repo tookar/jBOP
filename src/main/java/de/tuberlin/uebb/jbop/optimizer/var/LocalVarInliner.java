@@ -106,7 +106,7 @@ public class LocalVarInliner implements IOptimizer {
             newList.add(currentNode);
             continue;
           }
-          newList.add(NodeHelper.getInsnNodeFor(NodeHelper.getValue(valueNode)));
+          newList.add(NodeHelper.getInsnNodeFor(NodeHelper.getNumberValue(valueNode)));
           optimized = true;
           continue;
         }

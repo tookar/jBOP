@@ -70,13 +70,13 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
       AbstractInsnNode castNode1 = null;
       AbstractInsnNode castNode2 = null;
       try {
-        one = NodeHelper.getValue(currentNode);
+        one = NodeHelper.getNumberValue(currentNode);
         numberNode = NodeHelper.getNext(currentNode);
         if (NodeHelper.isCast(numberNode)) {
           castNode1 = numberNode;
           numberNode = NodeHelper.getNext(castNode1);
         }
-        two = NodeHelper.getValue(numberNode);
+        two = NodeHelper.getNumberValue(numberNode);
       } catch (final NotANumberException nane) {
         continue;
       }

@@ -148,7 +148,7 @@ public class LocalArrayValueInliner implements IOptimizer {
     }
     
     for (int i = indexes.size() - 1; i >= 0; --i) {
-      final int indexInArray = NodeHelper.getValue(indexes.get(i)).intValue();
+      final int indexInArray = NodeHelper.getNumberValue(indexes.get(i)).intValue();
       array = Array.get(array, indexInArray);
     }
     if (!(array instanceof Number)) {
@@ -244,7 +244,7 @@ public class LocalArrayValueInliner implements IOptimizer {
       if (previous2.size() <= i) {
         index1 = 0;
       } else {
-        final Number arrIndex = NodeHelper.getValue(previous2.get(i));
+        final Number arrIndex = NodeHelper.getNumberValue(previous2.get(i));
         index1 = arrIndex.intValue();
       }
       array2 = Array.get(array2, index1);

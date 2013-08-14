@@ -68,6 +68,15 @@ public final class NodeHelper {
     if (object instanceof String) {
       return new LdcInsnNode(object);
     }
+    if (object instanceof Character) {
+      return getInsnNodeFor((int) ((Character) object).charValue());
+    }
+    if (object instanceof Boolean) {
+      if (((Boolean) object).booleanValue()) {
+        return getInsnNodeFor(1);
+      }
+      return getInsnNodeFor(0);
+    }
     return null;
   }
   
@@ -79,7 +88,7 @@ public final class NodeHelper {
    * @return the insn node for
    */
   public static AbstractInsnNode getInsnNodeFor(final Number newNumber) {
-    if (newNumber instanceof Integer) {
+    if (isIntType(newNumber)) {
       switch (newNumber.intValue()) {
         case CONST_M1:
           return new InsnNode(Opcodes.ICONST_M1);
@@ -129,6 +138,19 @@ public final class NodeHelper {
       }
     }
     return null;
+  }
+  
+  private static boolean isIntType(final Number newNumber) {
+    if (newNumber instanceof Integer) {
+      return true;
+    }
+    if (newNumber instanceof Short) {
+      return true;
+    }
+    if (newNumber instanceof Byte) {
+      return true;
+    }
+    return false;
   }
   
   /**
@@ -579,7 +601,7 @@ public final class NodeHelper {
    * @throws NotANumberException
    *           if node is not a number-Node
    */
-  public static Number getValue(final AbstractInsnNode node) throws NotANumberException {
+  public static Number getNumberValue(final AbstractInsnNode node) throws NotANumberException {
     if (node == null) {
       throw new NotANumberException();
     }
@@ -614,6 +636,40 @@ public final class NodeHelper {
       }
     }
     throw new NotANumberException();
+  }
+  
+  /**
+   * Gets the boolean value.
+   * 
+   * @param node
+   *          the node
+   * @return the boolean value
+   * @throws NotANumberException
+   *           the not a number exception
+   */
+  public static boolean getBooleanValue(final AbstractInsnNode node) throws NotANumberException {
+    if (node == null) {
+      throw new NotANumberException();
+    }
+    final int bool = getNumberValue(node).intValue();
+    return Boolean.valueOf(bool == 1);
+  }
+  
+  /**
+   * Gets the char value.
+   * 
+   * @param node
+   *          the node
+   * @return the char value
+   * @throws NotANumberException
+   *           the not a number exception
+   */
+  public static char getCharValue(final AbstractInsnNode node) throws NotANumberException {
+    if (node == null) {
+      throw new NotANumberException();
+    }
+    final int charValue = getNumberValue(node).intValue();
+    return Character.valueOf((char) charValue);
   }
   
   /**
@@ -717,7 +773,7 @@ public final class NodeHelper {
    */
   public static boolean isNumberNode(final AbstractInsnNode node) {
     try {
-      getValue(node);
+      getNumberValue(node);
       return true;
     } catch (final NotANumberException nane) {
       return false;

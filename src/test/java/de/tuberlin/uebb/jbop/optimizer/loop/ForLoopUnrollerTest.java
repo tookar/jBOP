@@ -90,7 +90,7 @@ public class ForLoopUnrollerTest {
     
     int node = 2;
     for (int i = 0; i < 3; ++i) {
-      assertEquals(i, NodeHelper.getValue(optimized.get(node)).intValue());
+      assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
       node++;
       assertEquals(Opcodes.ISTORE, optimized.get(node).getOpcode());
       node++;// skip label
@@ -142,7 +142,7 @@ public class ForLoopUnrollerTest {
     
     int node = 2;
     for (int i = 6; i > 0; i -= 2) {
-      assertEquals(i, NodeHelper.getValue(optimized.get(node)).intValue());
+      assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
       node++;
       assertEquals(Opcodes.ISTORE, optimized.get(node).getOpcode());
       node++;// skip label

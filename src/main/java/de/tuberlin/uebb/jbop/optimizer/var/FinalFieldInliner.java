@@ -18,6 +18,15 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.var;
 
+import static org.objectweb.asm.Type.BOOLEAN_TYPE;
+import static org.objectweb.asm.Type.BYTE_TYPE;
+import static org.objectweb.asm.Type.CHAR_TYPE;
+import static org.objectweb.asm.Type.DOUBLE_TYPE;
+import static org.objectweb.asm.Type.FLOAT_TYPE;
+import static org.objectweb.asm.Type.INT_TYPE;
+import static org.objectweb.asm.Type.LONG_TYPE;
+import static org.objectweb.asm.Type.SHORT_TYPE;
+
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.util.Iterator;
@@ -49,15 +58,15 @@ import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
  */
 public class FinalFieldInliner implements IOptimizer {
   
-  private static final Type intType = Type.getType(int.class);
-  private static final Type intObjectType = Type.getType(Integer.class);
-  private static final Type longType = Type.getType(long.class);
-  private static final Type longObjectType = Type.getType(Long.class);
-  private static final Type floatType = Type.getType(float.class);
-  private static final Type floatObjectType = Type.getType(Float.class);
-  private static final Type doubleType = Type.getType(double.class);
-  private static final Type doubleObjectType = Type.getType(Double.class);
-  private static final Type stringObjectType = Type.getType(String.class);
+  private static final Type INT_OBJECT_TYPE = Type.getType(Integer.class);
+  private static final Type LONG_OBJECT_TYPE = Type.getType(Long.class);
+  private static final Type FLOAT_OBJECT_TYPE = Type.getType(Float.class);
+  private static final Type DOUBLE_OBJECT_TYPE = Type.getType(Double.class);
+  private static final Type STRING_OBJECT_TYPE = Type.getType(String.class);
+  private static final Object SHORT_OBJECT_TYPE = Type.getType(Short.class);
+  private static final Object BYTE_OBJECT_TYPE = Type.getType(Byte.class);
+  private static final Object CHAR_OBJECT_TYPE = Type.getType(Character.class);
+  private static final Object BOOLEAN_OBJECT_TYPE = Type.getType(Boolean.class);
   
   private boolean optimized;
   private final Object instance;
@@ -77,9 +86,14 @@ public class FinalFieldInliner implements IOptimizer {
     final Class<?> clazz = input.getClass();
     final ClassNode readClass = OptimizerUtils.readClass(input);
     final List<FieldNode> fields = readClass.fields;
+    collectFields(clazz, fields);
+    isField = new GetFieldPredicate(fieldMap);
+  }
+  
+  private void collectFields(final Class<?> clazz, final List<FieldNode> fields) throws JBOPClassException {
     for (final FieldNode field : fields) {
       if ((field.access & Opcodes.ACC_FINAL) != 0) {
-        if (isPrimitive(field.desc)) {
+        if (isBuiltIn(field.desc)) {
           try {
             fieldMap.put(field.name, clazz.getDeclaredField(field.name));
           } catch (NoSuchFieldException | SecurityException e) {
@@ -88,36 +102,70 @@ public class FinalFieldInliner implements IOptimizer {
         }
       }
     }
-    isField = new GetFieldPredicate(fieldMap);
   }
   
-  private static boolean isPrimitive(final String desc) {
+  private static boolean isBuiltIn(final String desc) {
     final Type type = Type.getType(desc);
-    if (type.equals(intType)) {
+    if (isPrimitive(type)) {
       return true;
     }
-    if (type.equals(longType)) {
+    return isPrimitiveWrapper(type);
+  }
+  
+  private static boolean isPrimitiveWrapper(final Type type) {
+    if (INT_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(floatType)) {
+    if (LONG_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(doubleType)) {
+    if (FLOAT_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(intObjectType)) {
+    if (DOUBLE_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(longObjectType)) {
+    if (SHORT_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(floatObjectType)) {
+    if (BYTE_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(doubleObjectType)) {
+    if (CHAR_OBJECT_TYPE.equals(type)) {
       return true;
     }
-    if (type.equals(stringObjectType)) {
+    if (BOOLEAN_OBJECT_TYPE.equals(type)) {
+      return true;
+    }
+    if (STRING_OBJECT_TYPE.equals(type)) {
+      return true;
+    }
+    return false;
+  }
+  
+  private static boolean isPrimitive(final Type type) {
+    if (INT_TYPE.equals(type)) {
+      return true;
+    }
+    if (LONG_TYPE.equals(type)) {
+      return true;
+    }
+    if (FLOAT_TYPE.equals(type)) {
+      return true;
+    }
+    if (DOUBLE_TYPE.equals(type)) {
+      return true;
+    }
+    if (SHORT_TYPE.equals(type)) {
+      return true;
+    }
+    if (BYTE_TYPE.equals(type)) {
+      return true;
+    }
+    if (CHAR_TYPE.equals(type)) {
+      return true;
+    }
+    if (BOOLEAN_TYPE.equals(type)) {
       return true;
     }
     return false;

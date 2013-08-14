@@ -73,8 +73,8 @@ public class LocalArrayLengthInlinerTest {
     // ASSERT STEP 1
     
     assertEquals(12, optimized.size());
-    assertEquals(15, NodeHelper.getValue(optimized.get(3)).intValue());
-    assertEquals(42, NodeHelper.getValue(optimized.get(9)).intValue());
+    assertEquals(15, NodeHelper.getNumberValue(optimized.get(3)).intValue());
+    assertEquals(42, NodeHelper.getNumberValue(optimized.get(9)).intValue());
     
     // RUN STEP 2
     final InsnList optimized2 = inliner.optimize(method.instructions, method);

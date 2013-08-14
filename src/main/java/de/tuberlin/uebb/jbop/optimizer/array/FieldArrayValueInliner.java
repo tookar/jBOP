@@ -173,7 +173,7 @@ public class FieldArrayValueInliner implements IOptimizer {
       final Iterator<AbstractInsnNode> iterator) {
     final int[] indexArr = new int[indexes.size()];
     for (int i = 0; i < indexes.size(); ++i) {
-      final int indexOf = NodeHelper.getValue(indexes.get(i)).intValue();
+      final int indexOf = NodeHelper.getNumberValue(indexes.get(i)).intValue();
       indexArr[i] = indexOf;
     }
     Object value;

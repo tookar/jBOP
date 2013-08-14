@@ -209,7 +209,7 @@ public class ForLoopUnroller implements IOptimizer {
     }
     
     countervar = ((VarInsnNode) node2).var;
-    start = NodeHelper.getValue(node1);
+    start = NodeHelper.getNumberValue(node1);
     _goto = node3;
     final AbstractInsnNode endNode = ((JumpInsnNode) node3).label;
     return endNode;

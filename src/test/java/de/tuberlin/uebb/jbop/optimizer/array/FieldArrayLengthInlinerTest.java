@@ -71,8 +71,8 @@ public class FieldArrayLengthInlinerTest {
     
     // ASSERT STEP 2
     assertEquals(4, optimized2.size());
-    assertEquals(15, NodeHelper.getValue(optimized2.getFirst()).intValue());
-    assertEquals(23, NodeHelper.getValue(optimized2.getFirst().getNext()).intValue());
+    assertEquals(15, NodeHelper.getNumberValue(optimized2.getFirst()).intValue());
+    assertEquals(23, NodeHelper.getNumberValue(optimized2.getFirst().getNext()).intValue());
     
     // RUN STEP 3
     final InsnList optimized3 = inliner.optimize(method.instructions, method);

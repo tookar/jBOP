@@ -83,24 +83,24 @@ public class FieldArrayValueInlinerTest {
     
     // first value pair
     AbstractInsnNode currentNode = optimized.getFirst();
-    assertEquals(1.0, NodeHelper.getValue(currentNode).doubleValue(), .0001);
+    assertEquals(1.0, NodeHelper.getNumberValue(currentNode).doubleValue(), .0001);
     currentNode = currentNode.getNext();
-    assertEquals(4.0, NodeHelper.getValue(currentNode).doubleValue(), .0001);
+    assertEquals(4.0, NodeHelper.getNumberValue(currentNode).doubleValue(), .0001);
     currentNode = currentNode.getNext();
     
     // second value pair
     currentNode = currentNode.getNext();
-    assertEquals(2.0, NodeHelper.getValue(currentNode).doubleValue(), .0001);
+    assertEquals(2.0, NodeHelper.getNumberValue(currentNode).doubleValue(), .0001);
     currentNode = currentNode.getNext();
-    assertEquals(5.0, NodeHelper.getValue(currentNode).doubleValue(), .0001);
+    assertEquals(5.0, NodeHelper.getNumberValue(currentNode).doubleValue(), .0001);
     currentNode = currentNode.getNext();
     currentNode = currentNode.getNext();
     
     // third value pair
     currentNode = currentNode.getNext();
-    assertEquals(3.0, NodeHelper.getValue(currentNode).doubleValue(), .0001);
+    assertEquals(3.0, NodeHelper.getNumberValue(currentNode).doubleValue(), .0001);
     currentNode = currentNode.getNext();
-    assertEquals(6.0, NodeHelper.getValue(currentNode).doubleValue(), .0001);
+    assertEquals(6.0, NodeHelper.getNumberValue(currentNode).doubleValue(), .0001);
     
     // RUN STEP 3
     final InsnList optimized3 = inliner.optimize(method.instructions, method);

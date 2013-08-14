@@ -266,7 +266,8 @@ public final class ClassNodeBuilder {
    */
   public ClassNodeBuilder initWith(final Object object) {
     final AbstractInsnNode returnNode = constructor.instructions.getLast();
-    if ((object instanceof String) || (object instanceof Number)) {
+    if ((object instanceof String) || (object instanceof Number) || (object instanceof Boolean)
+        || (object instanceof Character)) {
       constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
       final AbstractInsnNode numberNode = NodeHelper.getInsnNodeFor(object);
       constructor.instructions.insertBefore(returnNode, numberNode);

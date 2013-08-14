@@ -34,7 +34,7 @@ public final class NumberValuePredicate implements Predicate<AbstractInsnNode> {
   @Override
   public boolean evaluate(final AbstractInsnNode object) {
     try {
-      NodeHelper.getValue(object);
+      NodeHelper.getNumberValue(object);
     } catch (final NotANumberException nane) {
       return false;
     }
