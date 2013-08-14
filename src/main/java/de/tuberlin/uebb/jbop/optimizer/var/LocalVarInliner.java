@@ -153,13 +153,12 @@ public class LocalVarInliner implements IOptimizer {
   private void markVariables(final Map<Integer, AbstractInsnNode> values, final AbstractInsnNode currentNode) {
     if ((currentNode instanceof VarInsnNode) && (currentNode.getOpcode() == Opcodes.ISTORE)) {
       final AbstractInsnNode valueNode = NodeHelper.getPrevious(currentNode);
-      if ((valueNode instanceof IntInsnNode) || NodeHelper.isIconst(valueNode)) {
-        final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
-        if (values.containsKey(varIndex)) {
-          values.put(varIndex, NULL);
-        } else {
-          values.put(varIndex, valueNode);
-        }
+      final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
+      if (values.containsKey(varIndex)) {
+        values.put(varIndex, NULL);
+      } else if ((valueNode instanceof IntInsnNode) || NodeHelper.isIconst(valueNode)) {
+        
+        values.put(varIndex, valueNode);
       }
     }
     if (currentNode instanceof IincInsnNode) {
