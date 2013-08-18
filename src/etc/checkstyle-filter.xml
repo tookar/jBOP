@@ -6,7 +6,9 @@
 
 <!-- checks="[a-zA-Z0-9]*" matches all checks -->
 <suppressions>
-	<!-- No package-javadoc for JUnit-Tests needed -->
+    <!-- No checks for example classes -->
+    <suppress files="de[\\/]tuberlin[\\/]uebb[\\/]jbop[\\/]example[\\/]" checks="." />
+    <!-- No package-javadoc for JUnit-Tests needed -->
     <suppress files=".*Test\.java" checks="JavadocPackage" />
     <suppress files="[\\/]testclasses[\\/]" checks="JavadocPackage" />
     <!-- Don't check for magic Numbers in JUnit -->

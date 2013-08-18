@@ -44,7 +44,7 @@ public final class OptimizerUtils {
   }
   
   /**
-   * Init
+   * Initializes the cache.
    */
   public static void init() {
     CACHE.clear();

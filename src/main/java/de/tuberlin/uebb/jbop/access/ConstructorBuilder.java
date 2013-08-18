@@ -105,6 +105,10 @@ public final class ConstructorBuilder {
     if (isArray) {
       return desc;
     }
+    return expandPrimitives(desc);
+  }
+  
+  private static String expandPrimitives(final String desc) {
     if ("I".equals(desc)) {
       return Type.getDescriptor(Integer.class);
     }
@@ -174,42 +178,48 @@ public final class ConstructorBuilder {
     return nextParam;
   }
   
+  /**
+   * Gets the unboxing node.
+   * 
+   * @param field
+   *          the field
+   * @return the unboxing node
+   */
   public static AbstractInsnNode getUnboxingNode(final FieldNode field) {
-    AbstractInsnNode unboxing = null;
+    final AbstractInsnNode unboxing;
     final Type type = Type.getType(field.desc);
     final int sort = type.getSort();
     if (sort == Type.INT) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Integer.class), "intValue", "()I");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.LONG) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Long.class), "longValue", "()J");
-      // opcode = Opcodes.LLOAD;
     } else if (sort == Type.FLOAT) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Float.class), "intValue", "()F");
-      // opcode = Opcodes.FLOAD;
     } else if (sort == Type.DOUBLE) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Double.class), "doubleValue", "()D");
-      // opcode = Opcodes.DLOAD;
     } else if (sort == Type.BOOLEAN) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Boolean.class), "booleanValue", "()Z");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.SHORT) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Short.class), "shortValue", "()S");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.CHAR) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Character.class), "charValue", "()C");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.BYTE) {
       unboxing = new MethodInsnNode(Opcodes.INVOKEVIRTUAL, Type.getInternalName(Byte.class), "byteValue", "()B");
-      // opcode = Opcodes.ILOAD;
     } else {
-      // opcode = Opcodes.ALOAD;
+      unboxing = null;
     }
     return unboxing;
   }
   
+  /**
+   * Gets the boxing node.
+   * 
+   * @param field
+   *          the field
+   * @return the boxing node
+   */
   public static AbstractInsnNode getBoxingNode(final FieldNode field) {
-    AbstractInsnNode boxing = null;
+    final AbstractInsnNode boxing;
     Type type = Type.getType(field.desc);
     if (field.desc.startsWith("[")) {
       type = type.getElementType();
@@ -218,37 +228,29 @@ public final class ConstructorBuilder {
     if (sort == Type.INT) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
           "(D)Ljava/lang/Integer;");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.LONG) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Long.class), "valueOf",
           "(D)Ljava/lang/Long;");
-      // opcode = Opcodes.LLOAD;
     } else if (sort == Type.FLOAT) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Float.class), "valueOf",
           "(D)Ljava/lang/Float;");
-      // opcode = Opcodes.FLOAD;
     } else if (sort == Type.DOUBLE) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
           "(D)Ljava/lang/Double;");
-      // opcode = Opcodes.DLOAD;
     } else if (sort == Type.BOOLEAN) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
           "(D)Ljava/lang/Boolean;");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.SHORT) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
           "(D)Ljava/lang/Short;");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.CHAR) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
           "(D)Ljava/lang/Character;");
-      // opcode = Opcodes.ILOAD;
     } else if (sort == Type.BYTE) {
       boxing = new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
           "(D)Ljava/lang/Byte;");
-      // opcode = Opcodes.ILOAD;
     } else {
-      // opcode = Opcodes.ALOAD;
+      boxing = null;
     }
     return boxing;
   }

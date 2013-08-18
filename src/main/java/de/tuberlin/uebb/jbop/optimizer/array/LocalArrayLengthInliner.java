@@ -130,7 +130,8 @@ public class LocalArrayLengthInliner extends AbstractLocalArrayOptimizer {
    * Registers values for local arrays that are created via NEWARRAY / ANEWARRAY or MULTIANEWARRAY.
    */
   @Override
-  protected boolean registerAdditionalValues(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays) {
+  protected boolean registerAdditionalValues(final AbstractInsnNode currentNode, //
+      final Map<Integer, Object> knownArrays) {
     final int opcode = currentNode.getOpcode();
     if (!((opcode == Opcodes.NEWARRAY) || (opcode == Opcodes.ANEWARRAY) || (opcode == Opcodes.MULTIANEWARRAY))) {
       return false;

@@ -92,8 +92,6 @@ public class FieldArrayLengthInliner implements IOptimizer {
    *          the names
    * @param instance
    *          the instance
-   * @throws JBOPClassException
-   *           the jBOP class exception
    */
   public FieldArrayLengthInliner(final Collection<String> names, final Object instance) {
     this.instance = instance;

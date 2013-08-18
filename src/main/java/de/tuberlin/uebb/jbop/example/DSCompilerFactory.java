@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jbop.math;
+package de.tuberlin.uebb.jbop.example;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -50,7 +50,7 @@ class MethodRenamer extends MethodVisitor {
   public void visitTypeInsn(final int i, final String s) {
     final String nameToUse;
     if (fixer.contains(s)) {
-      nameToUse = fixer.newName;
+      nameToUse = fixer.getNewName();
     } else {
       nameToUse = s;
     }
@@ -60,7 +60,7 @@ class MethodRenamer extends MethodVisitor {
   @Override
   public void visitFieldInsn(final int opcode, final String owner, final String name, final String desc) {
     if (fixer.contains(owner)) {
-      super.visitFieldInsn(opcode, fixer.newName, name, fixer.fix(desc));
+      super.visitFieldInsn(opcode, fixer.getNewName(), name, fixer.fix(desc));
     } else {
       super.visitFieldInsn(opcode, owner, name, fixer.fix(desc));
     }
@@ -69,7 +69,7 @@ class MethodRenamer extends MethodVisitor {
   @Override
   public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
     if (fixer.contains(owner)) {
-      super.visitMethodInsn(opcode, fixer.newName, name, fixer.fix(desc));
+      super.visitMethodInsn(opcode, fixer.getNewName(), name, fixer.fix(desc));
     } else {
       super.visitMethodInsn(opcode, owner, name, fixer.fix(desc));
     }

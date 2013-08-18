@@ -18,6 +18,23 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.arithmetic;
 
+import static org.objectweb.asm.Opcodes.DADD;
+import static org.objectweb.asm.Opcodes.DDIV;
+import static org.objectweb.asm.Opcodes.DMUL;
+import static org.objectweb.asm.Opcodes.DSUB;
+import static org.objectweb.asm.Opcodes.FADD;
+import static org.objectweb.asm.Opcodes.FDIV;
+import static org.objectweb.asm.Opcodes.FMUL;
+import static org.objectweb.asm.Opcodes.FSUB;
+import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.IDIV;
+import static org.objectweb.asm.Opcodes.IMUL;
+import static org.objectweb.asm.Opcodes.ISUB;
+import static org.objectweb.asm.Opcodes.LADD;
+import static org.objectweb.asm.Opcodes.LDIV;
+import static org.objectweb.asm.Opcodes.LMUL;
+import static org.objectweb.asm.Opcodes.LSUB;
+
 import java.util.Iterator;
 
 import org.apache.commons.math3.exception.NotANumberException;
@@ -88,70 +105,151 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
       if (isArithmeticOp(op)) {
         final AbstractInsnNode replacement = getReplacement(one, two, op);
         original.insert(op, replacement);
-        if (castNode1 != null) {
-          iterator.next();// --> castNode1
-        }
-        iterator.next();// --> numberNode
-        if (castNode2 != null) {
-          iterator.next();// --> castNode2
-        }
-        iterator.next();// --> op
-        original.remove(currentNode);
-        if (castNode1 != null) {
-          original.remove(castNode1);
-        }
-        original.remove(numberNode);
-        if (castNode2 != null) {
-          original.remove(castNode2);
-        }
-        original.remove(op);
+        clean(original, iterator, currentNode, numberNode, castNode1, castNode2, op);
         optimized = true;
       }
     }
     return original;
   }
   
+  private void clean(final InsnList original, final Iterator<AbstractInsnNode> iterator,
+      final AbstractInsnNode currentNode, final AbstractInsnNode numberNode, final AbstractInsnNode castNode1,
+      final AbstractInsnNode castNode2, final AbstractInsnNode op) {
+    if (castNode1 != null) {
+      iterator.next();// --> castNode1
+    }
+    iterator.next();// --> numberNode
+    if (castNode2 != null) {
+      iterator.next();// --> castNode2
+    }
+    iterator.next();// --> op
+    original.remove(currentNode);
+    if (castNode1 != null) {
+      original.remove(castNode1);
+    }
+    original.remove(numberNode);
+    if (castNode2 != null) {
+      original.remove(castNode2);
+    }
+    original.remove(op);
+  }
+  
   private AbstractInsnNode getReplacement(final Number one, final Number two, final AbstractInsnNode op) {
     final int opcode = op.getOpcode();
-    AbstractInsnNode replacement = null;
-    if (opcode == Opcodes.DADD) {
-      replacement = NodeHelper.getInsnNodeFor(one.doubleValue() + two.doubleValue());
-    } else if (opcode == Opcodes.DMUL) {
-      replacement = NodeHelper.getInsnNodeFor(one.doubleValue() * two.doubleValue());
-    } else if (opcode == Opcodes.DSUB) {
-      replacement = NodeHelper.getInsnNodeFor(one.doubleValue() - two.doubleValue());
-    } else if (opcode == Opcodes.DDIV) {
-      replacement = NodeHelper.getInsnNodeFor(one.doubleValue() / two.doubleValue());
-    } else if (opcode == Opcodes.IADD) {
-      replacement = NodeHelper.getInsnNodeFor(one.intValue() + two.intValue());
-    } else if (opcode == Opcodes.IMUL) {
-      replacement = NodeHelper.getInsnNodeFor(one.intValue() * two.intValue());
-    } else if (opcode == Opcodes.ISUB) {
-      replacement = NodeHelper.getInsnNodeFor(one.intValue() - two.intValue());
-    } else if (opcode == Opcodes.IDIV) {
-      replacement = NodeHelper.getInsnNodeFor(one.intValue() / two.intValue());
-    } else if (opcode == Opcodes.FADD) {
-      replacement = NodeHelper.getInsnNodeFor(one.floatValue() + two.floatValue());
-    } else if (opcode == Opcodes.FMUL) {
-      replacement = NodeHelper.getInsnNodeFor(one.floatValue() * two.floatValue());
-    } else if (opcode == Opcodes.FSUB) {
-      replacement = NodeHelper.getInsnNodeFor(one.floatValue() - two.floatValue());
-    } else if (opcode == Opcodes.FDIV) {
-      replacement = NodeHelper.getInsnNodeFor(one.floatValue() / two.floatValue());
-    } else if (opcode == Opcodes.LADD) {
-      replacement = NodeHelper.getInsnNodeFor(one.longValue() + two.longValue());
-    } else if (opcode == Opcodes.LMUL) {
-      replacement = NodeHelper.getInsnNodeFor(one.longValue() * two.longValue());
-    } else if (opcode == Opcodes.LSUB) {
-      replacement = NodeHelper.getInsnNodeFor(one.longValue() - two.longValue());
-    } else if (opcode == Opcodes.LDIV) {
-      replacement = NodeHelper.getInsnNodeFor(one.longValue() / two.longValue());
+    if ((opcode >= IADD) && (opcode <= DADD)) {
+      return handleAdd(opcode, one, two);
     }
-    return replacement;
+    if ((opcode >= ISUB) && (opcode <= DSUB)) {
+      return handleSub(opcode, one, two);
+    }
+    if ((opcode >= IMUL) && (opcode <= DMUL)) {
+      return handleMul(opcode, one, two);
+    }
+    if ((opcode >= IDIV) && (opcode <= DDIV)) {
+      return handleDiv(opcode, one, two);
+    }
+    return null;
+  }
+  
+  private AbstractInsnNode handleDiv(final int opcode, final Number one, final Number two) {
+    final Number number;
+    switch (opcode) {
+      case (IDIV):
+        number = Integer.valueOf(one.intValue() / two.intValue());
+        break;
+      case (DDIV):
+        number = Double.valueOf(one.doubleValue() / two.doubleValue());
+        break;
+      case (FDIV):
+        number = Float.valueOf(one.floatValue() / two.floatValue());
+        break;
+      case (LDIV):
+        number = Long.valueOf(one.longValue() / two.longValue());
+        break;
+      default:
+        return null;
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleMul(final int opcode, final Number one, final Number two) {
+    final Number number;
+    switch (opcode) {
+      case (IMUL):
+        number = Integer.valueOf(one.intValue() * two.intValue());
+        break;
+      case (DMUL):
+        number = Double.valueOf(one.doubleValue() * two.doubleValue());
+        break;
+      case (FMUL):
+        number = Float.valueOf(one.floatValue() * two.floatValue());
+        break;
+      case (LMUL):
+        number = Long.valueOf(one.longValue() * two.longValue());
+        break;
+      default:
+        return null;
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleSub(final int opcode, final Number one, final Number two) {
+    final Number number;
+    switch (opcode) {
+      case (ISUB):
+        number = Integer.valueOf(one.intValue() - two.intValue());
+        break;
+      case (DSUB):
+        number = Double.valueOf(one.doubleValue() - two.doubleValue());
+        break;
+      case (FSUB):
+        number = Float.valueOf(one.floatValue() - two.floatValue());
+        break;
+      case (LSUB):
+        number = Long.valueOf(one.longValue() - two.longValue());
+        break;
+      default:
+        return null;
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleAdd(final int opcode, final Number one, final Number two) {
+    final Number number;
+    switch (opcode) {
+      case (IADD):
+        number = Integer.valueOf(one.intValue() + two.intValue());
+        break;
+      case (DADD):
+        number = Double.valueOf(one.doubleValue() + two.doubleValue());
+        break;
+      case (FADD):
+        number = Float.valueOf(one.floatValue() + two.floatValue());
+        break;
+      case (LADD):
+        number = Long.valueOf(one.longValue() + two.longValue());
+        break;
+      default:
+        return null;
+    }
+    return NodeHelper.getInsnNodeFor(number);
   }
   
   private boolean isArithmeticOp(final AbstractInsnNode op) {
     final int opcode = op.getOpcode();
+    if (isDoubleArithmetic(opcode)) {
+      return true;
+    } else if (isIntArithmetic(opcode)) {
+      return true;
+    } else if (isFloatArithmetic(opcode)) {
+      return true;
+    } else if (isLongArithmetic(opcode)) {
+      return true;
+    }
+    return false;
+  }
+  
+  private boolean isDoubleArithmetic(final int opcode) {
     if (opcode == Opcodes.DADD) {
       return true;
     } else if (opcode == Opcodes.DMUL) {
@@ -160,7 +258,12 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
       return true;
     } else if (opcode == Opcodes.DDIV) {
       return true;
-    } else if (opcode == Opcodes.IADD) {
+    }
+    return false;
+  }
+  
+  private boolean isIntArithmetic(final int opcode) {
+    if (opcode == Opcodes.IADD) {
       return true;
     } else if (opcode == Opcodes.IMUL) {
       return true;
@@ -168,25 +271,33 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
       return true;
     } else if (opcode == Opcodes.IDIV) {
       return true;
-    } else if (opcode == Opcodes.FADD) {
+    }
+    return false;
+  }
+  
+  private boolean isFloatArithmetic(final int opcode) {
+    if (opcode == Opcodes.FADD) {
       return true;
     } else if (opcode == Opcodes.FMUL) {
       return true;
-    } else if (opcode == Opcodes.FDIV) {
-      return true;
     } else if (opcode == Opcodes.FSUB) {
       return true;
-    } else if (opcode == Opcodes.LADD) {
+    } else if (opcode == Opcodes.FDIV) {
+      return true;
+    }
+    return false;
+  }
+  
+  private boolean isLongArithmetic(final int opcode) {
+    if (opcode == Opcodes.LADD) {
       return true;
     } else if (opcode == Opcodes.LMUL) {
       return true;
-    } else if (opcode == Opcodes.LDIV) {
-      return true;
     } else if (opcode == Opcodes.LSUB) {
       return true;
-    } else {
-      return false;
+    } else if (opcode == Opcodes.LDIV) {
+      return true;
     }
+    return false;
   }
-  
 }

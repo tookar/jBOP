@@ -97,8 +97,6 @@ public class FieldArrayValueInliner implements IOptimizer {
    *          the names
    * @param instance
    *          the instance
-   * @throws JBOPClassException
-   *           the jBOP class exception
    */
   public FieldArrayValueInliner(final Collection<String> names, final Object instance) {
     this.instance = instance;

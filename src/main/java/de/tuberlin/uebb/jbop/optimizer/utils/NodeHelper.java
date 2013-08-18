@@ -677,8 +677,7 @@ public final class NodeHelper {
    * 
    * @param node1
    *          the first node
-   * @param node
-   *          2
+   * @param node2
    *          the other node
    * @return true, if node1 is a predecessor of node2
    */
@@ -736,7 +735,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Checks if this is a cast:
+   * Checks if this is a cast.
    * <p>
    * i2l 0x85 value → result convert an int into a long<br/>
    * i2f 0x86 value → result convert an int into a float<br/>
@@ -781,7 +780,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Returns true if node is an if-Statement
+   * Returns true if node is an if-Statement.
    */
   public static boolean isIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -791,7 +790,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Returns true if node is an one-param-if-Statement
+   * Returns true if node is an one-param-if-Statement.
    */
   public static boolean isOneValueIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -810,7 +809,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Returns true if node is an two-param-if-Statement
+   * Returns true if node is an two-param-if-Statement.
    */
   public static boolean isTwoValueIf(final AbstractInsnNode node) {
     if (node == null) {

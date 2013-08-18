@@ -4,21 +4,22 @@
  * This file is part of JBOP (Java Bytecode OPtimizer).
  * 
  * JBOP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU Lesser General License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
  * JBOP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
+ * GNU Lesser General License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public License
+ * You should have received a copy of the GNU Lesser General License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
 package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,6 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.loop.SplitMarkNode;
-import de.tuberlin.uebb.jbop.optimizer.methodsplitter.Var.VarType;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
@@ -58,12 +58,12 @@ class Block implements Comparable<Block> {
   private final Type[] args;
   
   /** The insns. */
-  final List<AbstractInsnNode> insns = new ArrayList<>();
+  private final List<AbstractInsnNode> insns = new ArrayList<>();
   
   private CodeSizeEvaluator sizeEvaluator = new CodeSizeEvaluator(null);
   
   /** The num. */
-  final int num;
+  private final int num;
   private final Map<Integer, Integer> varMap = new HashMap<Integer, Integer>();
   private final InsnList pushParameters = new InsnList();
   private int varIndex = 1;
@@ -86,7 +86,7 @@ class Block implements Comparable<Block> {
     for (final Type type : args) {
       parameterIndexes[i] = varIndex;
       pushParameters.add(new VarInsnNode(getOpcode(type), varIndex));
-      parameters.add(new Var(varIndex, -1, VarType.READ, type, null));
+      parameters.add(new Var(varIndex, -1, VarType.READ, type));
       varMap.put(Integer.valueOf(varIndex), Integer.valueOf(varIndex));
       varIndex += type.getSize();
       i++;
@@ -123,7 +123,7 @@ class Block implements Comparable<Block> {
    * 
    * @return the size
    */
-  public int getSize() {
+  int getSize() {
     return sizeEvaluator.getMaxSize();
   }
   
@@ -170,10 +170,10 @@ class Block implements Comparable<Block> {
       }
       final Type findType = findType(insn);
       if (insn instanceof InsnNode) {
-        writers.add(new Var(-1, insns.indexOf(insn), VarType.WRITE, findType, insn));
+        writers.add(new Var(-1, insns.indexOf(insn), VarType.WRITE, findType));
       } else {
         final VarInsnNode var = (VarInsnNode) insn;
-        writers.add(new Var(var.var, insns.indexOf(insn), VarType.WRITE, findType, insn));
+        writers.add(new Var(var.var, insns.indexOf(insn), VarType.WRITE, findType));
       }
     } else if (isLoad(insn)) {
       final VarInsnNode var = (VarInsnNode) insn;
@@ -184,7 +184,7 @@ class Block implements Comparable<Block> {
       
       final Type findType = findType(insn);
       
-      final Var e = new Var(index, insns.indexOf(insn), VarType.READ, findType, insn);
+      final Var e = new Var(index, insns.indexOf(insn), VarType.READ, findType);
       readers.add(e);
       if (!writers.containsIndex(index) && !parameters.containsIndex(index)) {
         parameters.add(e);
@@ -210,11 +210,11 @@ class Block implements Comparable<Block> {
    * 
    * @return the parameter types
    */
-  public Type[] getParameterTypes() {
+  Type[] getParameterTypes() {
     final Type[] types = new Type[parameters.size()];
     int i = 0;
     for (final Var parameter : parameters) {
-      types[i++] = parameter.type2;
+      types[i++] = parameter.getParameterType();
     }
     return types;
   }
@@ -226,7 +226,7 @@ class Block implements Comparable<Block> {
    * 
    * @return the push parameters
    */
-  public InsnList getPushParameters() {
+  InsnList getPushParameters() {
     return pushParameters;
   }
   
@@ -235,7 +235,7 @@ class Block implements Comparable<Block> {
    * 
    * @return the end type
    */
-  public Type getEndType() {
+  Type getEndType() {
     final AbstractInsnNode lastStore = getLastStore();
     final int index = getIndex(lastStore);
     if (index == -1) {
@@ -248,7 +248,7 @@ class Block implements Comparable<Block> {
       }
       return findType(lastStore);
     }
-    return lastVar.type2;
+    return lastVar.getParameterType();
   }
   
   /**
@@ -297,7 +297,7 @@ class Block implements Comparable<Block> {
         // so find the writer and return the type of it.
         return findType(getWriter(node));
       }
-      return firstVar.type2;
+      return firstVar.getParameterType();
     }
     
     // Objects that are not parameters and not written before
@@ -329,7 +329,7 @@ class Block implements Comparable<Block> {
         final String desc = ((FieldInsnNode) currentNode).desc;
         return getObjectType(removeArrayType(desc, arrayCount));
       } else if ((opcode2 == Opcodes.ALOAD)) {
-        final Type type2 = readers.getFirstVar(((VarInsnNode) currentNode).var).type2;
+        final Type type2 = readers.getFirstVar(((VarInsnNode) currentNode).var).getParameterType();
         return getObjectType(removeArrayType(type2.getDescriptor(), arrayCount));
       } else if ((opcode2 >= Opcodes.INVOKEVIRTUAL) && (opcode2 <= Opcodes.INVOKEDYNAMIC)) {
         return Type.getReturnType(((MethodInsnNode) currentNode).desc);
@@ -420,7 +420,7 @@ class Block implements Comparable<Block> {
    * @param otherBlock
    *          the other block
    */
-  public void add(final Block otherBlock) {
+  void add(final Block otherBlock) {
     for (final AbstractInsnNode node : otherBlock.insns) {
       addInsn(node, true);
     }
@@ -429,7 +429,7 @@ class Block implements Comparable<Block> {
   /**
    * Clears this block.
    */
-  public void clear() {
+  void clear() {
     readers.clear();
     writers.clear();
     parameters.clear();
@@ -443,7 +443,7 @@ class Block implements Comparable<Block> {
    * Rename insns.
    * This means: correct the indexes of the local variables to match the parameters.
    */
-  public void renameInsns() {
+  void renameInsns() {
     for (final AbstractInsnNode node : insns) {
       renameIfVar(node);
     }
@@ -458,7 +458,7 @@ class Block implements Comparable<Block> {
     Integer value = varMap.get(key);
     if (value == null) {
       value = Integer.valueOf(varIndex);
-      varIndex += writers.getFirstVar(index).type2.getSize();
+      varIndex += writers.getFirstVar(index).getParameterType().getSize();
       varMap.put(key, value);
     }
     final int mapped = value.intValue();
@@ -488,7 +488,7 @@ class Block implements Comparable<Block> {
    * 
    * @return the last store or null if no store occurs
    */
-  public AbstractInsnNode getLastStore() {
+  AbstractInsnNode getLastStore() {
     for (int i = insns.size() - 1; i >= 0; --i) {
       final AbstractInsnNode insn = insns.get(i);
       if (isStore(insn)) {
@@ -496,6 +496,14 @@ class Block implements Comparable<Block> {
       }
     }
     return null;
+  }
+  
+  int getBlockNumber() {
+    return num;
+  }
+  
+  List<AbstractInsnNode> getInstructions() {
+    return Collections.unmodifiableList(insns);
   }
   
 }

@@ -468,8 +468,8 @@
           </reportSet>
         </reportSets>
         <configuration>
-          <linkXRef>false</linkXRef>
-          <consoleOutput>true</consoleOutput>
+          <linkXRef>true</linkXRef>
+          <consoleOutput>false</consoleOutput>
           <failsOnError>false</failsOnError>
           <headerLocation>file://${jbop.source.basedir}etc/checkstyleheader.txt</headerLocation>
           <outputFileFormat>xml</outputFileFormat>

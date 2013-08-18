@@ -103,7 +103,7 @@ public class ForLoopUnroller implements IOptimizer {
   
   private boolean optimized = false;
   private int countervar;
-  private AbstractInsnNode _goto;
+  private AbstractInsnNode gotoNode;
   private Number start;
   
   @Override
@@ -136,11 +136,11 @@ public class ForLoopUnroller implements IOptimizer {
     
     final ForLoopFooter footer = getFooter(endNode);
     if (footer == null) {
-      skipped.add(_goto);
-      _goto = null;
+      skipped.add(gotoNode);
+      gotoNode = null;
       return null;
     }
-    _goto = null;
+    gotoNode = null;
     final ForLoopBody body = getBody(iterator, endNode);
     
     correctIteratorPosition(iterator, footer);
@@ -182,7 +182,8 @@ public class ForLoopUnroller implements IOptimizer {
     final boolean isJump6 = NodeHelper.isIf(node6);
     final boolean isInt6 = NodeHelper.isNumberNode(node6);
     final boolean isJump5 = NodeHelper.isIf(node5);
-    final boolean isForLoopFooter = isIiload && ((isInt5 && isJump6) || (isInt6 && isJump5));
+    final boolean isJump = (isInt5 && isJump6) || (isInt6 && isJump5);
+    final boolean isForLoopFooter = isIiload && isJump;
     if (!isForLoopFooter) {
       return null;
     }
@@ -210,7 +211,7 @@ public class ForLoopUnroller implements IOptimizer {
     
     countervar = ((VarInsnNode) node2).var;
     start = NodeHelper.getNumberValue(node1);
-    _goto = node3;
+    gotoNode = node3;
     final AbstractInsnNode endNode = ((JumpInsnNode) node3).label;
     return endNode;
   }

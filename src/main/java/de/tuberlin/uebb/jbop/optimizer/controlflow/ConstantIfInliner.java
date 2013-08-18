@@ -230,31 +230,7 @@ public class ConstantIfInliner implements IOptimizer {
     } else {
       op2 = Double.valueOf(Double.NaN);
     }
-    if (NodeHelper.isIf(node1)) {
-      eval = evalTwoOpValue(op2, op1, currentNode.getOpcode());
-    } else {
-      if (isCompare(node1)) {
-        switch (node1.getOpcode()) {
-          case Opcodes.DCMPG:
-            op1 = Double.valueOf(op2.doubleValue() - op1.doubleValue());
-            break;
-          case Opcodes.DCMPL:
-            op1 = Double.valueOf(op2.doubleValue() - op1.doubleValue());
-            break;
-          case Opcodes.FCMPG:
-            op1 = Float.valueOf(op2.floatValue() - op1.floatValue());
-            break;
-          case Opcodes.FCMPL:
-            op1 = Float.valueOf(op2.floatValue() - op1.floatValue());
-            break;
-          case Opcodes.LCMP:
-            op1 = Long.valueOf(op2.longValue() - op1.longValue());
-            break;
-          default:
-        }
-      }
-      eval = evalSingleOpValue(op1, currentNode.getOpcode());
-    }
+    eval = evaluate(currentNode, node1, op1, op2);
     removeNodes(currentNode, node1, node3, node4, list, iterator, eval);
     if ((node5 != null) && (node5 != node3)) {
       list.remove(node5);
@@ -263,6 +239,43 @@ public class ConstantIfInliner implements IOptimizer {
       list.remove(node6);
     }
     return true;
+  }
+  
+  private boolean evaluate(final AbstractInsnNode currentNode, final AbstractInsnNode node1, final Number op1,
+      final Number op2) {
+    final boolean eval;
+    if (NodeHelper.isIf(node1)) {
+      eval = evalTwoOpValue(op2, op1, currentNode.getOpcode());
+    } else {
+      final Number operator = calculateOparator(node1, op1, op2);
+      eval = evalSingleOpValue(operator, currentNode.getOpcode());
+    }
+    return eval;
+  }
+  
+  private Number calculateOparator(final AbstractInsnNode node1, final Number op1, final Number op2) {
+    Number newNumber = op1;
+    if (isCompare(node1)) {
+      switch (node1.getOpcode()) {
+        case Opcodes.DCMPG:
+          newNumber = Double.valueOf(op2.doubleValue() - op1.doubleValue());
+          break;
+        case Opcodes.DCMPL:
+          newNumber = Double.valueOf(op2.doubleValue() - op1.doubleValue());
+          break;
+        case Opcodes.FCMPG:
+          newNumber = Float.valueOf(op2.floatValue() - op1.floatValue());
+          break;
+        case Opcodes.FCMPL:
+          newNumber = Float.valueOf(op2.floatValue() - op1.floatValue());
+          break;
+        case Opcodes.LCMP:
+          newNumber = Long.valueOf(op2.longValue() - op1.longValue());
+          break;
+        default:
+      }
+    }
+    return newNumber;
   }
   
   private boolean isCompare(final AbstractInsnNode node1) {

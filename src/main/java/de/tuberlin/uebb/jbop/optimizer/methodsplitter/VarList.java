@@ -81,7 +81,7 @@ class VarList implements Iterable<Var> {
    */
   public boolean containsIndex(final int index) {
     for (final Var var : this) {
-      if (var.index == index) {
+      if (var.getVarIndex() == index) {
         return true;
       }
     }
@@ -171,8 +171,8 @@ class VarList implements Iterable<Var> {
   private int getPosition(final int index, final Iterator<Var> set) {
     while (set.hasNext()) {
       final Var var = iterator().next();
-      if (var.index == index) {
-        return var.position;
+      if (var.getVarIndex() == index) {
+        return var.getVarPosition();
       }
     }
     return -1;
@@ -181,7 +181,7 @@ class VarList implements Iterable<Var> {
   private Var getVar(final int index, final Iterator<Var> set) {
     while (set.hasNext()) {
       final Var var = set.next();
-      if (var.index == index) {
+      if (var.getVarIndex() == index) {
         return var;
       }
     }
@@ -194,7 +194,7 @@ class VarList implements Iterable<Var> {
   public void removeAll(final int index) {
     final Collection<Var> toBeRemoved = new ArrayList<>();
     for (final Var var : this) {
-      if (var.index == index) {
+      if (var.getVarIndex() == index) {
         toBeRemoved.add(var);
       }
     }

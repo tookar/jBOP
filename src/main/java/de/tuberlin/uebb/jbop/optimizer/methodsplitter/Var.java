@@ -19,7 +19,6 @@
 package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * The Class Var.
@@ -36,34 +35,18 @@ class Var implements Comparable<Var> {
    * 
    * @author Christopher Ewest
    */
-  public enum VarType {
-    
-    /** The read. */
-    READ,
-    /** The write. */
-    WRITE,
-    /** The array read. */
-    ARRAY_READ,
-    /** The array write. */
-    ARRAY_WRITE,
-    /** The increment. */
-    INCREMENT
-  }
   
   /** The index. */
-  final int index;
+  private final int index;
   
   /** The position. */
-  final int position;
+  private final int position;
   
   /** The var type. */
-  final VarType varType;
+  private final VarType varType;
   
   /** The type2. */
-  final Type type2;
-  
-  /** The node. */
-  final AbstractInsnNode node;
+  private final Type type2;
   
   /**
    * Instantiates a new {@link Var}.
@@ -79,13 +62,12 @@ class Var implements Comparable<Var> {
    * @param node
    *          the node
    */
-  Var(final int index, final int position, final VarType varType, final Type type2, final AbstractInsnNode node) {
+  Var(final int index, final int position, final VarType varType, final Type type2) {
     super();
     this.index = index;
     this.position = position;
     this.varType = varType;
     this.type2 = type2;
-    this.node = node;
   }
   
   @Override
@@ -126,6 +108,33 @@ class Var implements Comparable<Var> {
     }
     builder.append(index).append("@").append(position).append(":").append(type2);
     return builder.toString();
+  }
+  
+  /**
+   * Gets the parameter type.
+   * 
+   * @return the parameter type
+   */
+  Type getParameterType() {
+    return type2;
+  }
+  
+  /**
+   * Gets the var index.
+   * 
+   * @return the var index
+   */
+  int getVarIndex() {
+    return index;
+  }
+  
+  /**
+   * Gets the poition of the var in the original {@link org.objectweb.asm.tree.InsnList}.
+   * 
+   * @return the var position
+   */
+  int getVarPosition() {
+    return position;
   }
   
 }
