@@ -19,8 +19,6 @@
 package de.tuberlin.uebb.jbop.optimizer.array;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +32,7 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import de.tuberlin.uebb.jbop.access.ClassAccessor;
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
@@ -81,7 +80,6 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer {
   
   private boolean optimized;
   private final Object input;
-  private final Class<?> clazz;
   
   /**
    * Instantiates a new {@link LocalArrayLengthInliner}.
@@ -91,7 +89,6 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer {
    */
   public AbstractLocalArrayOptimizer(final Object input) {
     this.input = input;
-    clazz = input.getClass();
   }
   
   @Override
@@ -162,7 +159,7 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer {
       }
     }
     final AbstractInsnNode previous3 = NodeHelper.getPrevious(previous2.get(previous2.size() - 1));
-    final Object array;
+    Object array;
     if (previous3 instanceof VarInsnNode) {
       array = knownArrays.get(Integer.valueOf(((VarInsnNode) previous3).var));
     } else {
@@ -175,36 +172,10 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer {
       }
       final String fieldName = ((FieldInsnNode) previous3).name;
       
-      Field field;
-      try {
-        field = clazz.getDeclaredField(fieldName);
-      } catch (NoSuchFieldException | SecurityException e) {
-        throw new JBOPClassException("There is no field named '" + fieldName + "' in Class<" + clazz.getName() + ">.",
-            e);
-      }
-      
-      if ((field.getModifiers() & Modifier.FINAL) == 0) {
-        return false;
-      }
-      
-      final boolean isAccessible = field.isAccessible();
-      
-      try {
-        field.setAccessible(true);
-        array = field.get(input);
-      } catch (IllegalArgumentException | IllegalAccessException e) {
-        throw new JBOPClassException("", e);
-      } finally {
-        try {
-          field.setAccessible(isAccessible);
-        } catch (final SecurityException e) {
-          //
-        }
-      }
+      array = ClassAccessor.getCurrentValue(input, fieldName);
     }
     final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
     
-    Object array2 = array;
     for (int i = previous2.size() - 1; i >= 0; i--) {
       int index1;
       if (previous2.size() <= i) {
@@ -213,9 +184,9 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer {
         final Number arrIndex = NodeHelper.getNumberValue(previous2.get(i));
         index1 = arrIndex.intValue();
       }
-      array2 = Array.get(array2, index1);
+      array = Array.get(array, index1);
     }
-    knownArrays.put(varIndex, array2);
+    knownArrays.put(varIndex, array);
     return true;
   }
 }
