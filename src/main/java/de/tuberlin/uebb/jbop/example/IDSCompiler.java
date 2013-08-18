@@ -4,19 +4,19 @@
  * This file is part of JBOP (Java Bytecode OPtimizer).
  * 
  * JBOP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU Lesser General License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
  * JBOP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
+ * GNU Lesser General License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public License
+ * You should have received a copy of the GNU Lesser General License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jbop.math;
+package de.tuberlin.uebb.jbop.example;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.NumberIsTooLargeException;
@@ -26,7 +26,7 @@ import org.apache.commons.math3.exception.NumberIsTooLargeException;
  * 
  * @author Christopher Ewest
  */
-public interface IDSCompiler {
+interface IDSCompiler {
   
   /**
    * Get the index of a partial derivative in the array.
@@ -36,8 +36,7 @@ public interface IDSCompiler {
    * </p>
    * <p>
    * The indices of derivatives are between 0 and {@link #getSize() getSize()} - 1. Their specific order is fixed for a
-   * given compiler, but otherwise not publicly specified. There are however some simple cases which have guaranteed
-   * indices:
+   * given compiler, but otherwise not ly specified. There are however some simple cases which have guaranteed indices:
    * </p>
    * <ul>
    * <li>the index of 0<sup>th</sup> order derivative is always 0</li>
@@ -47,7 +46,7 @@ public interface IDSCompiler {
    * <li>if the {@link #getOrder() derivation order} is 1, then the derivatives are sorted in incresing free parameter
    * order (i.e. f at index 0, df/dx<sub>1</sub> at index 1, df/dx<sub>2</sub> at index 2 ... df/dx<sub>k</sub> at index
    * k),</li>
-   * <li>all other cases are not publicly specified</li>
+   * <li>all other cases are not ly specified</li>
    * </ul>
    * <p>
    * This method is the inverse of method {@link #getPartialDerivativeOrders(int)}
@@ -64,8 +63,7 @@ public interface IDSCompiler {
    *           than the instance limits
    * @see #getPartialDerivativeOrders(int)
    */
-  public int getPartialDerivativeIndex(final int... orders) throws DimensionMismatchException,
-      NumberIsTooLargeException;
+  int getPartialDerivativeIndex(final int... orders) throws DimensionMismatchException, NumberIsTooLargeException;
   
   /**
    * Get the derivation orders for a specific index in the array.
@@ -78,21 +76,21 @@ public interface IDSCompiler {
    * @return orders derivation orders with respect to each parameter
    * @see #getPartialDerivativeIndex(int...)
    */
-  public int[] getPartialDerivativeOrders(final int index);
+  int[] getPartialDerivativeOrders(final int index);
   
   /**
    * Get the number of free parameters.
    * 
    * @return number of free parameters
    */
-  public int getFreeParameters();
+  int getFreeParameters();
   
   /**
    * Get the derivation order.
    * 
    * @return derivation order
    */
-  public int getOrder();
+  int getOrder();
   
   /**
    * Get the array size required for holding partial derivatives data.
@@ -103,7 +101,7 @@ public interface IDSCompiler {
    * 
    * @return array size required for holding partial derivatives data
    */
-  public int getSize();
+  int getSize();
   
   /**
    * Check rules set compatibility.
@@ -113,7 +111,7 @@ public interface IDSCompiler {
    * @throws DimensionMismatchException
    *           if number of free parameters or orders are inconsistent
    */
-  public void checkCompatibility(final IDSCompiler compiler) throws DimensionMismatchException;
+  void checkCompatibility(final IDSCompiler compiler) throws DimensionMismatchException;
   
   /**
    * Like
@@ -127,7 +125,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void add(final double[] lhs, final double[] rhs, final double[] result);
+  void add(final double[] lhs, final double[] rhs, final double[] result);
   
   /**
    * Like
@@ -141,7 +139,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void subtract(final double[] lhs, final double[] rhs, final double[] result);
+  void subtract(final double[] lhs, final double[] rhs, final double[] result);
   
   /**
    * Like
@@ -155,7 +153,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void multiply(final double[] lhs, final double[] rhs, final double[] result);
+  void multiply(final double[] lhs, final double[] rhs, final double[] result);
   
   /**
    * Like
@@ -169,7 +167,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void divide(final double[] lhs, final double[] rhs, final double[] result);
+  void divide(final double[] lhs, final double[] rhs, final double[] result);
   
   /**
    * Like
@@ -183,7 +181,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void compose(final double[] operand, final double[] f, final double[] result);
+  void compose(final double[] operand, final double[] f, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#pow(double[], int, double, double[], int)}
@@ -196,7 +194,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void pow(final double[] operand, final double p, final double[] result);
+  void pow(final double[] operand, final double p, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#pow(double[], int, int, double[], int)}
@@ -209,7 +207,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void pow(final double[] operand, final int n, final double[] result);
+  void pow(final double[] operand, final int n, final double[] result);
   
 /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#pow(double[], int, double[], int, double[], int) but with constant offset "0".
@@ -218,7 +216,7 @@ public interface IDSCompiler {
    * @param y the y
    * @param result the result
    */
-  public void pow(final double[] x, final double[] y, final double[] result);
+  void pow(final double[] x, final double[] y, final double[] result);
   
 /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#rootN(double[], int, int, double[], int) but with constant offset "0".
@@ -227,7 +225,7 @@ public interface IDSCompiler {
    * @param n the n
    * @param result the result
    */
-  public void rootN(final double[] operand, final int n, final double[] result);
+  void rootN(final double[] operand, final int n, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#exp(double[], int, double[], int)} but
@@ -238,7 +236,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void exp(final double[] operand, final double[] result);
+  void exp(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#expm1(double[], int, double[], int)} but
@@ -249,7 +247,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void expm1(final double[] operand, final double[] result);
+  void expm1(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#log(double[], int, double[], int)} but
@@ -260,7 +258,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void log(final double[] operand, final double[] result);
+  void log(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#log1p(double[], int, double[], int)} but
@@ -271,7 +269,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void log1p(final double[] operand, final double[] result);
+  void log1p(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#log10(double[], int, double[], int)} but
@@ -282,7 +280,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void log10(final double[] operand, final double[] result);
+  void log10(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#cos(double[], int, double[], int)} but wis
@@ -293,7 +291,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void cos(final double[] operand, final double[] result);
+  void cos(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#sin(double[], int, double[], int)} but
@@ -304,7 +302,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void sin(final double[] operand, final double[] result);
+  void sin(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#tan(double[], int, double[], int)} but
@@ -315,7 +313,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void tan(final double[] operand, final double[] result);
+  void tan(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#acos(double[], int, double[], int)} but
@@ -326,7 +324,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void acos(final double[] operand, final double[] result);
+  void acos(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#asin(double[], int, double[], int)} but
@@ -337,7 +335,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void asin(final double[] operand, final double[] result);
+  void asin(final double[] operand, final double[] result);
   
 /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#atan(double[], int, double[], int) but with constant offset "0".
@@ -345,7 +343,7 @@ public interface IDSCompiler {
    * @param operand the operand
    * @param result the result
    */
-  public void atan(final double[] operand, final double[] result);
+  void atan(final double[] operand, final double[] result);
   
   /**
    * Like
@@ -359,7 +357,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void atan2(final double[] y, final double[] x, final double[] result);
+  void atan2(final double[] y, final double[] x, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#cosh(double[], int, double[], int)} nut
@@ -370,7 +368,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void cosh(final double[] operand, final double[] result);
+  void cosh(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#sinh(double[], int, double[], int)} but
@@ -381,7 +379,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void sinh(final double[] operand, final double[] result);
+  void sinh(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#tanh(double[], int, double[], int)} but
@@ -392,7 +390,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void tanh(final double[] operand, final double[] result);
+  void tanh(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#acosh(double[], int, double[], int)} but
@@ -403,7 +401,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void acosh(final double[] operand, final double[] result);
+  void acosh(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#asinh(double[], int, double[], int)} but
@@ -414,7 +412,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void asinh(final double[] operand, final double[] result);
+  void asinh(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#atanh(double[], int, double[], int)} but
@@ -425,7 +423,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void atanh(final double[] operand, final double[] result);
+  void atanh(final double[] operand, final double[] result);
   
   /**
    * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#taylor(double[], int, double...)} but with
@@ -437,7 +435,7 @@ public interface IDSCompiler {
    *          the delta
    * @return the double
    */
-  public double taylor(final double[] ds, final double... delta);
+  double taylor(final double[] ds, final double... delta);
   
   /**
    * Like
@@ -456,8 +454,7 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void linearCombination(final double a1, final double[] c1, final double a2, final double[] c2,
-      final double[] result);
+  void linearCombination(final double a1, final double[] c1, final double a2, final double[] c2, final double[] result);
   
   /**
    * Like
@@ -479,8 +476,8 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void linearCombination(final double a1, final double[] c1, final double a2, final double[] c2,
-      final double a3, final double[] c3, final double[] result);
+  void linearCombination(final double a1, final double[] c1, final double a2, final double[] c2, final double a3,
+      final double[] c3, final double[] result);
   
   /**
    * Like.
@@ -506,8 +503,8 @@ public interface IDSCompiler {
    *          {@link #linearCombination(double, double[], int, double, double[], int, double, double[], int, double, double[], int, double[], int)}
    *          but with constant offset "0".
    */
-  public void linearCombination(final double a1, final double[] c1, final double a2, final double[] c2,
-      final double a3, final double[] c3, final double a4, final double[] c4, final double[] result);
+  void linearCombination(final double a1, final double[] c1, final double a2, final double[] c2, final double a3,
+      final double[] c3, final double a4, final double[] c4, final double[] result);
   
   /**
    * Like
@@ -521,41 +518,41 @@ public interface IDSCompiler {
    * @param result
    *          the result
    */
-  public void remainder(final double[] lhs, final double[] rhs, final double[] result);
+  void remainder(final double[] lhs, final double[] rhs, final double[] result);
   
   /**
    * Gets the sizes.
    * 
    * @return the sizes
    */
-  public int[][] getSizes();
+  int[][] getSizes();
   
   /**
    * Gets the derivatives indirection.
    * 
    * @return the derivatives indirection
    */
-  public int[][] getDerivativesIndirection();
+  int[][] getDerivativesIndirection();
   
   /**
    * Gets the lower indirection.
    * 
    * @return the lower indirection
    */
-  public int[] getLowerIndirection();
+  int[] getLowerIndirection();
   
   /**
    * Gets the mult indirection.
    * 
    * @return the mult indirection
    */
-  public int[][][] getMultIndirection();
+  int[][][] getMultIndirection();
   
   /**
    * Gets the comp indirection.
    * 
    * @return the comp indirection
    */
-  public int[][][] getCompIndirection();
+  int[][][] getCompIndirection();
   
 }

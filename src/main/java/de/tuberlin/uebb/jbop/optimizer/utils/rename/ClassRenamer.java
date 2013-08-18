@@ -51,7 +51,7 @@ public class ClassRenamer extends ClassVisitor {
   public void visit(final int version, final int access, final String name, final String signature,
       final String superName, final String[] interfaces) {
     fixer.add(name);
-    super.visit(version, access, fixer.newName, signature, superName, interfaces);
+    super.visit(version, access, fixer.getNewName(), signature, superName, interfaces);
   }
   
   @Override

@@ -89,55 +89,71 @@ public final class NodeHelper {
    */
   public static AbstractInsnNode getInsnNodeFor(final Number newNumber) {
     if (isIntType(newNumber)) {
-      switch (newNumber.intValue()) {
-        case CONST_M1:
-          return new InsnNode(Opcodes.ICONST_M1);
-        case CONST_0:
-          return new InsnNode(Opcodes.ICONST_0);
-        case CONST_1:
-          return new InsnNode(Opcodes.ICONST_1);
-        case CONST_2:
-          return new InsnNode(Opcodes.ICONST_2);
-        case CONST_3:
-          return new InsnNode(Opcodes.ICONST_3);
-        case CONST_4:
-          return new InsnNode(Opcodes.ICONST_4);
-        case CONST_5:
-          return new InsnNode(Opcodes.ICONST_5);
-        default:
-          if ((newNumber.intValue() >= CONST_LOW_INT) && (newNumber.intValue() <= CONST_HIGH_INT)) {
-            return new IntInsnNode(getopcodePush(newNumber.intValue()), newNumber.intValue());
-          }
-          return new LdcInsnNode(newNumber);
-      }
+      return getIntInsnNode(newNumber);
     } else if (newNumber instanceof Long) {
-      if (newNumber.longValue() == 0) {
-        return new InsnNode(Opcodes.LCONST_0);
-      } else if (newNumber.longValue() == 1) {
-        return new InsnNode(Opcodes.LCONST_1);
-      } else {
-        return new LdcInsnNode(newNumber);
-      }
+      return getLongInsnNode(newNumber);
     } else if (newNumber instanceof Float) {
-      if (newNumber.longValue() == 0) {
-        return new InsnNode(Opcodes.FCONST_0);
-      } else if (newNumber.longValue() == 1) {
-        return new InsnNode(Opcodes.FCONST_1);
-      } else if (newNumber.longValue() == 2) {
-        return new InsnNode(Opcodes.FCONST_2);
-      } else {
-        return new LdcInsnNode(newNumber);
-      }
+      return getFloatInsnNode(newNumber);
     } else if (newNumber instanceof Double) {
-      if (newNumber.longValue() == 0) {
-        return new InsnNode(Opcodes.DCONST_0);
-      } else if (newNumber.longValue() == 1) {
-        return new InsnNode(Opcodes.DCONST_1);
-      } else {
-        return new LdcInsnNode(newNumber);
-      }
+      return getDoubleInsnNode(newNumber);
     }
     return null;
+  }
+  
+  private static AbstractInsnNode getDoubleInsnNode(final Number newNumber) {
+    if (newNumber.longValue() == 0) {
+      return new InsnNode(Opcodes.DCONST_0);
+    } else if (newNumber.longValue() == 1) {
+      return new InsnNode(Opcodes.DCONST_1);
+    } else {
+      return new LdcInsnNode(newNumber);
+    }
+  }
+  
+  private static AbstractInsnNode getFloatInsnNode(final Number newNumber) {
+    if (newNumber.longValue() == 0) {
+      return new InsnNode(Opcodes.FCONST_0);
+    } else if (newNumber.longValue() == 1) {
+      return new InsnNode(Opcodes.FCONST_1);
+    } else if (newNumber.longValue() == 2) {
+      return new InsnNode(Opcodes.FCONST_2);
+    } else {
+      return new LdcInsnNode(newNumber);
+    }
+  }
+  
+  private static AbstractInsnNode getLongInsnNode(final Number newNumber) {
+    if (newNumber.longValue() == 0) {
+      return new InsnNode(Opcodes.LCONST_0);
+    } else if (newNumber.longValue() == 1) {
+      return new InsnNode(Opcodes.LCONST_1);
+    } else {
+      return new LdcInsnNode(newNumber);
+    }
+  }
+  
+  private static AbstractInsnNode getIntInsnNode(final Number newNumber) {
+    switch (newNumber.intValue()) {
+      case CONST_M1:
+        return new InsnNode(Opcodes.ICONST_M1);
+      case CONST_0:
+        return new InsnNode(Opcodes.ICONST_0);
+      case CONST_1:
+        return new InsnNode(Opcodes.ICONST_1);
+      case CONST_2:
+        return new InsnNode(Opcodes.ICONST_2);
+      case CONST_3:
+        return new InsnNode(Opcodes.ICONST_3);
+      case CONST_4:
+        return new InsnNode(Opcodes.ICONST_4);
+      case CONST_5:
+        return new InsnNode(Opcodes.ICONST_5);
+      default:
+        if ((newNumber.intValue() >= CONST_LOW_INT) && (newNumber.intValue() <= CONST_HIGH_INT)) {
+          return new IntInsnNode(getopcodePush(newNumber.intValue()), newNumber.intValue());
+        }
+        return new LdcInsnNode(newNumber);
+    }
   }
   
   private static boolean isIntType(final Number newNumber) {
@@ -677,8 +693,7 @@ public final class NodeHelper {
    * 
    * @param node1
    *          the first node
-   * @param node
-   *          2
+   * @param node2
    *          the other node
    * @return true, if node1 is a predecessor of node2
    */
@@ -736,7 +751,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Checks if this is a cast:
+   * Checks if this is a cast.
    * <p>
    * i2l 0x85 value → result convert an int into a long<br/>
    * i2f 0x86 value → result convert an int into a float<br/>
@@ -781,7 +796,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Returns true if node is an if-Statement
+   * Returns true if node is an if-Statement.
    */
   public static boolean isIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -791,7 +806,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Returns true if node is an one-param-if-Statement
+   * Returns true if node is an one-param-if-Statement.
    */
   public static boolean isOneValueIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -810,7 +825,7 @@ public final class NodeHelper {
   }
   
   /**
-   * Returns true if node is an two-param-if-Statement
+   * Returns true if node is an two-param-if-Statement.
    */
   public static boolean isTwoValueIf(final AbstractInsnNode node) {
     if (node == null) {

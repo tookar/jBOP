@@ -5,9 +5,9 @@
     This configuration file was written by the eclipse-cs plugin configuration editor
 -->
 <!--
-    Checkstyle-Configuration: JBOP Checkstyle
+    Checkstyle-Configuration: DAE Checkstyle
     Description: 
-Checkstyle Configuration for JBOP
+Checkstyle Configuration for DAE
 -->
 <module name="Checker">
   <property name="severity" value="warning"/>
@@ -177,9 +177,11 @@ Checkstyle Configuration for JBOP
     </module>
     <module name="ClassFanOutComplexity">
       <property name="severity" value="warning"/>
+      <property name="max" value="30"/>
     </module>
     <module name="CyclomaticComplexity">
       <property name="severity" value="warning"/>
+      <property name="max" value="15"/>
     </module>
     <module name="JavaNCSS">
       <property name="severity" value="info"/>

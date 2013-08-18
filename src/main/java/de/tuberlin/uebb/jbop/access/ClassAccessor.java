@@ -54,27 +54,34 @@ public final class ClassAccessor {
     //
   }
   
-  private static final Path tmpDir;
+  private static final Path TMP_DIR;
   static {
     try {
-      tmpDir = Files.createTempDirectory("jBOP");
-      tmpDir.toFile().deleteOnExit();
+      TMP_DIR = Files.createTempDirectory("jBOP");
+      TMP_DIR.toFile().deleteOnExit();
     } catch (final Exception e) {
       throw new RuntimeException("Temporary directory for created classfiles couldn't be created.", e);
     }
   }
   
-  private static final URLClassLoader classLoader;
+  private static final ClassLoader TMP_CLASS_LOADER;
   static {
-    final URI uri = tmpDir.toUri();
+    final URI uri = TMP_DIR.toUri();
     final URL url;
     try {
       url = uri.toURL();
     } catch (final MalformedURLException e) {
       throw new RuntimeException("Temporary directory for created classfiles couldn't be used as classpath.", e);
     }
-    classLoader = new URLClassLoader(new URL[] {
+    final URL[] urls = new URL[] {
       url
+    };
+    TMP_CLASS_LOADER = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+      
+      @Override
+      public ClassLoader run() {
+        return new URLClassLoader(urls);
+      }
     });
   }
   
@@ -156,7 +163,7 @@ public final class ClassAccessor {
    */
   public static Path store(final ClassDescriptor classDescriptor) throws JBOPClassException {
     
-    final Path packageDir = Paths.get(tmpDir.toString(), classDescriptor.getPackageDir());
+    final Path packageDir = Paths.get(TMP_DIR.toString(), classDescriptor.getPackageDir());
     final Path classFile = Paths.get(packageDir.toString(), classDescriptor.getSimpleName() + ".class");
     try {
       Files.createDirectories(packageDir);
@@ -248,14 +255,14 @@ public final class ClassAccessor {
    * returns the used tmp dir.
    */
   public static Path getTmpdir() {
-    return tmpDir;
+    return TMP_DIR;
   }
   
   /**
    * Returns the Classloader for created Classes.
    */
-  public static URLClassLoader getClassloader() {
-    return classLoader;
+  public static ClassLoader getClassloader() {
+    return TMP_CLASS_LOADER;
   }
   
   /**

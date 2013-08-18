@@ -41,7 +41,7 @@ import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 public @interface AdditionalSteps {
   
   /**
-   * array with additional Optimizer-Steps
+   * array with additional Optimizer-Steps.
    */
   Class<? extends IOptimizer>[] steps();
 }

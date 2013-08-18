@@ -35,7 +35,7 @@ class NameFixer {
   private final Set<String> oldNames = new HashSet<>();
   
   /** The new name. */
-  final String newName;
+  private final String newName;
   
   /**
    * Instantiates a new {@link NameFixer}.
@@ -84,5 +84,9 @@ class NameFixer {
    */
   boolean contains(final String s) {
     return oldNames.contains(s);
+  }
+  
+  String getNewName() {
+    return newName;
   }
 }

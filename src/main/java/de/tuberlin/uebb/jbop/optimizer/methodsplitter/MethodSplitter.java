@@ -49,9 +49,10 @@ import de.tuberlin.uebb.jbop.optimizer.loop.SplitMarkNode;
  * The Class MethodSplitter.<br/>
  * <p>
  * This Class can split methods that are longer than a given threshold<br>
- * in submethods (default is {@link #MAX_LENGTH}: {@value #MAX_LENGTH} kb).
+ * in submethods (default is {@link #MAX_LENGTH}: {@value #MAX_LENGTH} byte).
  * <p>
- * Currently only methods that are preprocessed with the {@link de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller}<br>
+ * Currently only methods that are preprocessed with the {@link de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller
+ * ForLoopUnroller} <br>
  * can be splitted (and only if they were not to long before this preprocessing).
  * <p>
  * The Limit for Java-Methods is 64 kilobytes, therefore classes that contains methods longer than<br>
@@ -66,7 +67,7 @@ import de.tuberlin.uebb.jbop.optimizer.loop.SplitMarkNode;
  */
 public class MethodSplitter implements IOptimizer {
   
-  private final class EmptyMethodVisitor extends MethodVisitor {
+  private static final class EmptyMethodVisitor extends MethodVisitor {
     
     private EmptyMethodVisitor(final int api) {
       super(api);
@@ -134,7 +135,8 @@ public class MethodSplitter implements IOptimizer {
     }
     
     @Override
-    public void visitInvokeDynamicInsn(final String name, final String desc, final Handle bsm, final Object... bsmArgs) {
+    public void visitInvokeDynamicInsn(final String name, final String desc, final Handle bsm,//
+        final Object... bsmArgs) {
       super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
     }
     
@@ -231,7 +233,7 @@ public class MethodSplitter implements IOptimizer {
     this.maxInsns = maxInsns;
   }
   
-  private static final int access = Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL;
+  private static final int ACCESS = Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL;
   
   @Override
   public boolean isOptimized() {
@@ -257,7 +259,7 @@ public class MethodSplitter implements IOptimizer {
     final Iterator<Block> iterator = blocks.iterator();
     
     final Block start = iterator.next();
-    add(list, start.insns, original);
+    add(list, start.getInstructions(), original);
     
     final String name = baseName + "__split__part__";
     while (iterator.hasNext()) {
@@ -270,9 +272,9 @@ public class MethodSplitter implements IOptimizer {
       }
       final String methodDescriptor = Type.getMethodDescriptor(endType, block.getParameterTypes());
       
-      final String newMethodName = name + block.num;
+      final String newMethodName = name + block.getBlockNumber();
       // System.out.println("Creating " + newMethodName);
-      final MethodNode splitMethod = new MethodNode(Opcodes.ASM4, access, newMethodName, methodDescriptor, null,
+      final MethodNode splitMethod = new MethodNode(Opcodes.ASM4, ACCESS, newMethodName, methodDescriptor, null,
           exceptions);
       
       final AbstractInsnNode lastStore = block.getLastStore();
@@ -283,7 +285,7 @@ public class MethodSplitter implements IOptimizer {
         addWriteOrReturn(list, lastStore);
       }
       block.renameInsns();
-      add(splitMethod.instructions, block.insns, original);
+      add(splitMethod.instructions, block.getInstructions(), original);
       addLoadAndReturn(splitMethod.instructions, lastStore);
       
       sorter = new LocalVariablesSorter(Opcodes.ACC_PRIVATE, splitMethod.desc, new EmptyMethodVisitor(Opcodes.ASM4));
