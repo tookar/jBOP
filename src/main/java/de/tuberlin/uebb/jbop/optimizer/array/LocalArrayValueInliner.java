@@ -19,24 +19,14 @@
 package de.tuberlin.uebb.jbop.optimizer.array;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jbop.exception.JBOPClassException;
-import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
-import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 import de.tuberlin.uebb.jbop.optimizer.utils.predicates.Predicates;
 
@@ -74,11 +64,7 @@ import de.tuberlin.uebb.jbop.optimizer.utils.predicates.Predicates;
  * 
  * @author Christopher Ewest
  */
-public class LocalArrayValueInliner implements IOptimizer {
-  
-  private boolean optimized;
-  private final Object input;
-  private final Class<?> clazz;
+public class LocalArrayValueInliner extends AbstractLocalArrayOptimizer {
   
   /**
    * Instantiates a new {@link LocalArrayValueInliner}.
@@ -87,31 +73,11 @@ public class LocalArrayValueInliner implements IOptimizer {
    *          the input
    */
   public LocalArrayValueInliner(final Object input) {
-    this.input = input;
-    clazz = input.getClass();
+    super(input);
   }
   
   @Override
-  public boolean isOptimized() {
-    return optimized;
-  }
-  
-  @Override
-  public InsnList optimize(final InsnList original, final MethodNode methodNode) throws JBOPClassException {
-    optimized = false;
-    final Iterator<AbstractInsnNode> iterator = original.iterator();
-    final Map<Integer, Object> knownArrays = new TreeMap<>();
-    while (iterator.hasNext()) {
-      final AbstractInsnNode currentNode = iterator.next();
-      if (registerValues(currentNode, knownArrays)) {
-        continue;
-      }
-      handleValues(original, knownArrays, currentNode);
-    }
-    return original;
-  }
-  
-  private void handleValues(final InsnList original, final Map<Integer, Object> knownArrays,
+  protected boolean handleValues(final InsnList original, final Map<Integer, Object> knownArrays,
       final AbstractInsnNode currentNode) {
     
     AbstractInsnNode arrayload = currentNode;
@@ -120,13 +86,13 @@ public class LocalArrayValueInliner implements IOptimizer {
     final List<AbstractInsnNode> indexes = new ArrayList<>();
     do {
       if (!Predicates.IS_XALOAD.evaluate(arrayload)) {
-        return;
+        return false;
       }
       arrayloads.add(arrayload);
       indexNode = NodeHelper.getPrevious(arrayload);
       
       if (!NodeHelper.isNumberNode(indexNode)) {
-        return;
+        return false;
       }
       indexes.add(indexNode);
       arrayload = NodeHelper.getPrevious(indexNode);
@@ -137,14 +103,14 @@ public class LocalArrayValueInliner implements IOptimizer {
     
     final AbstractInsnNode previous2 = arrayload;
     if (!(previous2 instanceof VarInsnNode)) {
-      return;
+      return false;
     }
     
     final Integer varIndex = Integer.valueOf(((VarInsnNode) previous2).var);
     Object array = knownArrays.get(varIndex);
     
     if (array == null) {
-      return;
+      return false;
     }
     
     for (int i = indexes.size() - 1; i >= 0; --i) {
@@ -152,7 +118,7 @@ public class LocalArrayValueInliner implements IOptimizer {
       array = Array.get(array, indexInArray);
     }
     if (!(array instanceof Number)) {
-      return;
+      return false;
     }
     final AbstractInsnNode replacement = NodeHelper.getInsnNodeFor((Number) array);
     original.insertBefore(previous2, replacement);
@@ -162,94 +128,6 @@ public class LocalArrayValueInliner implements IOptimizer {
     }
     original.remove(previous2);
     
-    optimized = true;
-  }
-  
-  private boolean registerValues(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
-      throws JBOPClassException {
-    if (currentNode.getOpcode() == Opcodes.ASTORE) {
-      return registerGetArray(currentNode, knownArrays);
-    }
-    return false;
-  }
-  
-  private boolean registerGetArray(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
-      throws JBOPClassException {
-    final List<AbstractInsnNode> previous = new ArrayList<>();
-    final List<AbstractInsnNode> previous2 = new ArrayList<>();
-    AbstractInsnNode previous2x = currentNode;
-    while (true) {
-      final AbstractInsnNode previousx = NodeHelper.getPrevious(previous2x);
-      if (previousx.getOpcode() != Opcodes.AALOAD) {
-        return false;
-      }
-      previous.add(previousx);
-      previous2x = NodeHelper.getPrevious(previousx);
-      if (!NodeHelper.isNumberNode(previous2x)) {
-        return false;
-      }
-      previous2.add(previous2x);
-      final AbstractInsnNode previous2xtmp = NodeHelper.getPrevious(previous2x);
-      if ((previous2xtmp instanceof FieldInsnNode) || NodeHelper.isAload(previous2xtmp)) {
-        break;
-      }
-    }
-    final AbstractInsnNode previous3 = NodeHelper.getPrevious(previous2.get(previous2.size() - 1));
-    final Object array;
-    if (previous3 instanceof VarInsnNode) {
-      array = knownArrays.get(Integer.valueOf(((VarInsnNode) previous3).var));
-    } else {
-      if (!(previous3 instanceof FieldInsnNode)) {
-        return false;
-      }
-      final AbstractInsnNode previous4 = NodeHelper.getPrevious(previous3);
-      if (!NodeHelper.isAload0(previous4)) {
-        return false;
-      }
-      final String fieldName = ((FieldInsnNode) previous3).name;
-      
-      Field field;
-      try {
-        field = clazz.getDeclaredField(fieldName);
-      } catch (NoSuchFieldException | SecurityException e) {
-        throw new JBOPClassException("There is no field named '" + fieldName + "' in Class<" + clazz.getName() + ">.",
-            e);
-      }
-      if ((field.getModifiers() & Modifier.FINAL) == 0) {
-        return false;
-      }
-      if (field.getAnnotation(ImmutableArray.class) == null) {
-        return false;
-      }
-      final boolean isAccessible = field.isAccessible();
-      
-      try {
-        field.setAccessible(true);
-        array = field.get(input);
-      } catch (IllegalArgumentException | IllegalAccessException e) {
-        throw new JBOPClassException("", e);
-      } finally {
-        try {
-          field.setAccessible(isAccessible);
-        } catch (final SecurityException e) {
-          //
-        }
-      }
-    }
-    final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
-    
-    Object array2 = array;
-    for (int i = previous2.size() - 1; i >= 0; i--) {
-      int index1;
-      if (previous2.size() <= i) {
-        index1 = 0;
-      } else {
-        final Number arrIndex = NodeHelper.getNumberValue(previous2.get(i));
-        index1 = arrIndex.intValue();
-      }
-      array2 = Array.get(array2, index1);
-    }
-    knownArrays.put(varIndex, array2);
     return true;
   }
 }
