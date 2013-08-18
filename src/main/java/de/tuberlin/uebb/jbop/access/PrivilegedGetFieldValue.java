@@ -16,32 +16,31 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jbop.optimizer.array;
+package de.tuberlin.uebb.jbop.access;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.security.PrivilegedAction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The Class PrivilegedGetArrayValue.
+ * The Class PrivilegedGetFieldValue.
  * 
  * Privileged getter for Reflection-Use.
  * 
  * @author Christopher Ewest
  */
-class PrivilegedGetArrayValue implements PrivilegedAction<Object> {
+class PrivilegedGetFieldValue implements PrivilegedAction<Object> {
   
-  private static final Logger LOG = Logger.getLogger("PrivilegedGetArray");
+  private static final Logger LOG = Logger.getLogger("PrivilegedGetField");
   
-  private final String originalName;
-  private final int[] indexes;
-  private final Field field;
+  private String fieldName;
   private final Object instance;
   
+  private final Class<? extends Object> clazz;
+  
   /**
-   * Instantiates a new {@link PrivilegedGetArrayValue}.
+   * Instantiates a new {@link PrivilegedGetFieldValue}.
    * 
    * @param originalName
    *          the original name
@@ -49,31 +48,24 @@ class PrivilegedGetArrayValue implements PrivilegedAction<Object> {
    *          the field
    * @param instance
    *          the instance
-   * @param indexes
-   *          the indexes
    */
-  public PrivilegedGetArrayValue(final String originalName, final Field field, final Object instance,
-      final int... indexes) {
-    this.originalName = originalName;
-    this.indexes = indexes;
-    this.field = field;
+  public PrivilegedGetFieldValue(final Object instance) {
     this.instance = instance;
+    clazz = instance.getClass();
   }
   
   @Override
   public Object run() {
+    final Field field = getField();
     final boolean isAccessible = field.isAccessible();
     try {
       field.setAccessible(true);
-      Object array = field.get(instance);
-      for (final int index : indexes) {
-        array = Array.get(array, index);
-      }
-      return array;
-    } catch (SecurityException | IllegalAccessException e) {
-      throw new RuntimeException("Field '" + originalName + "' of class Class<" + //
+      final Object value = field.get(instance);
+      return transform(value);
+    } catch (SecurityException | IllegalAccessException | IllegalArgumentException e) {
+      throw new RuntimeException("Field '" + fieldName + "' of class Class<" + //
           instance.getClass().getName() + //
-          "> could not be accessed. ", e);
+          "> could not be accessed.", e);
     } finally {
       try {
         field.setAccessible(isAccessible);
@@ -82,5 +74,33 @@ class PrivilegedGetArrayValue implements PrivilegedAction<Object> {
         LOG.log(Level.INFO, "skipped exception", e);
       }
     }
+  }
+  
+  /**
+   * Hook for subclasses to perform additional actions with 'value'
+   * before returning it.
+   */
+  protected Object transform(final Object value) {
+    return value;
+  }
+  
+  private Field getField() {
+    try {
+      return clazz.getDeclaredField(fieldName);
+    } catch (NoSuchFieldException | SecurityException e) {
+      throw new RuntimeException("There is no Field '" + fieldName + "' in class Class<" + //
+          clazz.getName() + //
+          ">.", e);
+    }
+  }
+  
+  /**
+   * Sets the field name.
+   * 
+   * @param fieldName
+   *          the new field name
+   */
+  public void setFieldName(final String fieldName) {
+    this.fieldName = fieldName;
   }
 }

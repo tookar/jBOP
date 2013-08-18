@@ -18,15 +18,11 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.array;
 
-import java.lang.reflect.Field;
-import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.commons.collections15.Predicate;
 import org.objectweb.asm.Opcodes;
@@ -40,7 +36,6 @@ import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
-import de.tuberlin.uebb.jbop.optimizer.utils.predicates.Predicates;
 
 /**
  * Inlines the value of an array (class field) at position i, so that further optimizationsteps
@@ -91,8 +86,6 @@ public class FieldArrayValueInliner implements IOptimizer {
   
   private boolean optimized = false;
   
-  private final Map<String, Field> replacementMap;
-  
   private final Object instance;
   
   private final Predicate<AbstractInsnNode> is_getfield;
@@ -107,22 +100,9 @@ public class FieldArrayValueInliner implements IOptimizer {
    * @throws JBOPClassException
    *           the jBOP class exception
    */
-  public FieldArrayValueInliner(final Collection<String> names, final Object instance) throws JBOPClassException {
-    replacementMap = new TreeMap<String, Field>();
+  public FieldArrayValueInliner(final Collection<String> names, final Object instance) {
     this.instance = instance;
-    final Class<? extends Object> instanceClass = instance.getClass();
-    
-    for (final String originalName : names) {
-      final Field originalValueField;
-      try {
-        originalValueField = instanceClass.getDeclaredField(originalName);
-      } catch (NoSuchFieldException | SecurityException e) {
-        throw new JBOPClassException("There is no Field like '" + originalName + "' in Class<"
-            + instanceClass.getName() + ">", e);
-      }
-      replacementMap.put(originalName, originalValueField);
-    }
-    is_getfield = new GetFieldPredicate(replacementMap);
+    is_getfield = new GetFieldPredicate(names);
   }
   
   @Override
@@ -131,72 +111,44 @@ public class FieldArrayValueInliner implements IOptimizer {
   }
   
   @Override
-  public InsnList optimize(final InsnList original, final MethodNode method) {
+  public InsnList optimize(final InsnList original, final MethodNode method) throws JBOPClassException {
     optimized = false;
     final Iterator<AbstractInsnNode> iterator = original.iterator();
-    
+    final ArrayHelper arrayHelper = new ArrayHelper();
     while (iterator.hasNext()) {
       final AbstractInsnNode aload = iterator.next();
-      if (!Predicates.IS_ALOAD.evaluate(aload)) {
+      if (!arrayHelper.isArrayInstruction(aload, is_getfield)) {
         continue;
       }
-      final AbstractInsnNode fieldNode = NodeHelper.getNext(aload);
-      if (!is_getfield.evaluate(fieldNode)) {
+      if (arrayHelper.isIndexEmpty()) {
         continue;
       }
-      final List<AbstractInsnNode> indexes = new ArrayList<>(3);
-      final List<AbstractInsnNode> arrayloads = new ArrayList<>(3);
-      AbstractInsnNode index = NodeHelper.getNext(fieldNode);
-      AbstractInsnNode arrayload = NodeHelper.getNext(index);
-      do {
-        if (!Predicates.IS_NUMBER_VALUE.evaluate(index)) {
-          break;
-        }
-        if (!Predicates.IS_XALOAD.evaluate(arrayload)) {
-          break;
-        }
-        indexes.add(index);
-        arrayloads.add(arrayload);
-        index = NodeHelper.getNext(arrayload);
-        arrayload = NodeHelper.getNext(index);
-      } while (true);
-      if (indexes.isEmpty()) {
-        continue;
-      }
-      handleValue(original, aload, fieldNode, indexes, arrayloads, iterator);
+      
+      handleValue(original, aload, arrayHelper, iterator);
     }
     return original;
   }
   
-  private void handleValue(final InsnList newList, final AbstractInsnNode aload, final AbstractInsnNode fieldNode,
-      final List<AbstractInsnNode> indexes, final List<AbstractInsnNode> arrayloads,
-      final Iterator<AbstractInsnNode> iterator) {
-    final int[] indexArr = new int[indexes.size()];
-    for (int i = 0; i < indexes.size(); ++i) {
-      final int indexOf = NodeHelper.getNumberValue(indexes.get(i)).intValue();
-      indexArr[i] = indexOf;
-    }
-    Object value;
-    try {
-      value = getArrayValue(NodeHelper.getFieldname(fieldNode), indexArr);
-    } catch (final JBOPClassException e) {
-      throw new RuntimeException(e);
-    }
+  private void handleValue(final InsnList newList, final AbstractInsnNode aload, final ArrayHelper arrayHelper,
+      final Iterator<AbstractInsnNode> iterator) throws JBOPClassException {
     
-    if (isArrayLoad(arrayloads.get(arrayloads.size() - 1).getOpcode())) {
+    final Object value = arrayHelper.getValue(instance);
+    
+    if (isArrayLoad(arrayHelper.getLastLoad().getOpcode())) {
       final AbstractInsnNode replacementNode;
       if ((value instanceof Number)) {
         replacementNode = NodeHelper.getInsnNodeFor((Number) value);
       } else {
         replacementNode = new LdcInsnNode(value);
       }
-      replaceNodes(newList, aload, fieldNode, indexes, arrayloads, replacementNode, iterator);
+      replaceNodes(newList, aload, arrayHelper, replacementNode, iterator);
     } else {
       if (value == null) {
         final AbstractInsnNode replacementNode = new InsnNode(Opcodes.ACONST_NULL);
-        replaceNodes(newList, aload, fieldNode, indexes, arrayloads, replacementNode, iterator);
+        replaceNodes(newList, aload, arrayHelper, replacementNode, iterator);
       } else {
-        final NonNullArrayValue arrayValue = new NonNullArrayValue(aload, fieldNode, indexes, arrayloads);
+        final NonNullArrayValue arrayValue = new NonNullArrayValue(aload, arrayHelper.getFieldNode(),
+            arrayHelper.getIndexes(), arrayHelper.getArrayloads());
         nonNullArrayValues.add(arrayValue);
       }
     }
@@ -218,29 +170,19 @@ public class FieldArrayValueInliner implements IOptimizer {
     return false;
   }
   
-  private void replaceNodes(final InsnList newList, final AbstractInsnNode aload, final AbstractInsnNode fieldNode,
-      final List<AbstractInsnNode> indexes, final List<AbstractInsnNode> arrayloads,
+  private void replaceNodes(final InsnList newList, final AbstractInsnNode aload, final ArrayHelper arrayHelper,
       final AbstractInsnNode replacementNode, final Iterator<AbstractInsnNode> iterator) {
-    newList.insert(arrayloads.get(arrayloads.size() - 1), replacementNode);
+    newList.insert(arrayHelper.getLastLoad(), replacementNode);
     newList.remove(aload);
-    for (final AbstractInsnNode node : indexes) {
+    for (final AbstractInsnNode node : arrayHelper.getIndexes()) {
       newList.remove(node);
     }
-    for (final AbstractInsnNode node : arrayloads) {
+    for (final AbstractInsnNode node : arrayHelper.getArrayloads()) {
       newList.remove(node);
     }
     iterator.next();
-    newList.remove(fieldNode);
+    newList.remove(arrayHelper.getFieldNode());
     optimized = true;
-  }
-  
-  private Object getArrayValue(final String originalName, final int... index) throws JBOPClassException {
-    final Field field = replacementMap.get(originalName);
-    try {
-      return AccessController.doPrivileged(new PrivilegedGetArrayValue(originalName, field, instance, index));
-    } catch (final RuntimeException re) {
-      throw new JBOPClassException(re.getMessage(), re.getCause());
-    }
   }
   
   /**

@@ -29,7 +29,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.security.AccessController;
 import java.security.CodeSource;
+import java.security.PrivilegedAction;
 
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.ClassReader;
@@ -254,6 +256,34 @@ public final class ClassAccessor {
    */
   public static URLClassLoader getClassloader() {
     return classLoader;
+  }
+  
+  /**
+   * Returns the current value of the Field 'fieldName' of the given object.
+   */
+  public static Object getCurrentValue(final Object instance, final String fieldName) throws JBOPClassException {
+    final PrivilegedGetFieldValue getter = new PrivilegedGetFieldValue(instance);
+    getter.setFieldName(fieldName);
+    return executePrivileged(getter);
+  }
+  
+  /**
+   * Returns the current value of the array 'fieldName' of the given object at the specified index.
+   */
+  public static Object getCurrentValue(final Object instance, final String fieldName, final int... indexes)
+      throws JBOPClassException {
+    final PrivilegedGetArrayValue getter = new PrivilegedGetArrayValue(instance);
+    getter.setFieldName(fieldName);
+    getter.setIndexes(indexes);
+    return executePrivileged(getter);
+  }
+  
+  private static <T> T executePrivileged(final PrivilegedAction<T> action) throws JBOPClassException {
+    try {
+      return AccessController.doPrivileged(action);
+    } catch (final RuntimeException re) {
+      throw new JBOPClassException(re.getMessage(), re.getCause());
+    }
   }
   
 }

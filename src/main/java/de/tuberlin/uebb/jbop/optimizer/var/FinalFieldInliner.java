@@ -27,22 +27,20 @@ import static org.objectweb.asm.Type.INT_TYPE;
 import static org.objectweb.asm.Type.LONG_TYPE;
 import static org.objectweb.asm.Type.SHORT_TYPE;
 
-import java.lang.reflect.Field;
-import java.security.AccessController;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
+import de.tuberlin.uebb.jbop.access.ClassAccessor;
 import de.tuberlin.uebb.jbop.access.OptimizerUtils;
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
@@ -70,7 +68,6 @@ public class FinalFieldInliner implements IOptimizer {
   
   private boolean optimized;
   private final Object instance;
-  private final Map<String, Field> fieldMap = new TreeMap<String, Field>();
   private final GetFieldPredicate isField;
   
   /**
@@ -83,25 +80,22 @@ public class FinalFieldInliner implements IOptimizer {
    */
   public FinalFieldInliner(final Object input) throws JBOPClassException {
     instance = input;
-    final Class<?> clazz = input.getClass();
     final ClassNode readClass = OptimizerUtils.readClass(input);
-    final List<FieldNode> fields = readClass.fields;
-    collectFields(clazz, fields);
-    isField = new GetFieldPredicate(fieldMap);
+    final List<FieldNode> fieldNodes = readClass.fields;
+    final Set<String> fields = collectFields(fieldNodes);
+    isField = new GetFieldPredicate(fields);
   }
   
-  private void collectFields(final Class<?> clazz, final List<FieldNode> fields) throws JBOPClassException {
-    for (final FieldNode field : fields) {
+  private Set<String> collectFields(final List<FieldNode> fieldNodes) {
+    final Set<String> fields = new HashSet<>();
+    for (final FieldNode field : fieldNodes) {
       if ((field.access & Opcodes.ACC_FINAL) != 0) {
         if (isBuiltIn(field.desc)) {
-          try {
-            fieldMap.put(field.name, clazz.getDeclaredField(field.name));
-          } catch (NoSuchFieldException | SecurityException e) {
-            throw new JBOPClassException("There is no Field '" + field.name + "' in Class<" + clazz.getName() + ">.", e);
-          }
+          fields.add(field.name);
         }
       }
     }
+    return fields;
   }
   
   private static boolean isBuiltIn(final String desc) {
@@ -200,13 +194,7 @@ public class FinalFieldInliner implements IOptimizer {
     return original;
   }
   
-  private Object getValue(final AbstractInsnNode getfield) throws JBOPClassException {
-    final String name = ((FieldInsnNode) getfield).name;
-    final Field field = fieldMap.get(name);
-    try {
-      return AccessController.doPrivileged(new PrivilegedGetFieldValue(name, field, instance));
-    } catch (final RuntimeException re) {
-      throw new JBOPClassException(re.getMessage(), re.getCause());
-    }
+  private Object getValue(final AbstractInsnNode getFieldNode) throws JBOPClassException {
+    return ClassAccessor.getCurrentValue(instance, NodeHelper.getFieldname(getFieldNode));
   }
 }
