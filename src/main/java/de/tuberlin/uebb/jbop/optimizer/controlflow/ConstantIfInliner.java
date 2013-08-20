@@ -19,6 +19,7 @@
 package de.tuberlin.uebb.jbop.optimizer.controlflow;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.apache.commons.math3.exception.NotANumberException;
@@ -165,12 +166,13 @@ public class ConstantIfInliner implements IOptimizer {
       if (node1.getOpcode() == Opcodes.ACONST_NULL) {
         eval = evalSingleOpValue(null, currentNode.getOpcode());
       } else {
+        // doesn't wotk for multiarrays yet
         final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
         final AbstractInsnNode node3 = NodeHelper.getPrevious(node2);
         final AbstractInsnNode node4 = NodeHelper.getPrevious(node3);
         boolean isNonNullArrayValue = false;
         for (final NonNullArrayValue nonNullarrayValue : arrayValue.getNonNullArrayValues()) {
-          if (nonNullarrayValue.is(node4, node3, node2, node1)) {
+          if (nonNullarrayValue.is(node4, node3, Arrays.asList(node2), Arrays.asList(node1))) {
             isNonNullArrayValue = true;
             break;
           }
@@ -258,14 +260,10 @@ public class ConstantIfInliner implements IOptimizer {
     if (isCompare(node1)) {
       switch (node1.getOpcode()) {
         case Opcodes.DCMPG:
-          newNumber = Double.valueOf(op2.doubleValue() - op1.doubleValue());
-          break;
         case Opcodes.DCMPL:
           newNumber = Double.valueOf(op2.doubleValue() - op1.doubleValue());
           break;
         case Opcodes.FCMPG:
-          newNumber = Float.valueOf(op2.floatValue() - op1.floatValue());
-          break;
         case Opcodes.FCMPL:
           newNumber = Float.valueOf(op2.floatValue() - op1.floatValue());
           break;

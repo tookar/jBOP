@@ -29,7 +29,7 @@ import java.lang.reflect.Array;
  */
 class PrivilegedGetArrayValue extends PrivilegedGetFieldValue {
   
-  private int[] indexes;
+  private int[] indexes = new int[0];
   
   /**
    * Instantiates a new {@link PrivilegedGetArrayValue}.

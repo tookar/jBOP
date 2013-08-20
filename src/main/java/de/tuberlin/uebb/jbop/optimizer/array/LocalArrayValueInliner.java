@@ -101,12 +101,9 @@ public class LocalArrayValueInliner extends AbstractLocalArrayOptimizer {
       }
     } while (true);
     
-    final AbstractInsnNode previous2 = arrayload;
-    if (!(previous2 instanceof VarInsnNode)) {
-      return false;
-    }
+    final VarInsnNode previous2 = (VarInsnNode) arrayload;
     
-    final Integer varIndex = Integer.valueOf(((VarInsnNode) previous2).var);
+    final Integer varIndex = Integer.valueOf(previous2.var);
     Object array = knownArrays.get(varIndex);
     
     if (array == null) {

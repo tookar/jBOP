@@ -50,7 +50,7 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * 
  * @author Christopher Ewest
  */
-class Block implements Comparable<Block> {
+class Block {
   
   private final VarList readers = new VarList();
   private final VarList writers = new VarList();
@@ -132,11 +132,6 @@ class Block implements Comparable<Block> {
     return "Block " + num + ": " + getSize() + "bytes";
   }
   
-  @Override
-  public int compareTo(final Block o) {
-    return Integer.compare(num, o.num);
-  }
-  
   /**
    * Adds the insn to this block.
    * 
@@ -158,7 +153,7 @@ class Block implements Comparable<Block> {
    */
   void addInsn(final AbstractInsnNode insn, final boolean deep) {
     insns.add(insn);
-    if (!(insns instanceof SplitMarkNode)) {
+    if (!(insn instanceof SplitMarkNode)) {
       insn.accept(sizeEvaluator);
     }
     if (!deep) {

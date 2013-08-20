@@ -88,16 +88,6 @@ class VarList implements Iterable<Var> {
     return false;
   }
   
-  @Override
-  public boolean equals(final Object o) {
-    return delegate.equals(o);
-  }
-  
-  @Override
-  public int hashCode() {
-    return delegate.hashCode();
-  }
-  
   /**
    * @see java.util.List#isEmpty()
    */

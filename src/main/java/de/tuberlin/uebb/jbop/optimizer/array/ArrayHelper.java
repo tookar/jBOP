@@ -39,8 +39,8 @@ import de.tuberlin.uebb.jbop.optimizer.utils.predicates.Predicates;
  */
 class ArrayHelper {
   
-  private List<AbstractInsnNode> indexes;
-  private List<AbstractInsnNode> arrayloads;
+  private final List<AbstractInsnNode> indexes = new ArrayList<>(3);
+  private final List<AbstractInsnNode> arrayloads = new ArrayList<>(3);
   private AbstractInsnNode fieldNode;
   private AbstractInsnNode array;
   
@@ -61,8 +61,8 @@ class ArrayHelper {
     if (!fieldPredicate.evaluate(fieldNode)) {
       return false;
     }
-    indexes = new ArrayList<>(3);
-    arrayloads = new ArrayList<>(3);
+    indexes.clear();
+    arrayloads.clear();
     findIndexes();
     return true;
   }

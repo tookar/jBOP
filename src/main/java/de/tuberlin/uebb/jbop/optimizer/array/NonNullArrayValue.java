@@ -97,19 +97,31 @@ public class NonNullArrayValue {
    *          the n4
    * @return true, if successful
    */
-  public boolean is(final AbstractInsnNode n1, final AbstractInsnNode n2, final AbstractInsnNode n3,
-      final AbstractInsnNode n4) {
+  public boolean is(final AbstractInsnNode n1, final AbstractInsnNode n2, final List<AbstractInsnNode> n3,
+      final List<AbstractInsnNode> n4) {
     if (node1 != n1) {
       return false;
     }
     if (node2 != n2) {
       return false;
     }
-    if (node3 != n3) {
+    if (!isEqual(node3, n3)) {
       return false;
     }
-    if (node4 != n4) {
+    if (!isEqual(node4, n4)) {
       return false;
+    }
+    return true;
+  }
+  
+  private boolean isEqual(final List<AbstractInsnNode> node, final List<AbstractInsnNode> n) {
+    if (node.size() != n.size()) {
+      return false;
+    }
+    for (int i = 0; i < node.size(); ++i) {
+      if (node.get(i) != n.get(i)) {
+        return false;
+      }
     }
     return true;
   }

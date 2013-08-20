@@ -77,7 +77,29 @@ class Var implements Comparable<Var> {
   
   @Override
   public boolean equals(final Object obj) {
-    return hashCode() == obj.hashCode();
+    if (obj == null) {
+      return false;
+    }
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof Var)) {
+      return false;
+    }
+    final Var var = (Var) obj;
+    if (index != var.index) {
+      return false;
+    }
+    if (position != var.position) {
+      return false;
+    }
+    if (!type2.equals(var.type2)) {
+      return false;
+    }
+    if (varType != var.varType) {
+      return false;
+    }
+    return true;
   }
   
   @Override

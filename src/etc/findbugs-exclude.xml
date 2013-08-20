@@ -1,10 +1,20 @@
 <FindBugsFilter>
-	<Match>
-		<Bug pattern="NP_ALWAYS_NULL" />
-		<Field name="System.out" />
-	</Match>
-	<Match>
-		<Bug pattern="NP_ALWAYS_NULL" />
-		<Field name="System.err" />
-	</Match>
+  <Match>
+    <Bug pattern="NP_ALWAYS_NULL" />
+    <Field name="System.out" />
+  </Match>
+  <Match>
+    <Bug pattern="NP_ALWAYS_NULL" />
+    <Field name="System.err" />
+  </Match>
+  <Match>
+    <Package name="~de\.tuberlin\.uebb\.jbop\.example\..*"/>
+  </Match>
+  <!-- All bugs in test classes, except for JUnit-specific bugs -->
+     <Match>
+      <Class name="~.*\.*Test" />
+      <Not>
+          <Bug code="IJU" />
+      </Not>
+     </Match>
 </FindBugsFilter>

@@ -34,7 +34,6 @@ import de.tuberlin.uebb.jbop.access.OptimizerUtils;
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.annotations.AdditionalSteps;
 import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
-import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jbop.optimizer.arithmetic.ArithmeticExpressionInterpreter;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthInliner;
@@ -44,6 +43,7 @@ import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.controlflow.ConstantIfInliner;
 import de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller;
 import de.tuberlin.uebb.jbop.optimizer.methodsplitter.MethodSplitter;
+import de.tuberlin.uebb.jbop.optimizer.utils.predicates.OptimizablePredicate;
 import de.tuberlin.uebb.jbop.optimizer.var.FinalFieldInliner;
 import de.tuberlin.uebb.jbop.optimizer.var.LocalVarInliner;
 import de.tuberlin.uebb.jbop.optimizer.var.RemoveUnusedLocalVars;
@@ -67,29 +67,11 @@ import de.tuberlin.uebb.jbop.optimizer.var.RemoveUnusedLocalVars;
  */
 public class Optimizer {
   
-  // private static final Logger log = Logger.getLogger("Optimizer");
-  
-  private final Predicate<MethodNode> optimizeThis = new Predicate<MethodNode>() {
-    
-    private final String descriptor = Type.getType(Optimizable.class).getDescriptor();
-    
-    @Override
-    public boolean evaluate(final MethodNode object) {
-      if (object.visibleAnnotations == null) {
-        return false;
-      }
-      for (final AnnotationNode annotation : object.visibleAnnotations) {
-        if (descriptor.equals(annotation.desc)) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
+  private final Predicate<MethodNode> optimizeThis = new OptimizablePredicate();
   private int methodLength = MethodSplitter.MAX_LENGTH;
   
   /**
-   * Optimize.
+   * Optimize the given inputObject and return a new Instance of the optimized Class.
    * 
    * @param <T>
    *          the type of the Object to optimize
@@ -202,7 +184,7 @@ public class Optimizer {
   }
   
   private FieldArrayValueInliner initFieldArrayOptimizers(final ClassNode classNode, final Object input,
-      final List<IOptimizer> optimizers) throws JBOPClassException {
+      final List<IOptimizer> optimizers) {
     final List<String> immutableArrayNames = new ArrayList<>();
     final List<String> finalArrayNames = new ArrayList<>();
     final String immutableArray = Type.getType(ImmutableArray.class).getDescriptor();

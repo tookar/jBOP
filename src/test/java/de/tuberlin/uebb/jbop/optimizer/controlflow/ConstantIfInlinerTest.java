@@ -339,7 +339,8 @@ public class ConstantIfInlinerTest {
     // INIT
     when(
         nonNullValue.is(Matchers.<AbstractInsnNode> any(), Matchers.<AbstractInsnNode> any(),
-            Matchers.<AbstractInsnNode> any(), Matchers.<AbstractInsnNode> any())).thenReturn(Boolean.valueOf(true));
+            Matchers.<List<AbstractInsnNode>> any(), Matchers.<List<AbstractInsnNode>> any())).thenReturn(
+        Boolean.valueOf(true));
     final LabelNode label = new LabelNode();
     builder.addInsn(new TypeInsnNode(Opcodes.NEW, Type.getDescriptor(Object.class))).//
         addInsn(new JumpInsnNode(Opcodes.IFNULL, label)).//

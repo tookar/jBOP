@@ -26,7 +26,7 @@ import org.apache.commons.math3.exception.NumberIsTooLargeException;
  * 
  * @author Christopher Ewest
  */
-interface IDSCompiler {
+public interface IDSCompiler {
   
   /**
    * Get the index of a partial derivative in the array.
@@ -209,12 +209,17 @@ interface IDSCompiler {
    */
   void pow(final double[] operand, final int n, final double[] result);
   
-/**
-   * Like {@link org.apache.commons.math3.analysis.differentiation.DSCompiler#pow(double[], int, double[], int, double[], int) but with constant offset "0".
-   *
-   * @param x the x
-   * @param y the y
-   * @param result the result
+  /**
+   * Like
+   * {@link org.apache.commons.math3.analysis.differentiation.DSCompiler# pow(double[], int, double[], int, double[], int)}
+   * but with constant offset "0".
+   * 
+   * @param x
+   *          the x
+   * @param y
+   *          the y
+   * @param result
+   *          the result
    */
   void pow(final double[] x, final double[] y, final double[] result);
   
