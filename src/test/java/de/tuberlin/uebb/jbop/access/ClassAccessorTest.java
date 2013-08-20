@@ -39,6 +39,16 @@ import de.tuberlin.uebb.jbop.exception.JBOPClassException;
  */
 public class ClassAccessorTest {
   
+  private static final String CURRENT_DIR;
+  static {
+    try {
+      CURRENT_DIR = new File(".").getCanonicalPath() + File.separator + "target" + File.separator + "test-classes"
+          + File.separator;
+    } catch (final IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
   /**
    * * Tests that stringToClasspath() of the Testobject is working correctly.
    */
@@ -76,11 +86,9 @@ public class ClassAccessorTest {
    * 
    * @throws JBOPClassException
    *           the jBOP class exception
-   * @throws IOException
-   *           Signals that an I/O exception has occurred.
    */
   @Test
-  public void testClassToFile() throws JBOPClassException, IOException {
+  public void testClassToFile() throws JBOPClassException {
     // INIT
     final Class<?> clazz = de.tuberlin.uebb.jbop.access.ClassAccessorTest.class;
     
@@ -88,9 +96,21 @@ public class ClassAccessorTest {
     final Path file = ClassAccessor.toPath(clazz);
     
     // ASSERT
-    final String expected = new File(".").getCanonicalPath() + "/target/test-classes/"
-        + clazz.getName().replace(".", "/") + ".class";
+    final String expected = getFile(clazz);
     assertEquals("The classpath is not as expected.", expected, file.toAbsolutePath().toString());
+  }
+  
+  private String getFile(final Class<?> clazz, final String... additional) {
+    final StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append(CURRENT_DIR);
+    if (additional != null) {
+      for (final String string : additional) {
+        stringBuilder.append(string).append(File.separator);
+      }
+    }
+    stringBuilder.append(clazz.getName().replace(".", File.separator));
+    stringBuilder.append(".class");
+    return stringBuilder.toString();
   }
   
   /**
@@ -98,11 +118,11 @@ public class ClassAccessorTest {
    * 
    * @throws JBOPClassException
    *           the jBOP class exception
-   * @throws IOException
-   *           Signals that an I/O exception has occurred.
+   * @throws ClassNotFoundException
+   *           the class not found exception
    */
   @Test
-  public void testClassToFileFromJar() throws JBOPClassException, IOException, ClassNotFoundException {
+  public void testClassToFileFromJar() throws JBOPClassException, ClassNotFoundException {
     // INIT
     final URLClassLoader cl = new URLClassLoader(new URL[] {
       getClass().getResource("/access.jar")
@@ -114,8 +134,7 @@ public class ClassAccessorTest {
     final Path file = ClassAccessor.toPath(clazz);
     
     // ASSERT
-    final String expected = new File(".").getCanonicalPath() + "/target/test-classes/access.jar!/"
-        + clazz.getName().replace(".", "/") + ".class";
+    final String expected = getFile(clazz, "access.jar!");
     assertEquals("The classpath is not as expected.", expected, file.toAbsolutePath().toString());
   }
   
@@ -124,11 +143,9 @@ public class ClassAccessorTest {
    * 
    * @throws JBOPClassException
    *           the jBOP class exception
-   * @throws IOException
-   *           Signals that an I/O exception has occurred.
    */
   @Test
-  public void testGetClassDescriptor() throws JBOPClassException, IOException {
+  public void testGetClassDescriptor() throws JBOPClassException {
     // INIT
     final Class<?> clazz = de.tuberlin.uebb.jbop.access.ClassAccessorTest.class;
     
@@ -136,8 +153,7 @@ public class ClassAccessorTest {
     final ClassDescriptor descriptor = ClassAccessor.getClassDescriptor(clazz);
     
     // ASSERT
-    final String expectedFile = new File(".").getCanonicalPath() + "/target/test-classes/"
-        + clazz.getName().replace(".", "/") + ".class";
+    final String expectedFile = getFile(clazz);
     assertEquals(expectedFile, descriptor.getFile());
     
     assertEquals(clazz.getName(), descriptor.getName());

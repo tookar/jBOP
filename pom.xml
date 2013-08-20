@@ -1,3 +1,4 @@
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -10,7 +11,7 @@
   <licenses>
     <license>
       <name>The GNU Lesser General Public License</name>
-      <url>file://${jbop.source.basedir}etc/license.txt</url>
+      <url>file:///${jbop.source.basedir}etc${file.separator}license.txt</url>
     </license>
   </licenses>
 
@@ -31,10 +32,10 @@
     <!-- developpers -->
     <jbop.developper>Christopher Ewest</jbop.developper>
     <!-- Parameter für Quellverzeichnisse -->
-    <jbop.source.basedir>${basedir}/src/</jbop.source.basedir>
-    <jbop.source>${jbop.source.basedir}main/java</jbop.source>
-    <jbop.test.source>${jbop.source.basedir}test/java</jbop.test.source>
-    <jbop.test.resource>${jbop.source.basedir}test/resources</jbop.test.resource>
+    <jbop.source.basedir>${basedir}${file.separator}src${file.separator}</jbop.source.basedir>
+    <jbop.source>${jbop.source.basedir}main${file.separator}java</jbop.source>
+    <jbop.test.source>${jbop.source.basedir}test${file.separator}java</jbop.test.source>
+    <jbop.test.resource>${jbop.source.basedir}test${file.separator}resources</jbop.test.resource>
 
     <!-- Encoding der Quell-Dateien (UTF-8) -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -46,18 +47,18 @@
 
     <!-- Konfiguration für das Verzeichnis in dem Distributionen erstellt 
       werden. -->
-    <jbop.distribution.directory>${project.build.directory}/distribution</jbop.distribution.directory>
-    <jbop.distribution.destination>${jbop.distribution.directory}/${jbop.distribution.project.name}</jbop.distribution.destination>
+    <jbop.distribution.directory>${project.build.directory}${file.separator}distribution</jbop.distribution.directory>
+    <jbop.distribution.destination>${jbop.distribution.directory}${file.separator}${jbop.distribution.project.name}</jbop.distribution.destination>
 
     <!-- Konfiguration für zusätzlichen Pfad innerhalb der Distribution. -->
     <jbop.distribution.subfolder>.</jbop.distribution.subfolder>
 
     <!-- Konfiguration für Verzeichnis mit zusätzlichen Ressourcen. -->
-    <jbop.distribution.dependencies>${project.build.directory}/distribution-dependencies</jbop.distribution.dependencies>
+    <jbop.distribution.dependencies>${project.build.directory}${file.separator}distribution-dependencies</jbop.distribution.dependencies>
 
     <!-- Konfiguration für Verzeichnis mit zusätzlichen Libraries. -->
-    <jbop.distribution.dependencies.jre>${jbop.distribution.dependencies}/jre</jbop.distribution.dependencies.jre>
-    <jbop.distribution.dependencies.lib>${jbop.distribution.dependencies}/lib</jbop.distribution.dependencies.lib>
+    <jbop.distribution.dependencies.jre>${jbop.distribution.dependencies}${file.separator}jre</jbop.distribution.dependencies.jre>
+    <jbop.distribution.dependencies.lib>${jbop.distribution.dependencies}${file.separator}lib</jbop.distribution.dependencies.lib>
 
     <!-- Konfiguration für die Bezeichnung der externen Bibliotheken (innerhalb 
       der assemblies) -->
@@ -99,6 +100,9 @@
     <projectinfo.version>2.6</projectinfo.version>
     <versions.version>2.0</versions.version>
     <jxr.version>2.3</jxr.version>
+
+    <!-- report output directory -->
+    <site.output.dir>${project.build.directory}${file.separator}site${file.separator}</site.output.dir>
   </properties>
 
   <dependencies>
@@ -255,7 +259,7 @@
             <manifestEntries>
               <Implementation-Title>${project.artifactId}</Implementation-Title>
               <Implementation-Version>${project.version}</Implementation-Version>
-              <Implementation-Vendor>${jbop.develooper}</Implementation-Vendor>
+              <Implementation-Vendor>${jbop.developper}</Implementation-Vendor>
             </manifestEntries>
           </archive>
         </configuration>
@@ -290,7 +294,7 @@
         <artifactId>maven-site-plugin</artifactId>
         <version>${site.version}</version>
         <configuration>
-          <outputDirectory>/usr/share/tomcat7/webapps/statistik/</outputDirectory>
+          <outputDirectory>${site.output.dir}</outputDirectory>
         </configuration>
       </plugin>
       <plugin>
@@ -471,12 +475,12 @@
           <linkXRef>true</linkXRef>
           <consoleOutput>false</consoleOutput>
           <failsOnError>false</failsOnError>
-          <headerLocation>file://${jbop.source.basedir}etc/checkstyleheader.txt</headerLocation>
+          <headerLocation>file:///${jbop.source.basedir}etc${file.separator}checkstyleheader.txt</headerLocation>
           <outputFileFormat>xml</outputFileFormat>
-          <configLocation>file://${jbop.source.basedir}etc/checkstyle.xml</configLocation>
+          <configLocation>file:///${jbop.source.basedir}etc${file.separator}checkstyle.xml</configLocation>
           <propertyExpansion>severity.codeformatter=error
             severity.eclipsewarnings=error
-            checkstyle.suppression.file=${basedir}/src/etc/checkstyle-filter.xml
+            checkstyle.suppression.file=${basedir}${file.separator}src${file.separator}etc${file.separator}checkstyle-filter.xml
           </propertyExpansion>
         </configuration>
       </plugin>
@@ -530,8 +534,6 @@
     </developer>
   </developers>
 
-  <!-- <issueManagement> <system>redmine</system> <url>https://mlcontrol.uebb.tu-berlin.de/redmine/projects/jdae</url> 
-    </issueManagement> -->
   <scm>
     <connection>scm:git:https://github.com/tookar/jBOP.git</connection>
     <developerConnection>scm:git:https://github.com/tookar/jBOP.git</developerConnection>

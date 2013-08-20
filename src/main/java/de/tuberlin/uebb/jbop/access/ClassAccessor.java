@@ -33,6 +33,8 @@ import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -126,7 +128,7 @@ public final class ClassAccessor {
     if (resource == null) {
       throw new JBOPClassException("The Classfile for Class<" + clazz.getName() + "> couldn't be determined.", null);
     }
-    String filename = resource.getFile();
+    String filename = FilenameUtils.normalize(FileUtils.toFile(resource).getAbsolutePath());
     final String path = toClassPath(clazz);
     if (filename.endsWith(".jar")) {
       filename = filename + "!" + path;
