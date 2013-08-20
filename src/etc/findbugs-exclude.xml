@@ -8,7 +8,7 @@
     <Field name="System.err" />
   </Match>
   <Match>
-    <Package name="~de\.tuberlin\.uebb\.jbop\.example\..*"/>
+    <Package name="de.tuberlin.uebb.jbop.example"/>
   </Match>
   <!-- All bugs in test classes, except for JUnit-specific bugs -->
      <Match>
