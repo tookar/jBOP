@@ -31,8 +31,6 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import de.tuberlin.uebb.jbop.optimizer.methodsplitter.Block;
-
 /**
  * Test for {@link Block}.
  * 
@@ -71,7 +69,7 @@ public class BlockTest {
     
     final Block block = new Block(1, new Type[] {
         Type.INT_TYPE, Type.INT_TYPE
-    });
+    }, Type.INT_TYPE);
     while (iterator.hasNext()) {
       block.addInsn(iterator.next(), true);
     }

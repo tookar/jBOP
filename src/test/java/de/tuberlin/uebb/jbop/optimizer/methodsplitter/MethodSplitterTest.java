@@ -1,7 +1,9 @@
 package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.Before;
@@ -23,8 +25,8 @@ public class MethodSplitterTest {
   private MethodNode method;
   private ClassNode classNode;
   private ClassNodeBuilder builder;
-  private final int length = (8 * 1024) - 1;
-  private final int arrayLength = 7500;
+  private final int length = MethodSplitter.MAX_LENGTH / 10;
+  private final int arrayLength = 750;
   
   @Before
   public void before() {
@@ -50,6 +52,7 @@ public class MethodSplitterTest {
     // ASSERT
     
     // check methods
+    assertFalse(additionalMethods.isEmpty());
     for (int i = 0; i < additionalMethods.size(); ++i) {
       final MethodNode methodNode = additionalMethods.get(i);
       assertEquals("([I)V", methodNode.desc);
@@ -58,7 +61,16 @@ public class MethodSplitterTest {
     // check that the class is valid by instantiating it
     method.instructions = splitted;
     classNode.methods.addAll(additionalMethods);
-    builder.toClass().instance();
+    final Object instance = builder.toClass().instance();
+    
+    // check method functionality
+    final Method instanceMethod = instance.getClass().getMethod("testMethod", int[].class);
+    instanceMethod.setAccessible(true);
+    final int[] is = new int[arrayLength];
+    instanceMethod.invoke(instance, is);
+    for (int i = 0; i < arrayLength; ++i) {
+      assertEquals((i + 1) * 2, is[i]);
+    }
   }
   
   @Test
@@ -66,7 +78,7 @@ public class MethodSplitterTest {
     // INIT
     classNode.name += "2";
     method.desc = "()[I";
-    builder.addArray("[I", 5);//
+    builder.addArray("[I", arrayLength);//
     fillArray().// arrayref
         addInsn(new InsnNode(Opcodes.ARETURN));
     
@@ -75,10 +87,12 @@ public class MethodSplitterTest {
     final List<MethodNode> additionalMethods = splitter.getAdditionalMethods();
     
     // ASSERT
+    
     // check methods
+    assertFalse(additionalMethods.isEmpty());
     for (int i = 0; i < (additionalMethods.size() - 1); ++i) {
       final MethodNode methodNode = additionalMethods.get(i);
-      assertEquals("([I)V", methodNode.desc);
+      assertEquals("([I)[I", methodNode.desc);
     }
     final MethodNode methodNode = additionalMethods.get(additionalMethods.size() - 1);
     assertEquals("([I)[I", methodNode.desc);
@@ -86,8 +100,15 @@ public class MethodSplitterTest {
     // check that the class is valid by instantiating it
     method.instructions = splitted;
     classNode.methods.addAll(additionalMethods);
+    final Object instance = builder.toClass().instance();
     
-    builder.toClass().instance();
+    // check method functionality
+    final Method intanceMethod = instance.getClass().getMethod("testMethod");
+    intanceMethod.setAccessible(true);
+    final int[] invoke = (int[]) intanceMethod.invoke(instance);
+    for (int i = 0; i < arrayLength; ++i) {
+      assertEquals((i + 1) * 2, invoke[i]);
+    }
   }
   
   private ClassNodeBuilder fillArray() {

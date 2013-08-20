@@ -18,10 +18,12 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
+import static org.objectweb.asm.Opcodes.IRETURN;
+
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
@@ -34,7 +36,6 @@ import org.objectweb.asm.commons.CodeSizeEvaluator;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -202,8 +203,12 @@ public class MethodSplitter implements IOptimizer {
     }
   }
   
-  /** Default Max-Length for methods. */
-  public static final int MAX_LENGTH = (1024 * 8) - 1;
+  /**
+   * Default Max-Length for methods.
+   * This is the max length of 8 kb to fit the JIT-Compiler
+   * minus 512 bytes for handling variables.
+   */
+  public static final int MAX_LENGTH = (7 * 1024) + 512;
   
   private final ClassNode classNode;
   private final int maxInsns;
@@ -243,8 +248,8 @@ public class MethodSplitter implements IOptimizer {
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) throws JBOPClassException {
     
-    LocalVariablesSorter sorter = new LocalVariablesSorter(Opcodes.ACC_PRIVATE, methodNode.desc,
-        new EmptyMethodVisitor(Opcodes.ASM4));
+    LocalVariablesSorter sorter = new LocalVariablesSorter(methodNode.access, methodNode.desc, new EmptyMethodVisitor(
+        Opcodes.ASM4));
     methodNode.accept(sorter);
     
     if (getLength(methodNode) < maxInsns) {
@@ -252,48 +257,39 @@ public class MethodSplitter implements IOptimizer {
     }
     
     final List<Block> blocks = getBlocks(original, methodNode);
+    
     final String baseName = methodNode.name;
     final String[] exceptions = getExceptions(methodNode);
-    final InsnList list = new InsnList();
     
-    final Iterator<Block> iterator = blocks.iterator();
+    final InsnList returnList = new InsnList();
+    InsnList list = returnList;
     
-    final Block start = iterator.next();
-    add(list, start.getInstructions(), original);
+    Block block = blocks.get(0);
+    block.renameInsns(block.getVarMap());
     
     final String name = baseName + "__split__part__";
-    while (iterator.hasNext()) {
-      final Block block = iterator.next();
-      final Type endType;
-      if (isReturn(block.getLastStore())) {
-        endType = Type.getReturnType(methodNode.desc);
-      } else {
-        endType = block.getEndType();
-      }
-      final String methodDescriptor = Type.getMethodDescriptor(endType, block.getParameterTypes());
-      
+    final Type endType = Type.getReturnType(methodNode.desc);
+    for (int i = 1; i < blocks.size(); ++i) {
+      final Map<Integer, Integer> paramRenameMap = block.getVarMap();
+      add(list, block.getInstructions(), original);
+      block = blocks.get(i);
+      block.renameInsns(paramRenameMap);
+      final String methodDescriptor = block.getDescriptor();
       final String newMethodName = name + block.getBlockNumber();
-      // System.out.println("Creating " + newMethodName);
       final MethodNode splitMethod = new MethodNode(Opcodes.ASM4, ACCESS, newMethodName, methodDescriptor, null,
           exceptions);
+      additionalMethods.add(splitMethod);
       
-      final AbstractInsnNode lastStore = block.getLastStore();
       list.add(new VarInsnNode(Opcodes.ALOAD, 0));
       list.add(block.getPushParameters());
       list.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, classNode.name, splitMethod.name, methodDescriptor));
-      if (lastStore != null) {
-        addWriteOrReturn(list, lastStore);
-      }
-      block.renameInsns();
-      add(splitMethod.instructions, block.getInstructions(), original);
-      addLoadAndReturn(splitMethod.instructions, lastStore);
-      
-      sorter = new LocalVariablesSorter(Opcodes.ACC_PRIVATE, splitMethod.desc, new EmptyMethodVisitor(Opcodes.ASM4));
+      list.add(new InsnNode(endType.getOpcode(IRETURN)));
+      sorter = new LocalVariablesSorter(splitMethod.access, splitMethod.desc, new EmptyMethodVisitor(Opcodes.ASM4));
       splitMethod.accept(sorter);
-      
-      additionalMethods.add(splitMethod);
+      list = splitMethod.instructions;
     }
-    return list;
+    add(list, block.getInstructions(), original);
+    return returnList;
   }
   
   private InsnList clean(final InsnList original) {
@@ -312,116 +308,6 @@ public class MethodSplitter implements IOptimizer {
     final CodeSizeEvaluator codeSizeEvaluator = new CodeSizeEvaluator(null);
     methodNode.accept(codeSizeEvaluator);
     return codeSizeEvaluator.getMaxSize();
-  }
-  
-  private boolean isStore(final AbstractInsnNode node) {
-    if (node == null) {
-      return false;
-    }
-    if ((node.getOpcode() >= Opcodes.ISTORE) && (node.getOpcode() <= Opcodes.ASTORE)) {
-      return true;
-    }
-    
-    return false;
-  }
-  
-  private boolean isReturn(final AbstractInsnNode node) {
-    if (node == null) {
-      return false;
-    }
-    if ((node.getOpcode() >= Opcodes.IRETURN) && (node.getOpcode() <= Opcodes.RETURN)) {
-      return true;
-    }
-    return false;
-  }
-  
-  private void addWriteOrReturn(final InsnList list, final AbstractInsnNode lastStore) {
-    if (isStore(lastStore)) {
-      final VarInsnNode write = new VarInsnNode(lastStore.getOpcode(), getIndex(lastStore));
-      list.add(write);
-    } else {
-      addWrite(list, lastStore);
-    }
-  }
-  
-  private void addWrite(final InsnList list, final AbstractInsnNode lastStore) {
-    final int opcode;
-    if (isReturn(lastStore)) {
-      // copy returnstatement to "main"-method
-      list.add(new InsnNode(lastStore.getOpcode()));
-      return;
-    }
-    if (lastStore == null) {
-      opcode = Opcodes.RETURN;
-    } else {
-      opcode = lastStore.getOpcode();
-    }
-    final InsnNode write = getReturn(opcode);
-    list.add(write);
-  }
-  
-  private void addLoadAndReturn(final InsnList instructions, final AbstractInsnNode lastStore) {
-    if (isReturn(lastStore)) {
-      // final InsnNode write = getReturn(lastStore.getOpcode());
-      // instructions.remove(lastStore);
-      // instructions.add(write);
-      return;
-    }
-    addLoad(instructions, lastStore);
-    addWrite(instructions, lastStore);
-    
-  }
-  
-  private void addLoad(final InsnList instructions, final AbstractInsnNode lastStore) {
-    if (lastStore == null) {
-      return;
-    }
-    final VarInsnNode load = new VarInsnNode(getLoadCode(lastStore.getOpcode()), getIndex(lastStore));
-    instructions.add(load);
-  }
-  
-  private int getIndex(final AbstractInsnNode node) {
-    if (node instanceof VarInsnNode) {
-      return ((VarInsnNode) node).var;
-    } else if (node instanceof IincInsnNode) {
-      return ((IincInsnNode) node).var;
-    } else {
-      return -1;
-    }
-  }
-  
-  private int getLoadCode(final int opcode) {
-    switch (opcode) {
-      case Opcodes.ISTORE:
-        return Opcodes.ILOAD;
-      case Opcodes.ASTORE:
-        return Opcodes.ALOAD;
-      case Opcodes.FSTORE:
-        return Opcodes.FLOAD;
-      case Opcodes.LSTORE:
-        return Opcodes.LLOAD;
-      case Opcodes.DSTORE:
-        return Opcodes.DLOAD;
-      default:
-        return 0;
-    }
-  }
-  
-  private InsnNode getReturn(final int opcode) {
-    switch (opcode) {
-      case Opcodes.ISTORE:
-        return new InsnNode(Opcodes.IRETURN);
-      case Opcodes.ASTORE:
-        return new InsnNode(Opcodes.ARETURN);
-      case Opcodes.FSTORE:
-        return new InsnNode(Opcodes.FRETURN);
-      case Opcodes.LSTORE:
-        return new InsnNode(Opcodes.LRETURN);
-      case Opcodes.DSTORE:
-        return new InsnNode(Opcodes.DRETURN);
-      default:
-        return new InsnNode(Opcodes.RETURN);
-    }
   }
   
   private void add(final InsnList list, final List<AbstractInsnNode> insns, final InsnList original) {
@@ -443,22 +329,18 @@ public class MethodSplitter implements IOptimizer {
     final ListIterator<AbstractInsnNode> iterator = original.iterator();
     final Type[] args = Type.getArgumentTypes(methodNode.desc);
     
-    final Block currentBlock = new Block(-1, args);
+    final Type returnType = Type.getReturnType(methodNode.desc);
+    final Block currentBlock = new Block(-1, args, returnType);
     final List<Block> blocks = new ArrayList<>();
-    boolean first = true;
     boolean added = false;
     int num = 0;
-    Block methodBlock = new Block(num, args);
+    Block methodBlock = new Block(num, args, returnType);
     
     while (iterator.hasNext()) {
       final AbstractInsnNode current = iterator.next();
       if (current instanceof SplitMarkNode) {
-        int maxLength = maxInsns;
-        if (first) {
-          maxLength = maxLength / 2;
-        }
         final int methodLength = currentBlock.getSize() + methodBlock.getSize();
-        if (methodLength < maxLength) {
+        if (methodLength < maxInsns) {
           methodBlock.add(currentBlock);
           currentBlock.clear();
         } else {
@@ -469,8 +351,7 @@ public class MethodSplitter implements IOptimizer {
           added = true;
           blocks.add(methodBlock);
           num++;
-          methodBlock = new Block(num, args);
-          first = false;
+          methodBlock = new Block(num, args, returnType);
           if (currentBlock.getSize() > 0) {
             methodBlock.add(currentBlock);
             currentBlock.clear();

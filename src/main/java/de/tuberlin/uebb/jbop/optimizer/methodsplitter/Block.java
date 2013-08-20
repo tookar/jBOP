@@ -21,6 +21,7 @@ package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +70,8 @@ class Block {
   private int varIndex = 1;
   private final int firstLocal;
   private final int parameterIndexes[];
+  private final StringBuilder descBuilder = new StringBuilder("(");
+  private final Type returnType;
   
   /**
    * Instantiates a new {@link Block}.
@@ -78,9 +81,10 @@ class Block {
    * @param args
    *          the top-Level parameters of the method
    */
-  Block(final int num, final Type[] args) {
+  Block(final int num, final Type[] args, final Type returnType) {
     this.args = args;
     this.num = num;
+    this.returnType = returnType;
     int i = 0;
     parameterIndexes = new int[args.length];
     for (final Type type : args) {
@@ -90,6 +94,7 @@ class Block {
       varMap.put(Integer.valueOf(varIndex), Integer.valueOf(varIndex));
       varIndex += type.getSize();
       i++;
+      descBuilder.append(type.getDescriptor());
     }
     firstLocal = varIndex;
   }
@@ -129,7 +134,11 @@ class Block {
   
   @Override
   public String toString() {
-    return "Block " + num + ": " + getSize() + "bytes";
+    return "Block " + num + ": " + getSize() + "bytes, " + getDescriptor();
+  }
+  
+  String getDescriptor() {
+    return descBuilder.toString() + ")" + returnType.getDescriptor();
   }
   
   /**
@@ -160,7 +169,8 @@ class Block {
       return;
     }
     if (isStore(insn)) {
-      if (writers.containsIndex(getIndex(insn))) {
+      final int index = getIndex(insn);
+      if (writers.containsIndex(index)) {
         return;
       }
       final Type findType = findType(insn);
@@ -186,6 +196,7 @@ class Block {
         
         final VarInsnNode node = new VarInsnNode(var.getOpcode(), index);
         pushParameters.add(node);
+        descBuilder.append(findType.getDescriptor());
         addVarMapping(var, findType);
       }
     }
@@ -469,23 +480,26 @@ class Block {
    * Rename insns.
    * This means: correct the indexes of the local variables to match the parameters.
    */
-  void renameInsns() {
+  void renameInsns(final Map<Integer, Integer> paramRenameMap) {
     for (final AbstractInsnNode node : insns) {
-      renameIfVar(node);
+      renameIfVar(node, varMap);
+    }
+    for (final Iterator<AbstractInsnNode> it = pushParameters.iterator(); it.hasNext();) {
+      renameIfVar(it.next(), paramRenameMap);
     }
   }
   
-  private void renameIfVar(final AbstractInsnNode currentNode) {
+  private void renameIfVar(final AbstractInsnNode currentNode, final Map<Integer, Integer> varRenameMap) {
     final int index = getIndex(currentNode);
     if (index < firstLocal) {
       return;
     }
     final Integer key = Integer.valueOf(index);
-    Integer value = varMap.get(key);
+    Integer value = varRenameMap.get(key);
     if (value == null) {
       value = Integer.valueOf(varIndex);
       varIndex += writers.getFirstVar(index).getParameterType().getSize();
-      varMap.put(key, value);
+      varRenameMap.put(key, value);
     }
     final int mapped = value.intValue();
     setIndex(currentNode, mapped);
@@ -530,6 +544,14 @@ class Block {
   
   List<AbstractInsnNode> getInstructions() {
     return Collections.unmodifiableList(insns);
+  }
+  
+  VarList getParameters() {
+    return parameters;
+  }
+  
+  Map<Integer, Integer> getVarMap() {
+    return Collections.unmodifiableMap(varMap);
   }
   
 }
