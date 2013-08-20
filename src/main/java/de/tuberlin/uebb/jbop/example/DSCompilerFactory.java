@@ -436,8 +436,8 @@ public class DSCompilerFactory {
    *           if sum of derivation orders is larger
    *           than the instance limits
    */
-  static int getPartialDerivativeIndex(final int parameters, final int order, final int[][] sizes, final int... orders)
-      throws NumberIsTooLargeException {
+  public static int getPartialDerivativeIndex(final int parameters, final int order, final int[][] sizes,
+      final int... orders) throws NumberIsTooLargeException {
     
     // the value is obtained by diving into the recursive Dan Kalman's structure
     // this is theorem 2 of his paper, with recursion replaced by iteration
