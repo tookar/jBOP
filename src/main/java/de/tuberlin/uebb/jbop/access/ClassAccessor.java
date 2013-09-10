@@ -19,6 +19,9 @@
 package de.tuberlin.uebb.jbop.access;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -292,6 +295,52 @@ public final class ClassAccessor {
       return AccessController.doPrivileged(action);
     } catch (final RuntimeException re) {
       throw new JBOPClassException(re.getMessage(), re.getCause());
+    }
+  }
+  
+  /**
+   * Tests whether the given field of input is final.
+   * 
+   * @param input
+   *          the object
+   * @param fieldName
+   *          the field name
+   * @return true, if is final
+   */
+  public static boolean isFinal(final Object input, final String fieldName) {
+    final Field declaredField = getField(input, fieldName);
+    if (declaredField == null) {
+      return false;
+    }
+    return (declaredField.getModifiers() & Modifier.FINAL) != 0;
+  }
+  
+  /**
+   * Tests whether the given field of input has this annotation.
+   * 
+   * @param input
+   *          the input
+   * @param fieldName
+   *          the field name
+   * @param annotationClass
+   *          the annotation class
+   * @return true, if successful
+   */
+  public static boolean hasAnnotation(final Object input, final String fieldName,
+      final Class<? extends Annotation> annotationClass) {
+    final Field declaredField = getField(input, fieldName);
+    if (declaredField == null) {
+      return false;
+    }
+    return declaredField.getAnnotation(annotationClass) != null;
+  }
+  
+  private static Field getField(final Object object, final String fieldName) {
+    final Class<? extends Object> clazz = object.getClass();
+    try {
+      return clazz.getDeclaredField(fieldName);
+    } catch (NoSuchFieldException | SecurityException e) {
+      return null;
     }
   }
   

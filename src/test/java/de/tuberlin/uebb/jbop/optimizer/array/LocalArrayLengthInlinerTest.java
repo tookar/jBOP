@@ -63,7 +63,8 @@ public class LocalArrayLengthInlinerTest {
         addInsn(new InsnNode(Opcodes.IADD)).// 1 -> 1
         addInsn(new InsnNode(Opcodes.IRETURN));// 1 -> 1
     // 14 -> 12
-    final LocalArrayLengthInliner inliner = new LocalArrayLengthInliner(builder.toClass().instance());
+    final LocalArrayLengthInliner inliner = new LocalArrayLengthInliner();
+    inliner.setInputObject(builder.toClass().instance());
     
     // RUN STEP 1
     final MethodNode method = builder.getMethod("getArrayLength");

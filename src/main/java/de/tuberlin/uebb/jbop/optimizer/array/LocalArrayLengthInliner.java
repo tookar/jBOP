@@ -73,16 +73,6 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  */
 public class LocalArrayLengthInliner extends AbstractLocalArrayOptimizer {
   
-  /**
-   * Instantiates a new {@link LocalArrayLengthInliner}.
-   * 
-   * @param input
-   *          the input
-   */
-  public LocalArrayLengthInliner(final Object input) {
-    super(input);
-  }
-  
   @Override
   protected boolean handleValues(final InsnList original, final Map<Integer, Object> knownArrays,
       final AbstractInsnNode currentNode) {

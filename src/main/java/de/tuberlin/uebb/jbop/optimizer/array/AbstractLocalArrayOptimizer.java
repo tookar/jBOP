@@ -34,6 +34,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.access.ClassAccessor;
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IInputObjectAware;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
@@ -76,20 +77,10 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * 
  * @author Christopher Ewest
  */
-abstract class AbstractLocalArrayOptimizer implements IOptimizer {
+abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAware {
   
   private boolean optimized;
-  private final Object input;
-  
-  /**
-   * Instantiates a new {@link LocalArrayLengthInliner}.
-   * 
-   * @param input
-   *          the input
-   */
-  public AbstractLocalArrayOptimizer(final Object input) {
-    this.input = input;
-  }
+  private Object input;
   
   @Override
   public boolean isOptimized() {
@@ -188,5 +179,10 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer {
     }
     knownArrays.put(varIndex, array);
     return true;
+  }
+  
+  @Override
+  public void setInputObject(final Object inputObject) {
+    input = inputObject;
   }
 }

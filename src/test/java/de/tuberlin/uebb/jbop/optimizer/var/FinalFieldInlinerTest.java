@@ -203,7 +203,8 @@ public class FinalFieldInlinerTest {
     classNode.name += testNumber;
     builder.addField("field", desc).withModifiers(ACC_PRIVATE, ACC_FINAL).withGetter().initWith(value);
     input = builder.toClass().instance();
-    inliner = new FinalFieldInliner(input);
+    inliner = new FinalFieldInliner();
+    inliner.setInputObject(input);
     method = builder.getMethod("getField");
   }
 }

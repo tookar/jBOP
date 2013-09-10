@@ -43,6 +43,7 @@ import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayLengthInliner;
 import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.controlflow.ConstantIfInliner;
 import de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller;
+import de.tuberlin.uebb.jbop.optimizer.var.FinalFieldInliner;
 import de.tuberlin.uebb.jbop.optimizer.var.LocalVarInliner;
 import de.tuberlin.uebb.jbop.optimizer.var.RemoveUnusedLocalVars;
 
@@ -60,6 +61,7 @@ public class OptimizerTest {
   private static final List<Class<? extends IOptimizer>> DEFAULT_OPTIMIZER_STEPS;
   static {
     final List<Class<? extends IOptimizer>> optimizers = new ArrayList<>();
+    optimizers.add(FinalFieldInliner.class);
     optimizers.add(LocalArrayLengthInliner.class);
     optimizers.add(FieldArrayLengthInliner.class);
     optimizers.add(LocalArrayValueInliner.class);

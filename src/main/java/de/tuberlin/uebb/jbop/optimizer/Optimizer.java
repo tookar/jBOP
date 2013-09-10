@@ -90,13 +90,9 @@ public class Optimizer {
     
     final ClassNode classNode = OptimizerUtils.readClass(input);
     
-    final FinalFieldInliner finalFieldInliner = new FinalFieldInliner(input);
-    
     final List<MethodNode> additionalMethods = new ArrayList<>();
     for (final MethodNode methodNode : classNode.methods) {
       if (optimizeThis.evaluate(methodNode)) {
-        // Constantfolding needs to be run only once per method
-        methodNode.instructions = finalFieldInliner.optimize(methodNode.instructions, methodNode);
         
         final List<IOptimizer> optimizers = initOptimizers(classNode, methodNode, input);
         // stores newly created Methods (see de.tuberlin.uebb.jbop.optimizer.methodsplitter.MethodSplitter)
@@ -144,10 +140,14 @@ public class Optimizer {
       throws JBOPClassException {
     
     final List<IOptimizer> optimizers = new ArrayList<>();
+    final FinalFieldInliner finalFieldInliner = new FinalFieldInliner();
+    finalFieldInliner.setInputObject(input);
+    optimizers.add(finalFieldInliner);
     
     initAdditionalSteps(methodNode, optimizers, classNode, input);
     
-    final IOptimizer localArrayLengthInliner = new LocalArrayLengthInliner(input);
+    final LocalArrayLengthInliner localArrayLengthInliner = new LocalArrayLengthInliner();
+    localArrayLengthInliner.setInputObject(input);
     optimizers.add(localArrayLengthInliner);
     
     final FieldArrayValueInliner arrayValue = initFieldArrayOptimizers(classNode, input, optimizers);
@@ -166,7 +166,8 @@ public class Optimizer {
     final IOptimizer arithmeticInterpreter = new ArithmeticExpressionInterpreter();
     optimizers.add(arithmeticInterpreter);
     
-    final LocalArrayValueInliner localArrayValue = new LocalArrayValueInliner(input);
+    final LocalArrayValueInliner localArrayValue = new LocalArrayValueInliner();
+    localArrayValue.setInputObject(input);
     optimizers.add(localArrayValue);
     
     return optimizers;

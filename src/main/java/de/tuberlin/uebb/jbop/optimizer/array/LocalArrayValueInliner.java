@@ -66,16 +66,6 @@ import de.tuberlin.uebb.jbop.optimizer.utils.predicates.Predicates;
  */
 public class LocalArrayValueInliner extends AbstractLocalArrayOptimizer {
   
-  /**
-   * Instantiates a new {@link LocalArrayValueInliner}.
-   * 
-   * @param input
-   *          the input
-   */
-  public LocalArrayValueInliner(final Object input) {
-    super(input);
-  }
-  
   @Override
   protected boolean handleValues(final InsnList original, final Map<Integer, Object> knownArrays,
       final AbstractInsnNode currentNode) {

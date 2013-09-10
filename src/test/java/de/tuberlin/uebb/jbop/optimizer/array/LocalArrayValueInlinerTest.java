@@ -68,7 +68,8 @@ public class LocalArrayValueInlinerTest {
         addInsn(new InsnNode(Opcodes.DALOAD)).// 1 -> 0| 1
         addInsn(new InsnNode(Opcodes.DRETURN));// 1 -> 1
     // 14 -> 12
-    final LocalArrayValueInliner inliner = new LocalArrayValueInliner(builder.toClass().instance());
+    final LocalArrayValueInliner inliner = new LocalArrayValueInliner();
+    inliner.setInputObject(builder.toClass().instance());
     
     // RUN STEP 1
     final MethodNode method = builder.getMethod("getArrayValue");

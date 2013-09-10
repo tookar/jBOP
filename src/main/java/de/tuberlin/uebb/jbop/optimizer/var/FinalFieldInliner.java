@@ -27,25 +27,17 @@ import static org.objectweb.asm.Type.INT_TYPE;
 import static org.objectweb.asm.Type.LONG_TYPE;
 import static org.objectweb.asm.Type.SHORT_TYPE;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.ListIterator;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
-import de.tuberlin.uebb.jbop.access.ClassAccessor;
-import de.tuberlin.uebb.jbop.access.OptimizerUtils;
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IInputObjectAware;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
-import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
 
 /**
  * The Class FinalFieldInliner.
@@ -54,7 +46,7 @@ import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
  * 
  * @author Christopher Ewest
  */
-public class FinalFieldInliner implements IOptimizer {
+public class FinalFieldInliner implements IOptimizer, IInputObjectAware {
   
   private static final Type INT_OBJECT_TYPE = Type.getType(Integer.class);
   private static final Type LONG_OBJECT_TYPE = Type.getType(Long.class);
@@ -67,38 +59,9 @@ public class FinalFieldInliner implements IOptimizer {
   private static final Object BOOLEAN_OBJECT_TYPE = Type.getType(Boolean.class);
   
   private boolean optimized;
-  private final Object instance;
-  private final GetFieldPredicate isField;
+  private Object instance;
   
-  /**
-   * Instantiates a new {@link FinalFieldInliner}.
-   * 
-   * @param input
-   *          the input
-   * @throws JBOPClassException
-   *           the jBOP class exception
-   */
-  public FinalFieldInliner(final Object input) throws JBOPClassException {
-    instance = input;
-    final ClassNode readClass = OptimizerUtils.readClass(input);
-    final List<FieldNode> fieldNodes = readClass.fields;
-    final Set<String> fields = collectFields(fieldNodes);
-    isField = new GetFieldPredicate(fields);
-  }
-  
-  private Set<String> collectFields(final List<FieldNode> fieldNodes) {
-    final Set<String> fields = new HashSet<>();
-    for (final FieldNode field : fieldNodes) {
-      if ((field.access & Opcodes.ACC_FINAL) != 0) {
-        if (isBuiltIn(field.desc)) {
-          fields.add(field.name);
-        }
-      }
-    }
-    return fields;
-  }
-  
-  private static boolean isBuiltIn(final String desc) {
+  static boolean isBuiltIn(final String desc) {
     final Type type = Type.getType(desc);
     if (isPrimitive(type)) {
       return true;
@@ -106,7 +69,7 @@ public class FinalFieldInliner implements IOptimizer {
     return isPrimitiveWrapper(type);
   }
   
-  private static boolean isPrimitiveWrapper(final Type type) {
+  static boolean isPrimitiveWrapper(final Type type) {
     if (INT_OBJECT_TYPE.equals(type)) {
       return true;
     }
@@ -137,7 +100,7 @@ public class FinalFieldInliner implements IOptimizer {
     return false;
   }
   
-  private static boolean isPrimitive(final Type type) {
+  static boolean isPrimitive(final Type type) {
     if (INT_TYPE.equals(type)) {
       return true;
     }
@@ -173,28 +136,27 @@ public class FinalFieldInliner implements IOptimizer {
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) throws JBOPClassException {
     optimized = false;
-    final Iterator<AbstractInsnNode> iterator = original.iterator();
+    final ListIterator<AbstractInsnNode> iterator = original.iterator();
+    final GetFieldChainInliner fieldChainInliner = new GetFieldChainInliner();
     while (iterator.hasNext()) {
       final AbstractInsnNode currentNode = iterator.next();
       if (!NodeHelper.isAload(currentNode)) {
         continue;
       }
-      final AbstractInsnNode getfield = NodeHelper.getNext(currentNode);
-      if (!isField.evaluate(getfield)) {
-        continue;
-      }
-      final Object value = getValue(getfield);
-      final AbstractInsnNode replacement = NodeHelper.getInsnNodeFor(value);
       
-      original.insertBefore(currentNode, replacement);
-      original.remove(currentNode);
-      iterator.next();
-      original.remove(getfield);
+      fieldChainInliner.setInputObject(instance);
+      fieldChainInliner.setIterator(iterator);
+      fieldChainInliner.optimize(original, methodNode);
+      if (fieldChainInliner.isOptimized()) {
+        original.remove(currentNode);
+        optimized = true;
+      }
     }
     return original;
   }
   
-  private Object getValue(final AbstractInsnNode getFieldNode) throws JBOPClassException {
-    return ClassAccessor.getCurrentValue(instance, NodeHelper.getFieldname(getFieldNode));
+  @Override
+  public void setInputObject(final Object input) {
+    instance = input;
   }
 }
