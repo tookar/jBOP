@@ -271,6 +271,7 @@ public class ConstantIfInliner implements IOptimizer {
           newNumber = Long.valueOf(op2.longValue() - op1.longValue());
           break;
         default:
+          newNumber = op1;
       }
     }
     return newNumber;
