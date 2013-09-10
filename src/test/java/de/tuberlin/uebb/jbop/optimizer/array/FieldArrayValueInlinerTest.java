@@ -19,17 +19,38 @@
 package de.tuberlin.uebb.jbop.optimizer.array;
 
 import static org.junit.Assert.assertEquals;
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.AASTORE;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.objectweb.asm.Opcodes.DALOAD;
+import static org.objectweb.asm.Opcodes.DRETURN;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
 
 import java.util.Arrays;
 
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
+import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
@@ -68,8 +89,8 @@ public class FieldArrayValueInlinerTest {
         addInsn(new InsnNode(Opcodes.DRETURN));// 1
     //
     
-    final FieldArrayValueInliner inliner = new FieldArrayValueInliner(Arrays.asList("doubleArray1", "doubleArray2"),
-        builder.toClass().instance());
+    final IOptimizer inliner = new FieldArrayValueInliner(Arrays.asList("doubleArray1", "doubleArray2"), builder
+        .toClass().instance());
     
     final MethodNode method = builder.getMethod("sumArrayValues");
     assertEquals(30, method.instructions.size());
@@ -107,5 +128,62 @@ public class FieldArrayValueInlinerTest {
     
     // ASSERT STEP 3
     assertEquals(12, optimized3.size());
+  }
+  
+  @Test
+  public void test() throws Exception {
+    // INIT
+    final ClassNodeBuilder builderC = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.C")
+        .addField("d", "[D").withModifiers(ACC_PRIVATE, ACC_FINAL).withAnnotation(ImmutableArray.class)
+        .initArrayWith(1.0).//
+        toClass();
+    final ClassNodeBuilder builderB = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.B")
+        .addField("c", Type.getDescriptor(builderC.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).toClass();
+    final ClassNodeBuilder builderA = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.A")
+        .addField("b", Type.getDescriptor(builderB.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).toClass();
+    final ClassNodeBuilder builderTestClass = ClassNodeBuilder
+        .createClass("de.tuberlin.uebb.jbop.optimizer.array.ChainedTestClass")
+        .addField("a", "[" + Type.getDescriptor(builderA.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .addToConstructor(initArray()).//
+        addMethod("get", "()D").//
+        addGetClassField("a").// ;
+        addInsn(new InsnNode(ICONST_0)).//
+        addInsn(new InsnNode(AALOAD)).//
+        addGetField(builderA, "b").//
+        addGetField(builderB, "c").//
+        addGetField(builderC, "d").//
+        addInsn(new InsnNode(ICONST_0)).//
+        addInsn(new InsnNode(DALOAD)).//
+        addInsn(new InsnNode(DRETURN));//
+    
+    final Object instance = builderTestClass.instance();
+    
+    // RUN
+    final FieldArrayValueInliner inliner = new FieldArrayValueInliner(Arrays.asList("a"), instance);
+    final MethodNode method = builderTestClass.getMethod("get");
+    final InsnList optimized = inliner.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertEquals(2, optimized.size());
+    assertEquals(1.0, NodeHelper.getNumberValue(optimized.get(0)).doubleValue(), .00001);
+  }
+  
+  private InsnList initArray() {
+    
+    final InsnList list = new InsnList();
+    list.add(new VarInsnNode(ALOAD, 0));
+    list.add(new InsnNode(ICONST_1));
+    list.add(new TypeInsnNode(ANEWARRAY, "de/tuberlin/uebb/jbop/optimizer/array/A"));
+    list.add(new InsnNode(DUP));
+    list.add(new InsnNode(ICONST_0));
+    list.add(new TypeInsnNode(NEW, "de/tuberlin/uebb/jbop/optimizer/array/A"));
+    list.add(new InsnNode(DUP));
+    list.add(new MethodInsnNode(INVOKESPECIAL, "de/tuberlin/uebb/jbop/optimizer/array/A", "<init>", "()V"));
+    list.add(new InsnNode(AASTORE));
+    list.add(new FieldInsnNode(PUTFIELD, "de/tuberlin/uebb/jbop/optimizer/array/ChainedTestClass", "a",
+        "[Lde/tuberlin/uebb/jbop/optimizer/array/A;"));
+    return list;
   }
 }
