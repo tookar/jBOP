@@ -130,8 +130,14 @@ public class FieldArrayValueInlinerTest {
     assertEquals(12, optimized3.size());
   }
   
+  /**
+   * Tests that the FieldArrayValueInliner is working correctly with field-chains.
+   * 
+   * @throws Exception
+   *           the exception
+   */
   @Test
-  public void test() throws Exception {
+  public void testFieldArrayValueInlinerWithFieldChain() throws Exception {
     // INIT
     final ClassNodeBuilder builderC = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.C")
         .addField("d", "[D").withModifiers(ACC_PRIVATE, ACC_FINAL).withAnnotation(ImmutableArray.class)

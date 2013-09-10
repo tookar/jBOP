@@ -54,20 +54,7 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * will become
  * 
  * <pre>
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
+
  * int e = 1;
  * </pre>
  * 
@@ -114,7 +101,6 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
   private boolean optimized;
   private Object input;
   private ListIterator<AbstractInsnNode> iterator = Collections.<AbstractInsnNode> emptyList().listIterator();
-  private int counter;
   
   @Override
   public boolean isOptimized() {
@@ -124,18 +110,16 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) throws JBOPClassException {
     optimized = false;
-    counter = 0;
+    final ListIterator<AbstractInsnNode> localIterator = original.iterator(iterator.nextIndex());
     Object object = input;
     Object lastObject = null;
     final List<AbstractInsnNode> nodes = new ArrayList<>();
     String fieldname = null;
-    while (iterator.hasNext()) {
-      final AbstractInsnNode next = iterator.next();
-      counter++;
+    while (localIterator.hasNext()) {
+      final AbstractInsnNode next = localIterator.next();
       if ((next.getOpcode() == GETFIELD)) {
         fieldname = NodeHelper.getFieldname(next);
         if (!ClassAccessor.isFinal(object, fieldname)) {
-          correctIterator();
           return original;
         }
         nodes.add(next);
@@ -144,7 +128,6 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
         
       } else {
         if (object == input) {
-          correctIterator();
           return original;
         }
         final Type type = Type.getType(object.getClass());
@@ -152,11 +135,19 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
         
         if (handleBuiltIn(descriptor, original, next, object, nodes)) {
           optimized = true;
+          if (localIterator.hasNext()) {
+            final AbstractInsnNode next2 = localIterator.next();
+            while (iterator.hasNext()) {
+              if (iterator.next() == next2) {
+                iterator.previous();
+                break;
+              }
+            }
+          }
           return original;
         }
-        object = handleArray(type, nodes, object, lastObject, next, fieldname);
+        object = handleArray(type, nodes, object, lastObject, next, fieldname, localIterator);
         if (object == null) {
-          correctIterator();
           return original;
         }
       }
@@ -164,14 +155,9 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
     return original;
   }
   
-  private void correctIterator() {
-    for (int i = 0; i < counter; ++i) {
-      iterator.previous();
-    }
-  }
-  
   private Object handleArray(final Type type, final List<AbstractInsnNode> nodes, final Object object,
-      final Object lastObject, final AbstractInsnNode currentNode, final String fieldName) {
+      final Object lastObject, final AbstractInsnNode currentNode, final String fieldName,
+      final ListIterator<AbstractInsnNode> localIterator) {
     if (!type.getDescriptor().startsWith("[")) {
       return null;
     }
@@ -181,7 +167,7 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
     Object localObject = object;
     AbstractInsnNode next = currentNode;
     for (int i = 0; i < type.getDimensions(); ++i) {
-      if (!iterator.hasNext()) {
+      if (!localIterator.hasNext()) {
         return null;
       }
       if (!NodeHelper.isNumberNode(next)) {
@@ -189,19 +175,17 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
       }
       final int index = NodeHelper.getNumberValue(next).intValue();
       nodes.add(next);
-      if (!iterator.hasNext()) {
+      if (!localIterator.hasNext()) {
         return null;
       }
-      next = iterator.next();
-      counter++;
+      next = localIterator.next();
       if (!((next.getOpcode() >= IALOAD) && (next.getOpcode() <= SALOAD))) {
         return null;
       }
       nodes.add(next);
       localObject = Array.get(localObject, index);
       if (i < (type.getDimensions() - 1)) {
-        counter++;
-        next = iterator.next();
+        next = localIterator.next();
       }
     }
     return localObject;
