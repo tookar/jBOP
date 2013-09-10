@@ -20,18 +20,44 @@ package de.tuberlin.uebb.jbop.optimizer.var;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.AASTORE;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.objectweb.asm.Opcodes.DALOAD;
+import static org.objectweb.asm.Opcodes.DASTORE;
+import static org.objectweb.asm.Opcodes.DCONST_1;
+import static org.objectweb.asm.Opcodes.DRETURN;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.NEWARRAY;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
+/**
+ * Tests for {@link FinalFieldInliner}.
+ * 
+ * @author Christopher Ewest
+ */
 public class FinalFieldInlinerTest {
   
   private ClassNodeBuilder builder;
@@ -39,8 +65,11 @@ public class FinalFieldInlinerTest {
   private MethodNode method;
   
   private Object input;
-  private FinalFieldInliner inliner;
+  private final FinalFieldInliner inliner = new FinalFieldInliner();
   
+  /**
+   * Init for every test.
+   */
   @Before
   public void before() {
     builder = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.FieldInlinerTestClass");//
@@ -199,11 +228,112 @@ public class FinalFieldInlinerTest {
     assertEquals('C', NodeHelper.getCharValue(optimized.get(0)));
   }
   
+  /**
+   * Tests that finalFieldInliner is is working correctly for field-Chains with mutli-arrays.
+   * 
+   * @throws Exception
+   *           the exception
+   */
+  @Test
+  public void testFinalFieldInlinerFieldChainMultiArray() throws Exception {
+    // INIT
+    final ClassNodeBuilder builderC = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.CM")
+        .addField("d", "[[D").withModifiers(ACC_PRIVATE, ACC_FINAL).withAnnotation(ImmutableArray.class)
+        .addToConstructor(new VarInsnNode(ALOAD, 0)).//
+        addToConstructor(new InsnNode(ICONST_1)).//
+        addToConstructor(new TypeInsnNode(ANEWARRAY, "[D")).//
+        addToConstructor(new InsnNode(DUP)).//
+        addToConstructor(new InsnNode(ICONST_0)).//
+        addToConstructor(new InsnNode(ICONST_1)).//
+        addToConstructor(new IntInsnNode(NEWARRAY, Opcodes.T_DOUBLE)).//
+        addToConstructor(new InsnNode(DUP)).//
+        addToConstructor(new InsnNode(ICONST_0)).//
+        addToConstructor(new InsnNode(DCONST_1)).//
+        addToConstructor(new InsnNode(DASTORE)).//
+        addToConstructor(new InsnNode(AASTORE)).//
+        addToConstructor(new FieldInsnNode(PUTFIELD, "de/tuberlin/uebb/jbop/optimizer/var/CM", "d", "[[D")).//
+        toClass();
+    final ClassNodeBuilder builderB = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.BM")
+        .addField("c", Type.getDescriptor(builderC.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).toClass();
+    final ClassNodeBuilder builderA = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.AM")
+        .addField("b", Type.getDescriptor(builderB.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).toClass();
+    final ClassNodeBuilder builderTestClass = ClassNodeBuilder
+        .createClass("de.tuberlin.uebb.jbop.optimizer.var.ChainedTestClassM")
+        .addField("a", Type.getDescriptor(builderA.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).//
+        addMethod("get", "()D").//
+        addGetClassField("a").// ;
+        addGetField(builderA, "b").//
+        addGetField(builderB, "c").//
+        addGetField(builderC, "d").//
+        addInsn(new InsnNode(ICONST_0)).//
+        addInsn(new InsnNode(AALOAD)).//
+        addInsn(new InsnNode(ICONST_0)).//
+        addInsn(new InsnNode(DALOAD)).//
+        addInsn(new InsnNode(DRETURN));//
+    
+    // RUN
+    final Object instance = builderTestClass.instance();
+    
+    inliner.setInputObject(instance);
+    method = builderTestClass.getMethod("get");
+    final InsnList optimized = inliner.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertEquals(2, optimized.size());
+    assertEquals(1.0, NodeHelper.getNumberValue(optimized.get(0)).doubleValue(), .00001);
+  }
+  
+  /**
+   * Tests that finalFieldInliner is is working correctly for field-Chains with single-arrays.
+   * 
+   * @throws Exception
+   *           the exception
+   */
+  @Test
+  public void testFinalFieldInlinerFieldChainArray() throws Exception {
+    // INIT
+    final ClassNodeBuilder builderC = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.C")
+        .addField("d", "[D").withModifiers(ACC_PRIVATE, ACC_FINAL).withAnnotation(ImmutableArray.class)
+        .initArrayWith(1.0).//
+        toClass();
+    final ClassNodeBuilder builderB = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.B")
+        .addField("c", Type.getDescriptor(builderC.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).toClass();
+    final ClassNodeBuilder builderA = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.var.A")
+        .addField("b", Type.getDescriptor(builderB.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).toClass();
+    final ClassNodeBuilder builderTestClass = ClassNodeBuilder
+        .createClass("de.tuberlin.uebb.jbop.optimizer.var.ChainedTestClass")
+        .addField("a", Type.getDescriptor(builderA.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
+        .initWith(null).//
+        addMethod("get", "()D").//
+        addGetClassField("a").// ;
+        addGetField(builderA, "b").//
+        addGetField(builderB, "c").//
+        addGetField(builderC, "d").//
+        addInsn(new InsnNode(ICONST_0)).//
+        addInsn(new InsnNode(DALOAD)).//
+        addInsn(new InsnNode(DRETURN));//
+    
+    // RUN
+    final Object instance = builderTestClass.instance();
+    
+    inliner.setInputObject(instance);
+    method = builderTestClass.getMethod("get");
+    final InsnList optimized = inliner.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertEquals(2, optimized.size());
+    assertEquals(1.0, NodeHelper.getNumberValue(optimized.get(0)).doubleValue(), .00001);
+  }
+  
   private void initTestMethod(final String desc, final Object value, final int testNumber) throws Exception {
     classNode.name += testNumber;
     builder.addField("field", desc).withModifiers(ACC_PRIVATE, ACC_FINAL).withGetter().initWith(value);
     input = builder.toClass().instance();
-    inliner = new FinalFieldInliner();
     inliner.setInputObject(input);
     method = builder.getMethod("getField");
   }

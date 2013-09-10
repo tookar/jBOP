@@ -18,9 +18,15 @@
  */
 package de.tuberlin.uebb.jbop.optimizer;
 
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -31,6 +37,7 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -89,6 +96,7 @@ public final class ClassNodeBuilder {
   public static ClassNodeBuilder createClass(final String className) {
     final ClassNodeBuilder builder = new ClassNodeBuilder();
     builder.classNode = new ClassNode(Opcodes.ASM4);
+    builder.classNode.access = ACC_PUBLIC;
     builder.classNode.name = className.replace(".", "/");
     builder.classNode.superName = Type.getInternalName(Object.class);
     builder.classNode.version = Opcodes.V1_7;
@@ -277,10 +285,42 @@ public final class ClassNodeBuilder {
       constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.PUTFIELD, classNode.name,
           lastField.name, lastField.desc));
     } else {
-      final TypeInsnNode node = new TypeInsnNode(Opcodes.NEW, lastField.desc);
-      constructor.instructions.insertBefore(returnNode, node);
+      constructor.instructions.insertBefore(returnNode, new VarInsnNode(ALOAD, 0));
+      constructor.instructions.insertBefore(returnNode, newObject(lastField.desc));
+      constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.PUTFIELD, classNode.name,
+          lastField.name, lastField.desc));
+      
     }
     return this;
+  }
+  
+  /**
+   * Creates Instruction to instantiate a new Object of type "desc".
+   * 
+   * @param desc
+   *          the desc
+   * @return the insn list
+   */
+  private InsnList newObject(final String desc) {
+    final InsnList list = new InsnList();
+    final String fieldDesc = StringUtils.removeEnd(StringUtils.removeStart(desc, "L"), ";");
+    final TypeInsnNode node = new TypeInsnNode(Opcodes.NEW, fieldDesc);
+    list.add(node);
+    list.add(new InsnNode(DUP));
+    list.add(new MethodInsnNode(INVOKESPECIAL, fieldDesc, "<init>", "()V"));
+    return list;
+  }
+  
+  /**
+   * Creates Instruction to instantiate a new Object of type "desc".
+   * 
+   * @param desc
+   *          the desc
+   * @return the insn list
+   */
+  public ClassNodeBuilder addNewObject(final String desc) {
+    final InsnList newObject = newObject(desc);
+    return addInsn(newObject);
   }
   
   /**
@@ -503,6 +543,32 @@ public final class ClassNodeBuilder {
   }
   
   /**
+   * Adds the given node to the constructor.
+   * 
+   * @param node
+   *          the node
+   * @return the class node builder
+   */
+  public ClassNodeBuilder addToConstructor(final AbstractInsnNode node) {
+    final AbstractInsnNode returnNode = constructor.instructions.getLast();
+    constructor.instructions.insertBefore(returnNode, node);
+    return this;
+  }
+  
+  /**
+   * Adds the given nodes to the constructor.
+   * 
+   * @param node
+   *          the node
+   * @return the class node builder
+   */
+  public ClassNodeBuilder addToConstructor(final InsnList nodes) {
+    final AbstractInsnNode returnNode = constructor.instructions.getLast();
+    constructor.instructions.insertBefore(returnNode, nodes);
+    return this;
+  }
+  
+  /**
    * adds a the given instruction to the method that was created last via {@link #addMethod(String, String)}.
    * 
    * @param node
@@ -515,16 +581,42 @@ public final class ClassNodeBuilder {
   }
   
   /**
+   * adds a the given instructions to the method that was created last via {@link #addMethod(String, String)}.
+   * 
+   * @param node
+   *          the node
+   * @return the abstract optimizer test
+   */
+  public ClassNodeBuilder addInsn(final InsnList nodes) {
+    lastMethod.instructions.add(nodes);
+    return this;
+  }
+  
+  /**
    * adds a FieldInsnNode for the given Field.
    * 
    * @param field
    *          the field
    * @return the abstract optimizer test
    */
-  public ClassNodeBuilder addGetField(final String field) {
-    final FieldNode fieldNode = getField(field);
+  public ClassNodeBuilder addGetClassField(final String field) {
     addInsn(new VarInsnNode(Opcodes.ALOAD, 0));
-    final FieldInsnNode node = new FieldInsnNode(Opcodes.GETFIELD, classNode.name, field, fieldNode.desc);
+    return addGetField(this, field);
+  }
+  
+  /**
+   * adds a FieldInsnNode for the given Field.
+   * 
+   * @param field
+   *          the field
+   * @return the abstract optimizer test
+   */
+  public ClassNodeBuilder addGetField(final ClassNodeBuilder builder, final String field) {
+    
+    final FieldNode fieldNode = builder.getField(field);
+    
+    final FieldInsnNode node = new FieldInsnNode(Opcodes.GETFIELD, builder.getClassNode().name, fieldNode.name,
+        fieldNode.desc);
     return addInsn(node);
   }
   
@@ -535,9 +627,22 @@ public final class ClassNodeBuilder {
    *          the field
    * @return the abstract optimizer test
    */
-  public ClassNodeBuilder addPutField(final String field) {
+  public ClassNodeBuilder addPutClassField(final String field) {
     final FieldNode fieldNode = getField(field);
     final FieldInsnNode node = new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, field, fieldNode.desc);
+    return addInsn(node);
+  }
+  
+  /**
+   * adds a FieldInsnNode for the given Field.
+   * 
+   * @param field
+   *          the field
+   * @return the abstract optimizer test
+   */
+  public ClassNodeBuilder addPutField(final ClassNodeBuilder builder, final String field) {
+    final FieldNode fieldNode = builder.getField(field);
+    final FieldInsnNode node = new FieldInsnNode(Opcodes.PUTFIELD, builder.classNode.name, field, fieldNode.desc);
     return addInsn(node);
   }
   
@@ -551,7 +656,7 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder loadFieldArrayValue(final String field, final int index) {
-    addGetField(field);
+    addGetClassField(field);
     return addArrayLoad(field, index);
   }
   
@@ -647,6 +752,15 @@ public final class ClassNodeBuilder {
   }
   
   /**
+   * Gets the builded class.
+   * 
+   * @return the builded class
+   */
+  public Class<?> getBuildedClass() {
+    return buildedClass;
+  }
+  
+  /**
    * Instantiate the classObject.
    * 
    * @return the object
@@ -654,6 +768,9 @@ public final class ClassNodeBuilder {
    *           the exception
    */
   public Object instance() throws Exception {
+    if (buildedClass == null) {
+      toClass();
+    }
     return ConstructorUtils.invokeConstructor(buildedClass);
   }
   

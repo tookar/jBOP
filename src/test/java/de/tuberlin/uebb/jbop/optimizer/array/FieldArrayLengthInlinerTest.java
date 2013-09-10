@@ -49,9 +49,9 @@ public class FieldArrayLengthInlinerTest {
         addField("doubleArray", "[D").initArray(15).//
         addField("objectArray", Type.getDescriptor(Object[].class)).initArray(23).//
         addMethod("sumArrayLength", "()I").withAnnotation(Optimizable.class).//
-        addGetField("doubleArray").//
+        addGetClassField("doubleArray").//
         addInsn(new InsnNode(Opcodes.ARRAYLENGTH)).//
-        addGetField("objectArray").//
+        addGetClassField("objectArray").//
         addInsn(new InsnNode(Opcodes.ARRAYLENGTH)).//
         addInsn(new InsnNode(Opcodes.IADD)).//
         addInsn(new InsnNode(Opcodes.IRETURN));

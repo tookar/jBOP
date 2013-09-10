@@ -59,7 +59,7 @@ public class LocalArrayValueInlinerTest {
         initMultiArrayWith(3.0, 1, 0).//
         initMultiArrayWith(4.0, 1, 1).//
         addMethod("getArrayValue", "()D").withAnnotation(Optimizable.class).//
-        addGetField("doubleArray").// 2 -> 2
+        addGetClassField("doubleArray").// 2 -> 2
         addInsn(new InsnNode(Opcodes.ICONST_0)).// 1 -> 1
         addInsn(new InsnNode(Opcodes.AALOAD)).// 1 -> 1
         addInsn(new VarInsnNode(Opcodes.ASTORE, 2)).// 1 -> 1

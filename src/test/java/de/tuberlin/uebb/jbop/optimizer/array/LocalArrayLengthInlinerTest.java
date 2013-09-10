@@ -54,7 +54,7 @@ public class LocalArrayLengthInlinerTest {
         addArray("[D", 15).// 3 -> 3
         addInsn(new VarInsnNode(Opcodes.ALOAD, 1)).// 1 -> 0|
         addInsn(new InsnNode(Opcodes.ARRAYLENGTH)).// 1 -> 0|1
-        addGetField("doubleArray").// 2 -> 2
+        addGetClassField("doubleArray").// 2 -> 2
         addInsn(new InsnNode(Opcodes.ICONST_0)).// 1 -> 1
         addInsn(new InsnNode(Opcodes.AALOAD)).// 1 -> 1
         addInsn(new VarInsnNode(Opcodes.ASTORE, 2)).// 1 -> 1

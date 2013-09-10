@@ -63,6 +63,11 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * 
  * 
  * 
+ * 
+ * 
+ * 
+ * 
+ * 
  * int e = 1;
  * </pre>
  * 
@@ -121,6 +126,7 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
     optimized = false;
     counter = 0;
     Object object = input;
+    Object lastObject = null;
     final List<AbstractInsnNode> nodes = new ArrayList<>();
     String fieldname = null;
     while (iterator.hasNext()) {
@@ -133,7 +139,9 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
           return original;
         }
         nodes.add(next);
+        lastObject = object;
         object = ClassAccessor.getCurrentValue(object, fieldname);
+        
       } else {
         if (object == input) {
           correctIterator();
@@ -146,8 +154,7 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
           optimized = true;
           return original;
         }
-        
-        object = handleArray(type, nodes, object, fieldname);
+        object = handleArray(type, nodes, object, lastObject, next, fieldname);
         if (object == null) {
           correctIterator();
           return original;
@@ -164,20 +171,19 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
   }
   
   private Object handleArray(final Type type, final List<AbstractInsnNode> nodes, final Object object,
-      final String fieldName) {
+      final Object lastObject, final AbstractInsnNode currentNode, final String fieldName) {
     if (!type.getDescriptor().startsWith("[")) {
       return null;
     }
-    if (!ClassAccessor.hasAnnotation(object, fieldName, ImmutableArray.class)) {
+    if (!ClassAccessor.hasAnnotation(lastObject, fieldName, ImmutableArray.class)) {
       return null;
     }
     Object localObject = object;
+    AbstractInsnNode next = currentNode;
     for (int i = 0; i < type.getDimensions(); ++i) {
       if (!iterator.hasNext()) {
         return null;
       }
-      AbstractInsnNode next = iterator.next();
-      counter++;
       if (!NodeHelper.isNumberNode(next)) {
         return null;
       }
@@ -193,6 +199,10 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
       }
       nodes.add(next);
       localObject = Array.get(localObject, index);
+      if (i < (type.getDimensions() - 1)) {
+        counter++;
+        next = iterator.next();
+      }
     }
     return localObject;
   }
