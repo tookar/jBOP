@@ -60,7 +60,7 @@ public final class OptimizerUtils {
    */
   public static ClassNode readClass(final Object input) throws JBOPClassException {
     final ClassReader classReader = new ClassReader(ClassAccessor.toBytes(input));
-    final ClassNode classNode = new ClassNode(Opcodes.ASM4);
+    final ClassNode classNode = new ClassNode(Opcodes.ASM5);
     classReader.accept(classNode, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     return classNode;
   }

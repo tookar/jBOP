@@ -43,7 +43,7 @@ public class ClassRenamer extends ClassVisitor {
    *          the new name
    */
   public ClassRenamer(final ClassWriter parent, final String newName) {
-    super(Opcodes.ASM4, parent);
+    super(Opcodes.ASM5, parent);
     fixer = new NameFixer(newName);
   }
   

@@ -42,7 +42,7 @@ class MethodRenamer extends MethodVisitor {
    *          the fixer
    */
   public MethodRenamer(final MethodVisitor parent, final NameFixer fixer) {
-    super(Opcodes.ASM4, parent);
+    super(Opcodes.ASM5, parent);
     this.fixer = fixer;
   }
   

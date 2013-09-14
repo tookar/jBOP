@@ -95,7 +95,7 @@ public final class ClassNodeBuilder {
    */
   public static ClassNodeBuilder createClass(final String className) {
     final ClassNodeBuilder builder = new ClassNodeBuilder();
-    builder.classNode = new ClassNode(Opcodes.ASM4);
+    builder.classNode = new ClassNode(Opcodes.ASM5);
     builder.classNode.access = ACC_PUBLIC;
     builder.classNode.name = className.replace(".", "/");
     builder.classNode.superName = Type.getInternalName(Object.class);
@@ -694,7 +694,7 @@ public final class ClassNodeBuilder {
   }
   
   private void initClassNode(final String className) throws Exception {
-    classNode = new ClassNode(Opcodes.ASM4);
+    classNode = new ClassNode(Opcodes.ASM5);
     new ClassReader(className).accept(classNode, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
   }
   

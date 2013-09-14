@@ -249,7 +249,7 @@ public class MethodSplitter implements IOptimizer {
   public InsnList optimize(final InsnList original, final MethodNode methodNode) throws JBOPClassException {
     
     LocalVariablesSorter sorter = new LocalVariablesSorter(methodNode.access, methodNode.desc, new EmptyMethodVisitor(
-        Opcodes.ASM4));
+        Opcodes.ASM5));
     methodNode.accept(sorter);
     
     if (getLength(methodNode) < maxInsns) {
@@ -276,7 +276,7 @@ public class MethodSplitter implements IOptimizer {
       block.renameInsns(paramRenameMap);
       final String methodDescriptor = block.getDescriptor();
       final String newMethodName = name + block.getBlockNumber();
-      final MethodNode splitMethod = new MethodNode(Opcodes.ASM4, ACCESS, newMethodName, methodDescriptor, null,
+      final MethodNode splitMethod = new MethodNode(Opcodes.ASM5, ACCESS, newMethodName, methodDescriptor, null,
           exceptions);
       additionalMethods.add(splitMethod);
       
@@ -284,7 +284,7 @@ public class MethodSplitter implements IOptimizer {
       list.add(block.getPushParameters());
       list.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, classNode.name, splitMethod.name, methodDescriptor));
       list.add(new InsnNode(endType.getOpcode(IRETURN)));
-      sorter = new LocalVariablesSorter(splitMethod.access, splitMethod.desc, new EmptyMethodVisitor(Opcodes.ASM4));
+      sorter = new LocalVariablesSorter(splitMethod.access, splitMethod.desc, new EmptyMethodVisitor(Opcodes.ASM5));
       splitMethod.accept(sorter);
       list = splitMethod.instructions;
     }

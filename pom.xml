@@ -17,7 +17,7 @@
 
   <properties>
     <!-- dependency-versions -->
-    <asm.version>4.1</asm.version>
+    <asm.version>5.0_ALPHA</asm.version>
     <commons-math.version>3.2</commons-math.version>
     <commons-io.version>2.4</commons-io.version>
     <commons-lang.version>3.1</commons-lang.version>
