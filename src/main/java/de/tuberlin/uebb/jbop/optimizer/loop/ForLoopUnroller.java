@@ -18,6 +18,9 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.loop;
 
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFLE;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -125,6 +128,7 @@ public class ForLoopUnroller implements IOptimizer {
       insn.add(loop.getInsnList(method));
     }
     return insn;
+    
   }
   
   private ForLoop findForloop(final Iterator<AbstractInsnNode> iterator, final InsnList skipped) {
@@ -177,20 +181,22 @@ public class ForLoopUnroller implements IOptimizer {
     final AbstractInsnNode node4 = NodeHelper.getNext(endNode);
     final AbstractInsnNode node5 = NodeHelper.getNext(node4);
     final AbstractInsnNode node6 = NodeHelper.getNext(node5);
-    final boolean isIiload = NodeHelper.isIload(node4, countervar);
+    final boolean isIload = NodeHelper.isIload(node4, countervar);
     final boolean isInt5 = NodeHelper.isNumberNode(node5);
     final boolean isJump6 = NodeHelper.isIf(node6);
     final boolean isInt6 = NodeHelper.isNumberNode(node6);
     final boolean isJump5 = NodeHelper.isIf(node5);
-    final boolean isJump = (isInt5 && isJump6) || (isInt6 && isJump5);
-    final boolean isForLoopFooter = isIiload && isJump;
+    final boolean isSingleValueJump = (node5.getOpcode() >= IFEQ) && (node5.getOpcode() <= IFLE);
+    final boolean isJump = (isInt5 && isJump6) || ((isInt6 || isSingleValueJump) && isJump5);
+    final boolean isForLoopFooter = isIload && isJump;
     if (!isForLoopFooter) {
       return null;
     }
     final AbstractInsnNode iinc = NodeHelper.getPrevious(endNode);
     final ForLoopFooter footer;
     if (isJump5) {
-      footer = new ForLoopFooter((VarInsnNode) node4, node6, (JumpInsnNode) node5, ((IincInsnNode) iinc));
+      footer = new ForLoopFooter((VarInsnNode) node4, isSingleValueJump ? null : node6, (JumpInsnNode) node5,
+          ((IincInsnNode) iinc));
     } else {
       footer = new ForLoopFooter((VarInsnNode) node4, node5, (JumpInsnNode) node6, ((IincInsnNode) iinc));
     }

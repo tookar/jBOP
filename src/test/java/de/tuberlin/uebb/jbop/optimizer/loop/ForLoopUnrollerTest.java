@@ -129,12 +129,11 @@ public class ForLoopUnrollerTest {
         addInsn(new IincInsnNode(1, -2)).//
         addInsn(label1).//
         addInsn(new VarInsnNode(Opcodes.ILOAD, 1)).//
-        addInsn(NodeHelper.getInsnNodeFor(3)).//
         addInsn(new JumpInsnNode(Opcodes.IFGT, label2)).//
         addInsn(new InsnNode(Opcodes.RETURN));
     
     // RUN
-    assertEquals(13, method.instructions.size());
+    assertEquals(12, method.instructions.size());
     final InsnList optimized = optimizer.optimize(method.instructions, method);
     
     // ASSERT
