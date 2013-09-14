@@ -30,6 +30,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * Tests for {@link ArithmeticExpressionInterpreter}.
@@ -129,5 +130,119 @@ public class ArithmeticExpressionInterpreterTest {
     assertFalse(interpreter.isOptimized());
     assertEquals(2, optimized3.size());
     assertEquals(Opcodes.ICONST_5, optimized2.getFirst().getOpcode());
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical or expressions.
+   */
+  @Test
+  public void testArithmeticExpressionInterpreterLogicalIntOr() {
+    // INIT
+    builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new InsnNode(Opcodes.ICONST_2)).//
+        addInsn(new InsnNode(Opcodes.IOR)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(3, NodeHelper.getNumberValue(optimized.get(0)));
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical xor expressions.
+   */
+  @Test
+  public void testArithmeticExpressionInterpreterLogicalIntXOr() {
+    // INIT
+    builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new InsnNode(Opcodes.ICONST_2)).//
+        addInsn(new InsnNode(Opcodes.IXOR)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(3, NodeHelper.getNumberValue(optimized.get(0)));
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical and expressions.
+   */
+  @Test
+  public void testArithmeticExpressionInterpreterLogicalIntAnd() {
+    // INIT
+    builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
+        addInsn(new InsnNode(Opcodes.ICONST_2)).//
+        addInsn(new InsnNode(Opcodes.IAND)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(0, NodeHelper.getNumberValue(optimized.get(0)));
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical or expressions.
+   */
+  @Test
+  public void testArithmeticExpressionInterpreterLogicalLongOr() {
+    // INIT
+    builder.addInsn(new InsnNode(Opcodes.LCONST_1)).//
+        addInsn(new InsnNode(Opcodes.LCONST_1)).//
+        addInsn(new InsnNode(Opcodes.LOR)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(1l, NodeHelper.getNumberValue(optimized.get(0)));
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical xor expressions.
+   */
+  @Test
+  public void testArithmeticExpressionInterpreterLogicalLongXOr() {
+    // INIT
+    builder.addInsn(new InsnNode(Opcodes.LCONST_1)).//
+        addInsn(new InsnNode(Opcodes.LCONST_1)).//
+        addInsn(new InsnNode(Opcodes.LXOR)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(0l, NodeHelper.getNumberValue(optimized.get(0)));
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical and expressions.
+   */
+  @Test
+  public void testArithmeticExpressionInterpreterLogicalLongAnd() {
+    // INIT
+    builder.addInsn(new InsnNode(Opcodes.LCONST_1)).//
+        addInsn(new InsnNode(Opcodes.LCONST_1)).//
+        addInsn(new InsnNode(Opcodes.LAND)).//
+        addInsn(new InsnNode(Opcodes.RETURN));
+    
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(1l, NodeHelper.getNumberValue(optimized.get(0)));
   }
 }

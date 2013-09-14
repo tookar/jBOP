@@ -27,18 +27,23 @@ import static org.objectweb.asm.Opcodes.FDIV;
 import static org.objectweb.asm.Opcodes.FMUL;
 import static org.objectweb.asm.Opcodes.FSUB;
 import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.IAND;
 import static org.objectweb.asm.Opcodes.IDIV;
 import static org.objectweb.asm.Opcodes.IMUL;
+import static org.objectweb.asm.Opcodes.IOR;
 import static org.objectweb.asm.Opcodes.ISUB;
+import static org.objectweb.asm.Opcodes.IXOR;
 import static org.objectweb.asm.Opcodes.LADD;
+import static org.objectweb.asm.Opcodes.LAND;
 import static org.objectweb.asm.Opcodes.LDIV;
 import static org.objectweb.asm.Opcodes.LMUL;
+import static org.objectweb.asm.Opcodes.LOR;
 import static org.objectweb.asm.Opcodes.LSUB;
+import static org.objectweb.asm.Opcodes.LXOR;
 
 import java.util.Iterator;
 
 import org.apache.commons.math3.exception.NotANumberException;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
@@ -148,7 +153,46 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
     if ((opcode >= IDIV) && (opcode <= DDIV)) {
       return handleDiv(opcode, one, two);
     }
+    if ((opcode == IOR) || (opcode == LOR)) {
+      return handleOr(opcode, one, two);
+    }
+    if ((opcode == IXOR) || (opcode == LXOR)) {
+      return handleXOr(opcode, one, two);
+    }
+    if ((opcode == IAND) || (opcode == LAND)) {
+      return handleAnd(opcode, one, two);
+    }
     return null;
+  }
+  
+  private AbstractInsnNode handleAnd(final int opcode, final Number one, final Number two) {
+    final Number number;
+    if (opcode == IAND) {
+      number = Integer.valueOf(one.intValue() & two.intValue());
+    } else {
+      number = Long.valueOf(one.longValue() & two.longValue());
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleXOr(final int opcode, final Number one, final Number two) {
+    final Number number;
+    if (opcode == IXOR) {
+      number = Integer.valueOf(one.intValue() ^ two.intValue());
+    } else {
+      number = Long.valueOf(one.longValue() ^ two.longValue());
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleOr(final int opcode, final Number one, final Number two) {
+    final Number number;
+    if (opcode == IOR) {
+      number = Integer.valueOf(one.intValue() | two.intValue());
+    } else {
+      number = Long.valueOf(one.longValue() | two.longValue());
+    }
+    return NodeHelper.getInsnNodeFor(number);
   }
   
   private AbstractInsnNode handleDiv(final int opcode, final Number one, final Number two) {
@@ -250,54 +294,67 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   }
   
   private boolean isDoubleArithmetic(final int opcode) {
-    if (opcode == Opcodes.DADD) {
+    if (opcode == DADD) {
       return true;
-    } else if (opcode == Opcodes.DMUL) {
+    } else if (opcode == DMUL) {
       return true;
-    } else if (opcode == Opcodes.DSUB) {
+    } else if (opcode == DSUB) {
       return true;
-    } else if (opcode == Opcodes.DDIV) {
+    } else if (opcode == DDIV) {
       return true;
     }
     return false;
   }
   
   private boolean isIntArithmetic(final int opcode) {
-    if (opcode == Opcodes.IADD) {
+    if (opcode == IADD) {
       return true;
-    } else if (opcode == Opcodes.IMUL) {
+    } else if (opcode == IMUL) {
       return true;
-    } else if (opcode == Opcodes.ISUB) {
+    } else if (opcode == ISUB) {
       return true;
-    } else if (opcode == Opcodes.IDIV) {
+    } else if (opcode == IDIV) {
+      return true;
+    } else if (opcode == IOR) {
+      return true;
+    } else if (opcode == IXOR) {
+      return true;
+    } else if (opcode == IAND) {
       return true;
     }
     return false;
   }
   
   private boolean isFloatArithmetic(final int opcode) {
-    if (opcode == Opcodes.FADD) {
+    if (opcode == FADD) {
       return true;
-    } else if (opcode == Opcodes.FMUL) {
+    } else if (opcode == FMUL) {
       return true;
-    } else if (opcode == Opcodes.FSUB) {
+    } else if (opcode == FSUB) {
       return true;
-    } else if (opcode == Opcodes.FDIV) {
+    } else if (opcode == FDIV) {
       return true;
     }
     return false;
   }
   
   private boolean isLongArithmetic(final int opcode) {
-    if (opcode == Opcodes.LADD) {
+    if (opcode == LADD) {
       return true;
-    } else if (opcode == Opcodes.LMUL) {
+    } else if (opcode == LMUL) {
       return true;
-    } else if (opcode == Opcodes.LSUB) {
+    } else if (opcode == LSUB) {
       return true;
-    } else if (opcode == Opcodes.LDIV) {
+    } else if (opcode == LDIV) {
+      return true;
+    } else if (opcode == LOR) {
+      return true;
+    } else if (opcode == LXOR) {
+      return true;
+    } else if (opcode == LAND) {
       return true;
     }
+    
     return false;
   }
 }

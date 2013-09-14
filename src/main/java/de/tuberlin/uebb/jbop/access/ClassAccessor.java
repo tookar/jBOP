@@ -344,4 +344,11 @@ public final class ClassAccessor {
     }
   }
   
+  /**
+   * Clean the tmp-Directory.
+   */
+  public static void clean() {
+    FileUtils.deleteQuietly(TMP_DIR.toFile());
+  }
+  
 }

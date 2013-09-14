@@ -40,30 +40,30 @@ import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 public class DSCompiler implements IDSCompiler {
   
   /** Number of free parameters. */
-  final int parameters;
+  private final int parameters;
   
   /** Derivation order. */
-  final int order;
+  private final int order;
   
   /** Number of partial derivatives (including the single 0 order derivative element). */
   @ImmutableArray
-  final int[][] sizes;
+  private final int[][] sizes;
   
   /** Indirection array for partial derivatives. */
   @ImmutableArray
-  final int[][] derivativesIndirection;
+  private final int[][] derivativesIndirection;
   
   /** Indirection array of the lower derivative elements. */
   @ImmutableArray
-  final int[] lowerIndirection;
+  private final int[] lowerIndirection;
   
   /** Indirection arrays for multiplication. */
   @ImmutableArray
-  final int[][][] multIndirection;
+  private final int[][][] multIndirection;
   
   /** Indirection arrays for function composition. */
   @ImmutableArray
-  final int[][][] compIndirection;
+  private final int[][][] compIndirection;
   
   /**
    * public for simpler access via reflection.
@@ -92,7 +92,30 @@ public class DSCompiler implements IDSCompiler {
       throw new DimensionMismatchException(orders.length, parameters);
     }
     
-    return DSCompilerFactory.getPartialDerivativeIndex(parameters, order, sizes, orders);
+    int index = 0;
+    int m = order;
+    int ordersSum = 0;
+    for (int i = parameters - 1; i >= 0; --i) {
+      
+      // derivative order for current free parameter
+      int derivativeOrder = orders[i];
+      
+      // safety check
+      ordersSum += derivativeOrder;
+      if (ordersSum > order) {
+        throw new NumberIsTooLargeException(ordersSum, order, true);
+      }
+      
+      while (derivativeOrder-- > 0) {
+        // as long as we differentiate according to current free parameter,
+        // we have to skip the value part and dive into the derivative part
+        // so we add the size of the value part to the base index
+        index += sizes[i][m--];
+      }
+      
+    }
+    
+    return index;
     
   }
   
@@ -102,6 +125,7 @@ public class DSCompiler implements IDSCompiler {
   }
   
   @Override
+  @Optimizable
   public int getFreeParameters() {
     return parameters;
   }
@@ -112,6 +136,7 @@ public class DSCompiler implements IDSCompiler {
    * @return derivation order
    */
   @Override
+  @Optimizable
   public int getOrder() {
     return order;
   }

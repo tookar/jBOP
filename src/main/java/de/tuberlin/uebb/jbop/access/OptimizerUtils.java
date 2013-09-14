@@ -29,6 +29,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.utils.RemoveUnusedFields;
 
 /**
  * The Class OptimizerUtils.
@@ -83,6 +84,7 @@ public final class OptimizerUtils {
    */
   public static <T> T createInstance(final ClassNode classNode, final T input, final String suffix)
       throws JBOPClassException {
+    RemoveUnusedFields.removeUnusedFields(classNode);
     final List<Object> params = ConstructorBuilder.createConstructor(classNode, input);
     final ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
     classNode.accept(writer);

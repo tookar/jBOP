@@ -636,6 +636,9 @@ public final class NodeHelper {
     if (node.getOpcode() == Opcodes.FCONST_1) {
       return Float.valueOf(1);
     }
+    if (node.getOpcode() == Opcodes.FCONST_2) {
+      return Float.valueOf(1);
+    }
     if (node.getOpcode() == Opcodes.DCONST_0) {
       return Double.valueOf(0);
     }
@@ -832,6 +835,20 @@ public final class NodeHelper {
       return false;
     }
     return ((node.getOpcode() >= Opcodes.IF_ICMPEQ) && (node.getOpcode() <= Opcodes.IF_ACMPNE));
+  }
+  
+  /**
+   * Gets the owner of the fieldNode.
+   * 
+   * @param node
+   *          the node
+   * @return the fielowner
+   */
+  public static String getFieldowner(final AbstractInsnNode node) {
+    if (!(node instanceof FieldInsnNode)) {
+      return null;
+    }
+    return ((FieldInsnNode) node).owner;
   }
   
 }

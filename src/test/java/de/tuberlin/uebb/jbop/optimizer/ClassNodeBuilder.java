@@ -131,7 +131,7 @@ public final class ClassNodeBuilder {
   public ClassNodeBuilder withSetter() {
     final String name = lastField.name;
     final String desc = lastField.desc;
-    addMethod("set" + Character.toUpperCase(name.charAt(0)) + name.substring(1), "()" + desc);
+    addMethod("set" + Character.toUpperCase(name.charAt(0)) + name.substring(1), "(" + desc + ")V");
     final Type type = Type.getType(desc);
     addInsn(new VarInsnNode(Opcodes.ALOAD, 0));
     addInsn(new VarInsnNode(type.getOpcode(Opcodes.ILOAD), 1));
