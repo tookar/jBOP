@@ -84,6 +84,7 @@ public class LocalVarInliner implements IOptimizer {
     return optimized;
   }
   
+  @SuppressWarnings("null")
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) {
     optimized = false;
@@ -93,22 +94,18 @@ public class LocalVarInliner implements IOptimizer {
     while (iterator.hasNext()) {
       final AbstractInsnNode currentNode = iterator.next();
       if (currentNode instanceof VarInsnNode) {
-        final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
+        final Integer varIndex = NodeHelper.getVarIndex(currentNode);
         final AbstractInsnNode valueNode = inlinableVars.get(varIndex);
-        if ((valueNode == NodeHelper.getPrevious(currentNode)) && (isStore(currentNode))) {
+        final boolean isStore = isStore(currentNode);
+        final boolean isLoad = isLoad(currentNode);
+        final boolean isValueUnknown = (valueNode == null) || (valueNode == NULL);
+        if (isStore || isValueUnknown || (!isStore && !isLoad)) {
           newList.add(currentNode);
           continue;
         }
-        if (isLoad(currentNode)) {
-          final AbstractInsnNode value = inlinableVars.get(Integer.valueOf(((VarInsnNode) currentNode).var));
-          if ((value == null) || (value == NULL)) {
-            newList.add(currentNode);
-            continue;
-          }
-          newList.add(valueNode.clone(null));
-          optimized = true;
-          continue;
-        }
+        newList.add(valueNode.clone(null));
+        optimized = true;
+        continue;
       }
       newList.add(currentNode);
     }
@@ -116,8 +113,8 @@ public class LocalVarInliner implements IOptimizer {
   }
   
   private boolean isLoad(final AbstractInsnNode currentNode) {
-    
-    return (currentNode.getOpcode() >= Opcodes.ILOAD) && (currentNode.getOpcode() <= Opcodes.ALOAD);
+    return currentNode.getOpcode() == Opcodes.ILOAD;
+    // return (currentNode.getOpcode() >= Opcodes.ILOAD) && (currentNode.getOpcode() <= Opcodes.ALOAD);
   }
   
   private boolean isStore(final AbstractInsnNode currentNode) {
@@ -134,7 +131,7 @@ public class LocalVarInliner implements IOptimizer {
       if (currentNode instanceof JumpInsnNode) {
         final LabelNode label = ((JumpInsnNode) currentNode).label;
         if (NodeHelper.isPredecessor(label, currentNode)) {
-          jumpTargets.add(Pair.of(currentNode, ((JumpInsnNode) currentNode).label.getNext()));
+          jumpTargets.add(Pair.of(currentNode, label.getNext()));
         }
       }
     }
@@ -150,14 +147,12 @@ public class LocalVarInliner implements IOptimizer {
   }
   
   private void markVariables(final Map<Integer, AbstractInsnNode> values, final AbstractInsnNode currentNode) {
-    if ((currentNode instanceof VarInsnNode)
-        && ((currentNode.getOpcode() >= Opcodes.ISTORE) && (currentNode.getOpcode() <= Opcodes.ASTORE))) {
+    if (isStore(currentNode)) {
       final AbstractInsnNode valueNode = NodeHelper.getPrevious(currentNode);
-      final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
+      final Integer varIndex = NodeHelper.getVarIndex(currentNode);
       if (values.containsKey(varIndex)) {
         values.put(varIndex, NULL);
       } else if (NodeHelper.isValue(valueNode)) {
-        
         values.put(varIndex, valueNode);
       }
     }

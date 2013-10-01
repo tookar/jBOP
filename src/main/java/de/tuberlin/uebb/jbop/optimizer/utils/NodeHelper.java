@@ -910,4 +910,17 @@ public final class NodeHelper {
     return ((FieldInsnNode) node).owner;
   }
   
+  /**
+   * Gets the var index or -1 if node is not a VarInsnNode.
+   * 
+   * @param node
+   *          the node
+   * @return the var index
+   */
+  public static int getVarIndex(final AbstractInsnNode node) {
+    if (node instanceof VarInsnNode) {
+      return ((VarInsnNode) node).var;
+    }
+    return -1;
+  }
 }
