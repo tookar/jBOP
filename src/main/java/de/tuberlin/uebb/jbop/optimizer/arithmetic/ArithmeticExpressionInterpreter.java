@@ -84,6 +84,15 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) {
     optimized = false;
+    boolean isOptimized;
+    do {
+      isOptimized = runIntern(original);
+    } while (isOptimized);
+    return original;
+  }
+  
+  private boolean runIntern(final InsnList original) {
+    boolean intern = false;
     final Iterator<AbstractInsnNode> iterator = original.iterator();
     while (iterator.hasNext()) {
       final AbstractInsnNode currentNode = iterator.next();
@@ -112,9 +121,10 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
         original.insert(op, replacement);
         clean(original, iterator, currentNode, numberNode, castNode1, castNode2, op);
         optimized = true;
+        intern = true;
       }
     }
-    return original;
+    return intern;
   }
   
   private void clean(final InsnList original, final Iterator<AbstractInsnNode> iterator,

@@ -109,26 +109,16 @@ public class ArithmeticExpressionInterpreterTest {
     
     // ASSERT STEP 1
     assertTrue(interpreter.isOptimized());
-    assertEquals(4, optimized.size());
-    assertEquals(Opcodes.ICONST_3, optimized.getFirst().getOpcode());
-    assertEquals(Opcodes.ICONST_2, optimized.getFirst().getNext().getOpcode());
+    assertEquals(2, optimized.size());
+    assertEquals(Opcodes.ICONST_5, optimized.getFirst().getOpcode());
     
     // RUN STEP 2
     final InsnList optimized2 = interpreter.optimize(builder.getMethod("testMethod").instructions,
         builder.getMethod("testMethod"));
     
     // ASSERT STEP 2
-    assertTrue(interpreter.isOptimized());
-    assertEquals(2, optimized2.size());
-    assertEquals(Opcodes.ICONST_5, optimized2.getFirst().getOpcode());
-    
-    // RUN STEP 3
-    final InsnList optimized3 = interpreter.optimize(builder.getMethod("testMethod").instructions,
-        builder.getMethod("testMethod"));
-    
-    // ASSERT STEP 3
     assertFalse(interpreter.isOptimized());
-    assertEquals(2, optimized3.size());
+    assertEquals(2, optimized2.size());
     assertEquals(Opcodes.ICONST_5, optimized2.getFirst().getOpcode());
   }
   
