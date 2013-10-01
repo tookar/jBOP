@@ -79,10 +79,10 @@ public class RemoveUnusedLocalVars implements IOptimizer {
   public InsnList optimize(final InsnList original, final MethodNode methodNode) {
     optimized = false;
     prevs.clear();
-    final List<VarInsnNode> stores = findStores(original);
+    final List<VarInsnNode> stores = new ArrayList<>();
     final List<VarInsnNode> users = new ArrayList<>();
     final List<IincInsnNode> iincs = new ArrayList<>();
-    findNodesToRemove(original, users, iincs);
+    findNodes(original, stores, users, iincs);
     final List<AbstractInsnNode> toBeRemoved = new ArrayList<>();
     for (final VarInsnNode node : stores) {
       if (!usersContains(users, node)) {
@@ -101,12 +101,13 @@ public class RemoveUnusedLocalVars implements IOptimizer {
           continue;
         }
         final AbstractInsnNode prev = prevs.get(currentNode);
-        if (NodeHelper.isBipush(prev) || NodeHelper.isIconst(prev)) {
+        if (NodeHelper.isValue(prev)) {
           newList.remove(prev);
           original.remove(currentNode);
           optimized = true;
         } else {
           original.remove(currentNode);
+          // POP value instead?
           newList.add(currentNode);
         }
         
@@ -137,32 +138,20 @@ public class RemoveUnusedLocalVars implements IOptimizer {
     return false;
   }
   
-  private void findNodesToRemove(final InsnList original, final List<VarInsnNode> users, //
+  private void findNodes(final InsnList original, final List<VarInsnNode> stores, final List<VarInsnNode> users, //
       final List<IincInsnNode> iincs) {
     final Iterator<AbstractInsnNode> iterator = original.iterator();
     while (iterator.hasNext()) {
       final AbstractInsnNode node = iterator.next();
-      if ((node.getOpcode() == Opcodes.ILOAD) || (node.getOpcode() == Opcodes.DLOAD)
-          || (node.getOpcode() == Opcodes.ALOAD)) {
+      if ((node.getOpcode() >= Opcodes.ISTORE) && (node.getOpcode() <= Opcodes.ASTORE)) {
+        stores.add((VarInsnNode) node);
+        prevs.put(node, NodeHelper.getPrevious(node));
+      } else if ((node.getOpcode() >= Opcodes.ILOAD) && (node.getOpcode() <= Opcodes.ALOAD)) {
         users.add((VarInsnNode) node);
       } else if (node.getOpcode() == Opcodes.IINC) {
         iincs.add((IincInsnNode) node);
       }
     }
-  }
-  
-  private List<VarInsnNode> findStores(final InsnList original) {
-    final List<VarInsnNode> stores = new ArrayList<>();
-    final Iterator<AbstractInsnNode> iterator = original.iterator();
-    while (iterator.hasNext()) {
-      final AbstractInsnNode node = iterator.next();
-      if ((node.getOpcode() == Opcodes.ISTORE) || (node.getOpcode() == Opcodes.DSTORE)
-          || (node.getOpcode() == Opcodes.ASTORE)) {
-        stores.add((VarInsnNode) node);
-        prevs.put(node, NodeHelper.getPrevious(node));
-      }
-    }
-    return stores;
   }
   
 }
