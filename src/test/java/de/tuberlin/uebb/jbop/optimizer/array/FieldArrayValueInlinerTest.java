@@ -34,8 +34,6 @@ import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.NEW;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
 
-import java.util.Arrays;
-
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -72,8 +70,8 @@ public class FieldArrayValueInlinerTest {
     // INIT
     final String owner = "de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueTestClass";
     final ClassNodeBuilder builder = ClassNodeBuilder.createClass(owner).//
-        addField("doubleArray1", "[D").initArrayWith(1.0, 2.0, 3.0).//
-        addField("doubleArray2", "[D").initArrayWith(4.0, 5.0, 6.0).//
+        addField("doubleArray1", "[D").withAnnotation(ImmutableArray.class).initArrayWith(1.0, 2.0, 3.0).//
+        addField("doubleArray2", "[D").withAnnotation(ImmutableArray.class).initArrayWith(4.0, 5.0, 6.0).//
         addMethod("sumArrayValues", "()D").withAnnotation(Optimizable.class).//
         loadFieldArrayValue("doubleArray1", 0).// 4 -> 1
         loadFieldArrayValue("doubleArray2", 0).// 4 -> 1
@@ -89,8 +87,7 @@ public class FieldArrayValueInlinerTest {
         addInsn(new InsnNode(Opcodes.DRETURN));// 1
     //
     
-    final IOptimizer inliner = new FieldArrayValueInliner(Arrays.asList("doubleArray1", "doubleArray2"), builder
-        .toClass().instance());
+    final IOptimizer inliner = new FieldArrayValueInliner(builder.getClassNode(), builder.toClass().instance());
     
     final MethodNode method = builder.getMethod("sumArrayValues");
     assertEquals(30, method.instructions.size());
@@ -151,8 +148,8 @@ public class FieldArrayValueInlinerTest {
         .initWith(null).toClass();
     final ClassNodeBuilder builderTestClass = ClassNodeBuilder
         .createClass("de.tuberlin.uebb.jbop.optimizer.array.ChainedTestClass")
-        .addField("a", "[" + Type.getDescriptor(builderA.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
-        .addToConstructor(initArray()).//
+        .addField("a", "[" + Type.getDescriptor(builderA.getBuildedClass())).withAnnotation(ImmutableArray.class)
+        .withModifiers(ACC_PRIVATE, ACC_FINAL).addToConstructor(initArray()).//
         addMethod("get", "()D").//
         addGetClassField("a").// ;
         addInsn(new InsnNode(ICONST_0)).//
@@ -167,7 +164,7 @@ public class FieldArrayValueInlinerTest {
     final Object instance = builderTestClass.instance();
     
     // RUN
-    final FieldArrayValueInliner inliner = new FieldArrayValueInliner(Arrays.asList("a"), instance);
+    final FieldArrayValueInliner inliner = new FieldArrayValueInliner(builderTestClass.getClassNode(), instance);
     final MethodNode method = builderTestClass.getMethod("get");
     final InsnList optimized = inliner.optimize(method.instructions, method);
     

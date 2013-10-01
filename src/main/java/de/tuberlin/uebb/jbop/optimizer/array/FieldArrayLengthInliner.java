@@ -18,18 +18,16 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.array;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.ListIterator;
 
-import org.apache.commons.collections15.Predicate;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
-import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
-import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
+import de.tuberlin.uebb.jbop.optimizer.var.GetFieldChainInliner;
 
 /**
  * Inlines the size of an array (class field), so that further optimizationsteps
@@ -83,7 +81,7 @@ public class FieldArrayLengthInliner implements IOptimizer {
   
   private final Object instance;
   
-  private final Predicate<AbstractInsnNode> is_getfield;
+  private final ClassNode classNode;
   
   /**
    * Instantiates a new FieldArrayLengthInliner.
@@ -93,9 +91,9 @@ public class FieldArrayLengthInliner implements IOptimizer {
    * @param instance
    *          the instance
    */
-  public FieldArrayLengthInliner(final Collection<String> names, final Object instance) {
+  public FieldArrayLengthInliner(final ClassNode classNode, final Object instance) {
+    this.classNode = classNode;
     this.instance = instance;
-    is_getfield = new GetFieldPredicate(names);
   }
   
   @Override
@@ -106,38 +104,45 @@ public class FieldArrayLengthInliner implements IOptimizer {
   @Override
   public InsnList optimize(final InsnList original, final MethodNode method) throws JBOPClassException {
     optimized = false;
-    final Iterator<AbstractInsnNode> iterator = original.iterator();
+    final ListIterator<AbstractInsnNode> iterator = original.iterator();
     final ArrayHelper arrayHelper = new ArrayHelper();
     while (iterator.hasNext()) {
       final AbstractInsnNode aload = iterator.next();
-      if (!arrayHelper.isArrayInstruction(aload, is_getfield)) {
+      if (!arrayHelper.isArrayInstruction(classNode, aload, null)) {
         continue;
       }
       if (!arrayHelper.isArrayLength()) {
         continue;
       }
-      arrayHelper.addArrayLoad();
-      final int length = arrayHelper.getLength(instance);
-      
-      replaceNodes(original, aload, arrayHelper, length);
-      
+      // arrayHelper.addArrayLoad();
+      // final int length = arrayHelper.getLength(instance);
+      //
+      // replaceNodes(original, aload, arrayHelper, length);
+      final GetFieldChainInliner fieldChainInliner = new GetFieldChainInliner();
+      fieldChainInliner.setIterator(iterator);
+      fieldChainInliner.setInputObject(instance);
+      fieldChainInliner.optimize(original, null);
+      if (fieldChainInliner.isOptimized()) {
+        optimized = true;
+        original.remove(aload);
+      }
     }
     return original;
   }
   
-  private void replaceNodes(final InsnList original, final AbstractInsnNode aload, final ArrayHelper arrayHelper,
-      final Integer length) {
-    final AbstractInsnNode replacementNode = NodeHelper.getInsnNodeFor(length);
-    original.insert(aload, replacementNode);
-    original.remove(aload);
-    for (final AbstractInsnNode node : arrayHelper.getIndexes()) {
-      original.remove(node);
-    }
-    for (final AbstractInsnNode node : arrayHelper.getArrayloads()) {
-      original.remove(node);
-    }
-    original.remove(arrayHelper.getFieldNode());
-    optimized = true;
-  }
+  // private void replaceNodes(final InsnList original, final AbstractInsnNode aload, final ArrayHelper arrayHelper,
+  // final Integer length) {
+  // final AbstractInsnNode replacementNode = NodeHelper.getInsnNodeFor(length);
+  // original.insert(aload, replacementNode);
+  // original.remove(aload);
+  // for (final AbstractInsnNode node : arrayHelper.getIndexes()) {
+  // original.remove(node);
+  // }
+  // for (final AbstractInsnNode node : arrayHelper.getArrayloads()) {
+  // original.remove(node);
+  // }
+  // original.remove(arrayHelper.getFieldNode());
+  // optimized = true;
+  // }
   
 }

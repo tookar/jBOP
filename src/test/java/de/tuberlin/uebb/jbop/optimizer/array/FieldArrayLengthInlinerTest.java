@@ -19,8 +19,7 @@
 package de.tuberlin.uebb.jbop.optimizer.array;
 
 import static org.junit.Assert.assertEquals;
-
-import java.util.Arrays;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
 
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
@@ -36,7 +35,7 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 public class FieldArrayLengthInlinerTest {
   
   /**
-   * Tests that FieldArrayLengthInbliner is working correctly.
+   * Tests that FieldArrayLengthInliner is working correctly.
    * 
    * @throws Exception
    *           the exception
@@ -46,8 +45,8 @@ public class FieldArrayLengthInlinerTest {
     // INIT
     final String owner = "de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthTestClass";
     final ClassNodeBuilder builder = ClassNodeBuilder.createClass(owner).//
-        addField("doubleArray", "[D").initArray(15).//
-        addField("objectArray", Type.getDescriptor(Object[].class)).initArray(23).//
+        addField("doubleArray", "[D").withModifiers(ACC_FINAL).initArray(15).//
+        addField("objectArray", Type.getDescriptor(Object[].class)).withModifiers(ACC_FINAL).initArray(23).//
         addMethod("sumArrayLength", "()I").withAnnotation(Optimizable.class).//
         addGetClassField("doubleArray").//
         addInsn(new InsnNode(Opcodes.ARRAYLENGTH)).//
@@ -56,8 +55,8 @@ public class FieldArrayLengthInlinerTest {
         addInsn(new InsnNode(Opcodes.IADD)).//
         addInsn(new InsnNode(Opcodes.IRETURN));
     
-    final FieldArrayLengthInliner inliner = new FieldArrayLengthInliner(Arrays.asList("doubleArray", "objectArray"),
-        builder.toClass().instance());
+    final FieldArrayLengthInliner inliner = new FieldArrayLengthInliner(builder.getClassNode(), builder.toClass()
+        .instance());
     
     // RUN STEP 1
     final MethodNode method = builder.getMethod("sumArrayLength");

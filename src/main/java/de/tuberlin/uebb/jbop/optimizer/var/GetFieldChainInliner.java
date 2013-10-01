@@ -18,6 +18,7 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.var;
 
+import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.IALOAD;
 import static org.objectweb.asm.Opcodes.SALOAD;
@@ -54,7 +55,14 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * will become
  * 
  * <pre>
-
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
  * int e = 1;
  * </pre>
  * 
@@ -161,29 +169,45 @@ public class GetFieldChainInliner implements IOptimizer, IInputObjectAware, IIte
     if (!type.getDescriptor().startsWith("[")) {
       return null;
     }
-    if (!ClassAccessor.hasAnnotation(lastObject, fieldName, ImmutableArray.class)) {
-      return null;
-    }
+    
     Object localObject = object;
     AbstractInsnNode next = currentNode;
+    final boolean isFinal = ClassAccessor.isFinal(lastObject, fieldName);
+    final boolean hasAnnotation = ClassAccessor.hasAnnotation(lastObject, fieldName, ImmutableArray.class);
+    
     for (int i = 0; i < type.getDimensions(); ++i) {
       if (!localIterator.hasNext()) {
         return null;
       }
-      if (!NodeHelper.isNumberNode(next)) {
-        return null;
+      final boolean isArrayLength = next.getOpcode() == ARRAYLENGTH;
+      if (isArrayLength) {
+        if (!isFinal) {
+          return null;
+        }
+        localObject = Array.getLength(localObject);
+      } else {
+        
+        if (!NodeHelper.isNumberNode(next)) {
+          return null;
+        }
+        final int index = NodeHelper.getNumberValue(next).intValue();
+        nodes.add(next);
+        if (!localIterator.hasNext()) {
+          return null;
+        }
+        next = localIterator.next();
+        final boolean isArrayLoad = (next.getOpcode() >= IALOAD) && (next.getOpcode() <= SALOAD);
+        if (isArrayLoad) {
+          if (!hasAnnotation) {
+            return null;
+          }
+          localObject = Array.get(localObject, index);
+        }
       }
-      final int index = NodeHelper.getNumberValue(next).intValue();
       nodes.add(next);
-      if (!localIterator.hasNext()) {
-        return null;
+      if (isArrayLength) {
+        break;
       }
-      next = localIterator.next();
-      if (!((next.getOpcode() >= IALOAD) && (next.getOpcode() <= SALOAD))) {
-        return null;
-      }
-      nodes.add(next);
-      localObject = Array.get(localObject, index);
       if (i < (type.getDimensions() - 1)) {
         next = localIterator.next();
       }

@@ -19,14 +19,13 @@
 package de.tuberlin.uebb.jbop.optimizer.array;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.collections15.Predicate;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
@@ -34,8 +33,8 @@ import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
-import de.tuberlin.uebb.jbop.optimizer.utils.predicates.GetFieldPredicate;
 import de.tuberlin.uebb.jbop.optimizer.var.GetFieldChainInliner;
 
 /**
@@ -89,7 +88,7 @@ public class FieldArrayValueInliner implements IOptimizer {
   
   private final Object instance;
   
-  private final Predicate<AbstractInsnNode> is_getfield;
+  private final ClassNode classNode;
   
   /**
    * Instantiates a new ArrayValueInliner.
@@ -99,9 +98,9 @@ public class FieldArrayValueInliner implements IOptimizer {
    * @param instance
    *          the instance
    */
-  public FieldArrayValueInliner(final Collection<String> names, final Object instance) {
+  public FieldArrayValueInliner(final ClassNode classNode, final Object instance) {
+    this.classNode = classNode;
     this.instance = instance;
-    is_getfield = new GetFieldPredicate(names);
   }
   
   @Override
@@ -116,7 +115,7 @@ public class FieldArrayValueInliner implements IOptimizer {
     final ArrayHelper arrayHelper = new ArrayHelper();
     while (iterator.hasNext()) {
       final AbstractInsnNode aload = iterator.next();
-      if (!arrayHelper.isArrayInstruction(aload, is_getfield)) {
+      if (!arrayHelper.isArrayInstruction(classNode, aload, ImmutableArray.class)) {
         continue;
       }
       if (arrayHelper.isIndexEmpty()) {
