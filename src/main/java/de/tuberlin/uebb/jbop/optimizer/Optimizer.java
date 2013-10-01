@@ -22,18 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections15.Predicate;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.access.OptimizerUtils;
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.annotations.AdditionalSteps;
-import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jbop.optimizer.arithmetic.ArithmeticExpressionInterpreter;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthInliner;
@@ -146,29 +143,33 @@ public class Optimizer {
     
     initAdditionalSteps(methodNode, optimizers, classNode, input);
     
+    final IOptimizer arrayLength = new FieldArrayLengthInliner(classNode, input);
+    optimizers.add(arrayLength);
+    
     final LocalArrayLengthInliner localArrayLengthInliner = new LocalArrayLengthInliner();
     localArrayLengthInliner.setInputObject(input);
     optimizers.add(localArrayLengthInliner);
     
-    final FieldArrayValueInliner arrayValue = initFieldArrayOptimizers(classNode, input, optimizers);
-    
-    initLoopOptimizers(methodNode, optimizers);
+    final FieldArrayValueInliner arrayValue = new FieldArrayValueInliner(classNode, input);
+    optimizers.add(arrayValue);
     
     final IOptimizer localVars = new LocalVarInliner();
     optimizers.add(localVars);
     
-    final IOptimizer unusedLocals = new RemoveUnusedLocalVars();
-    optimizers.add(unusedLocals);
+    final IOptimizer arithmeticInterpreter = new ArithmeticExpressionInterpreter();
+    optimizers.add(arithmeticInterpreter);
     
     final IOptimizer constantIf = new ConstantIfInliner(arrayValue);
     optimizers.add(constantIf);
     
-    final IOptimizer arithmeticInterpreter = new ArithmeticExpressionInterpreter();
-    optimizers.add(arithmeticInterpreter);
+    initLoopOptimizers(methodNode, optimizers);
     
     final LocalArrayValueInliner localArrayValue = new LocalArrayValueInliner();
     localArrayValue.setInputObject(input);
     optimizers.add(localArrayValue);
+    
+    final IOptimizer unusedLocals = new RemoveUnusedLocalVars();
+    optimizers.add(unusedLocals);
     
     return optimizers;
   }
@@ -182,33 +183,6 @@ public class Optimizer {
         break;
       }
     }
-  }
-  
-  private FieldArrayValueInliner initFieldArrayOptimizers(final ClassNode classNode, final Object input,
-      final List<IOptimizer> optimizers) {
-    final List<String> immutableArrayNames = new ArrayList<>();
-    final List<String> finalArrayNames = new ArrayList<>();
-    final String immutableArray = Type.getType(ImmutableArray.class).getDescriptor();
-    for (final FieldNode field : classNode.fields) {
-      if (field.desc.startsWith("[") && ((field.access & Opcodes.ACC_FINAL) != 0)) {
-        finalArrayNames.add(field.name);
-      }
-      if (field.visibleAnnotations == null) {
-        continue;
-      }
-      for (final AnnotationNode annotation : field.visibleAnnotations) {
-        if (immutableArray.equals(annotation.desc)) {
-          immutableArrayNames.add(field.name);
-        }
-      }
-    }
-    
-    final IOptimizer arrayLength = new FieldArrayLengthInliner(finalArrayNames, input);
-    optimizers.add(arrayLength);
-    
-    final FieldArrayValueInliner arrayValue = new FieldArrayValueInliner(immutableArrayNames, input);
-    optimizers.add(arrayValue);
-    return arrayValue;
   }
   
   private void initAdditionalSteps(final MethodNode methodNode, final List<IOptimizer> optimizers,
