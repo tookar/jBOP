@@ -609,6 +609,27 @@ public final class NodeHelper {
   }
   
   /**
+   * Checks if node is a value node.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is value
+   */
+  public static boolean isValue(final AbstractInsnNode node) {
+    try {
+      NodeHelper.getNumberValue(node);
+      return true;
+    } catch (final NotANumberException nane) {
+      try {
+        NodeHelper.getStringValue(node);
+        return true;
+      } catch (final NotANumberException nane2) {
+        return false;
+      }
+    }
+  }
+  
+  /**
    * Gets the value.
    * 
    * @param node
@@ -655,6 +676,23 @@ public final class NodeHelper {
       }
     }
     throw new NotANumberException();
+  }
+  
+  /**
+   * Gets the string value.
+   * 
+   * @param node
+   *          the node
+   * @return the string value
+   * @throws NotANumberException
+   *           the not a number exception if node is null or not a string constant
+   */
+  public static String getStringValue(final AbstractInsnNode node) throws NotANumberException {
+    if ((node == null) || !(node instanceof LdcInsnNode)) {
+      throw new NotANumberException();
+    }
+    
+    return (String) ((LdcInsnNode) node).cst;
   }
   
   /**
