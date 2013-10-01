@@ -20,6 +20,7 @@ package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
@@ -72,14 +74,29 @@ public final class RemoveUnusedFields {
           if (!(next instanceof FieldInsnNode)) {
             continue;
           }
+          
+          int aloadCounter = 0;
           for (final FieldNode node : usedOnlyInConstructor) {
             if (node.name.equals(NodeHelper.getFieldname(next))) {
               while (true) {
                 final AbstractInsnNode toBeRemoved = next;
                 next = NodeHelper.getPrevious(next);
+                if (next instanceof FieldInsnNode) {
+                  aloadCounter++;
+                }
+                if (next instanceof MethodInsnNode) {
+                  if (next.getOpcode() != INVOKESTATIC) {
+                    if (((MethodInsnNode) next).owner.equals(classNode.name)) {
+                      aloadCounter++;
+                    }
+                  }
+                }
                 method.instructions.remove(toBeRemoved);
                 if (NodeHelper.isAload0(toBeRemoved)) {
-                  break;
+                  if (aloadCounter == 0) {
+                    break;
+                  }
+                  aloadCounter--;
                 }
               }
             }
