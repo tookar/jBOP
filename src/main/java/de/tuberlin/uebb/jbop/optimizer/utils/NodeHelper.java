@@ -18,6 +18,8 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+
 import org.apache.commons.math3.exception.NotANumberException;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -616,6 +618,9 @@ public final class NodeHelper {
    * @return true if node is value
    */
   public static boolean isValue(final AbstractInsnNode node) {
+    if (node == null) {
+      return false;
+    }
     try {
       NodeHelper.getNumberValue(node);
       return true;
@@ -641,6 +646,9 @@ public final class NodeHelper {
   public static Number getNumberValue(final AbstractInsnNode node) throws NotANumberException {
     if (node == null) {
       throw new NotANumberException();
+    }
+    if (node.getOpcode() == ACONST_NULL) {
+      return null;
     }
     if (isIconst(node)) {
       return Integer.valueOf(node.getOpcode() - Opcodes.ICONST_0);
@@ -688,10 +696,15 @@ public final class NodeHelper {
    *           the not a number exception if node is null or not a string constant
    */
   public static String getStringValue(final AbstractInsnNode node) throws NotANumberException {
-    if ((node == null) || !(node instanceof LdcInsnNode)) {
+    if (node == null) {
       throw new NotANumberException();
     }
-    
+    if (node.getOpcode() == ACONST_NULL) {
+      return null;
+    }
+    if (!(node instanceof LdcInsnNode)) {
+      throw new NotANumberException();
+    }
     return (String) ((LdcInsnNode) node).cst;
   }
   
@@ -708,7 +721,11 @@ public final class NodeHelper {
     if (node == null) {
       throw new NotANumberException();
     }
-    final int bool = getNumberValue(node).intValue();
+    final Number numberValue = getNumberValue(node);
+    if (numberValue == null) {
+      throw new NotANumberException();
+    }
+    final int bool = numberValue.intValue();
     return Boolean.valueOf(bool == 1);
   }
   
@@ -725,7 +742,11 @@ public final class NodeHelper {
     if (node == null) {
       throw new NotANumberException();
     }
-    final int charValue = getNumberValue(node).intValue();
+    final Number numberValue = getNumberValue(node);
+    if (numberValue == null) {
+      throw new NotANumberException();
+    }
+    final int charValue = numberValue.intValue();
     return Character.valueOf((char) charValue);
   }
   

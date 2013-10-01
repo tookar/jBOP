@@ -21,6 +21,10 @@ package de.tuberlin.uebb.jbop.optimizer.var;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.IADD;
 import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
@@ -28,12 +32,14 @@ import static org.objectweb.asm.Opcodes.ICONST_2;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LDC;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
@@ -155,5 +161,57 @@ public class LocalVarInlinerTest {
     // ASSERT
     assertEquals(6, optimized.size());
     assertFalse(optimizer.isOptimized());
+  }
+  
+  /**
+   * Tests that localVarInliner is working correctly.
+   * This is the simplest case:
+   * there is a single store of a known 'String' value.
+   * The value is pushed directly to the stack,
+   * instead of loading the var.
+   */
+  @Test
+  public void testLocalVarInlinerStringValue() {
+    // INIT
+    builder.addInsn(new LdcInsnNode("Hallo")).//
+        addInsn(new VarInsnNode(ASTORE, 1)).//
+        addInsn(new VarInsnNode(ALOAD, 1)).//
+        addInsn(new InsnNode(ARETURN));//
+    methodNode.desc = "()Ljava/lang/String;";
+    
+    // RUN
+    assertEquals(4, methodNode.instructions.size());
+    final InsnList optimized = optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertEquals(4, optimized.size());
+    assertTrue(optimizer.isOptimized());
+    assertEquals(LDC, optimized.get(2).getOpcode());
+  }
+  
+  /**
+   * Tests that localVarInliner is working correctly.
+   * This is the simplest case:
+   * there is a single store of a known 'null' value.
+   * The value is pushed directly to the stack,
+   * instead of loading the var.
+   */
+  @Test
+  public void testLocalVarInlinerNullValue() {
+    // INIT
+    builder.addInsn(new InsnNode(ACONST_NULL)).//
+        addInsn(new VarInsnNode(ASTORE, 1)).//
+        addInsn(new VarInsnNode(ALOAD, 1)).//
+        addInsn(new InsnNode(ARETURN));//
+    methodNode.desc = "()Ljava/lang/Object;";
+    
+    // RUN
+    assertEquals(4, methodNode.instructions.size());
+    final InsnList optimized = optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertEquals(4, optimized.size());
+    assertTrue(optimizer.isOptimized());
+    assertEquals(ACONST_NULL, optimized.get(2).getOpcode());
   }
 }

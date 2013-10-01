@@ -19,6 +19,12 @@
 package de.tuberlin.uebb.jbop.optimizer.var;
 
 import static org.junit.Assert.assertEquals;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.DCONST_1;
+import static org.objectweb.asm.Opcodes.DSTORE;
+import static org.objectweb.asm.Opcodes.FCONST_1;
+import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.ICONST_2;
 import static org.objectweb.asm.Opcodes.ICONST_3;
@@ -27,6 +33,8 @@ import static org.objectweb.asm.Opcodes.ICONST_5;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LCONST_1;
+import static org.objectweb.asm.Opcodes.LSTORE;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -74,11 +82,19 @@ public class RemoveUnusedLocalVarsTest {
         addInsn(new VarInsnNode(ISTORE, 4)).//
         addInsn(new InsnNode(ICONST_5)).//
         addInsn(new VarInsnNode(ISTORE, 5)).//
+        addInsn(new InsnNode(DCONST_1)).//
+        addInsn(new VarInsnNode(DSTORE, 6)).//
+        addInsn(new InsnNode(ACONST_NULL)).//
+        addInsn(new VarInsnNode(ASTORE, 7)).//
+        addInsn(new InsnNode(FCONST_1)).//
+        addInsn(new VarInsnNode(FSTORE, 8)).//
+        addInsn(new InsnNode(LCONST_1)).//
+        addInsn(new VarInsnNode(LSTORE, 9)).//
         addInsn(new VarInsnNode(ILOAD, 1)).//
         addInsn(new InsnNode(IRETURN));
     
     // RUN
-    assertEquals(12, methodNode.instructions.size());
+    assertEquals(20, methodNode.instructions.size());
     final InsnList optimized = optimizer.optimize(methodNode.instructions, methodNode);
     
     // ASSERT
