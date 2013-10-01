@@ -63,7 +63,13 @@ public final class ClassAccessor {
   static {
     try {
       TMP_DIR = Files.createTempDirectory("jBOP");
-      TMP_DIR.toFile().deleteOnExit();
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        
+        @Override
+        public void run() {
+          ClassAccessor.clean();
+        }
+      });
     } catch (final Exception e) {
       throw new RuntimeException("Temporary directory for created classfiles couldn't be created.", e);
     }
