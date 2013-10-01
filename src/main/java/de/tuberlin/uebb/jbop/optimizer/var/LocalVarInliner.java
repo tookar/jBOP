@@ -30,7 +30,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -106,7 +105,7 @@ public class LocalVarInliner implements IOptimizer {
             newList.add(currentNode);
             continue;
           }
-          newList.add(NodeHelper.getInsnNodeFor(NodeHelper.getNumberValue(valueNode)));
+          newList.add(valueNode.clone(null));
           optimized = true;
           continue;
         }
@@ -118,11 +117,11 @@ public class LocalVarInliner implements IOptimizer {
   
   private boolean isLoad(final AbstractInsnNode currentNode) {
     
-    return currentNode.getOpcode() == Opcodes.ILOAD;
+    return (currentNode.getOpcode() >= Opcodes.ILOAD) && (currentNode.getOpcode() <= Opcodes.ALOAD);
   }
   
   private boolean isStore(final AbstractInsnNode currentNode) {
-    return currentNode.getOpcode() == Opcodes.ISTORE;
+    return (currentNode.getOpcode() >= Opcodes.ISTORE) && (currentNode.getOpcode() <= Opcodes.ASTORE);
   }
   
   private Map<Integer, AbstractInsnNode> findInlinableVars(final InsnList original) {
@@ -151,12 +150,13 @@ public class LocalVarInliner implements IOptimizer {
   }
   
   private void markVariables(final Map<Integer, AbstractInsnNode> values, final AbstractInsnNode currentNode) {
-    if ((currentNode instanceof VarInsnNode) && (currentNode.getOpcode() == Opcodes.ISTORE)) {
+    if ((currentNode instanceof VarInsnNode)
+        && ((currentNode.getOpcode() >= Opcodes.ISTORE) && (currentNode.getOpcode() <= Opcodes.ASTORE))) {
       final AbstractInsnNode valueNode = NodeHelper.getPrevious(currentNode);
       final Integer varIndex = Integer.valueOf(((VarInsnNode) currentNode).var);
       if (values.containsKey(varIndex)) {
         values.put(varIndex, NULL);
-      } else if ((valueNode instanceof IntInsnNode) || NodeHelper.isIconst(valueNode)) {
+      } else if (NodeHelper.isValue(valueNode)) {
         
         values.put(varIndex, valueNode);
       }
