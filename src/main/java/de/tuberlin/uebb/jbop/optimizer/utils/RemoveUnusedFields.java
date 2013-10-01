@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.collections15.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -60,7 +59,6 @@ public final class RemoveUnusedFields {
     collectUsedFields(classNode, usedFields, usedInConstructor);
     final Collection<FieldNode> usedOnlyInConstructor = CollectionUtils.subtract(usedInConstructor, usedFields);
     final Collection<FieldNode> unusedFields = CollectionUtils.subtract(classNode.fields, usedFields);
-    System.out.println("Remove unused fields from " + classNode.name + ":" + StringUtils.join(unusedFields, ", "));
     classNode.fields.removeAll(unusedFields);
     correctConstructors(classNode, usedOnlyInConstructor);
   }

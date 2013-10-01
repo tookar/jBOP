@@ -91,7 +91,6 @@ public class DSCompilerFactory {
           final Optimizer optimizer = new Optimizer();
           IDSCompiler optimized;
           try {
-            System.out.println("Creating DSCompiler" + p + "x" + o);
             optimized = optimizer.optimize(dsCompiler, "__" + p + "x" + o);
           } catch (final JBOPClassException e) {
             throw new RuntimeException("IDSCompiler couldn't be created.", e);
