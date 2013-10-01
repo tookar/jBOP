@@ -62,7 +62,7 @@ public final class NodeHelper {
    */
   public static AbstractInsnNode getInsnNodeFor(final Object object) {
     if (object == null) {
-      return null;
+      return new InsnNode(ACONST_NULL);
     }
     if (object instanceof Number) {
       return getInsnNodeFor((Number) object);
@@ -622,15 +622,25 @@ public final class NodeHelper {
       return false;
     }
     try {
-      NodeHelper.getNumberValue(node);
+      NodeHelper.getValue(node);
       return true;
     } catch (final NotANumberException nane) {
-      try {
-        NodeHelper.getStringValue(node);
-        return true;
-      } catch (final NotANumberException nane2) {
-        return false;
-      }
+      return false;
+    }
+  }
+  
+  /**
+   * Gets the value of the Node, if this is a value node.
+   * 
+   * @param valueNode
+   *          the value node
+   * @return the value
+   */
+  public static Object getValue(final AbstractInsnNode valueNode) throws NotANumberException {
+    try {
+      return getNumberValue(valueNode);
+    } catch (final NotANumberException nane) {
+      return getStringValue(valueNode);
     }
   }
   
@@ -646,9 +656,6 @@ public final class NodeHelper {
   public static Number getNumberValue(final AbstractInsnNode node) throws NotANumberException {
     if (node == null) {
       throw new NotANumberException();
-    }
-    if (node.getOpcode() == ACONST_NULL) {
-      return null;
     }
     if (isIconst(node)) {
       return Integer.valueOf(node.getOpcode() - Opcodes.ICONST_0);
@@ -677,13 +684,7 @@ public final class NodeHelper {
     if (node instanceof IntInsnNode) {
       return Integer.valueOf(((IntInsnNode) node).operand);
     }
-    if (node instanceof LdcInsnNode) {
-      final Object cst = ((LdcInsnNode) node).cst;
-      if (cst instanceof Number) {
-        return (Number) cst;
-      }
-    }
-    throw new NotANumberException();
+    return getConstantValue(node, Number.class);
   }
   
   /**
@@ -696,6 +697,10 @@ public final class NodeHelper {
    *           the not a number exception if node is null or not a string constant
    */
   public static String getStringValue(final AbstractInsnNode node) throws NotANumberException {
+    return getConstantValue(node, String.class);
+  }
+  
+  private static <T> T getConstantValue(final AbstractInsnNode node, final Class<T> clazz) throws NotANumberException {
     if (node == null) {
       throw new NotANumberException();
     }
@@ -705,7 +710,12 @@ public final class NodeHelper {
     if (!(node instanceof LdcInsnNode)) {
       throw new NotANumberException();
     }
-    return (String) ((LdcInsnNode) node).cst;
+    try {
+      final Object value = ((LdcInsnNode) node).cst;
+      return clazz.cast(value);
+    } catch (final ClassCastException cce) {
+      throw new NotANumberException();
+    }
   }
   
   /**
@@ -923,4 +933,5 @@ public final class NodeHelper {
     }
     return -1;
   }
+  
 }
