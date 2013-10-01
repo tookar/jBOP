@@ -44,7 +44,7 @@ import java.lang.annotation.Target;
  * <pre>
  * ...
  * double[] in = {1.0, 2.0, 3.0}
- * double [] out[] = new double[in.length];
+ * double[] out = new double[in.length];
  * double e = 0;
  * for(int i = 0; i< 3; ++i){
  *  e = e + in[i];
