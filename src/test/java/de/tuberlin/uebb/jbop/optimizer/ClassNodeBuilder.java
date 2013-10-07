@@ -782,5 +782,12 @@ public final class ClassNodeBuilder {
   public ClassNode getClassNode() {
     return classNode;
   }
-  
+
+  /**
+   * 
+   * @return the last method that has been built
+   */
+  public MethodNode returnMethod() {
+    return lastMethod;
+  }
 }
