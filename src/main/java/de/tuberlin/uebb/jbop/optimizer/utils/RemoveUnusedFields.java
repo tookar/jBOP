@@ -20,7 +20,9 @@ package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.NEW;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,7 +34,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
@@ -67,41 +69,105 @@ public final class RemoveUnusedFields {
       final Collection<FieldNode> usedOnlyInConstructor) {
     for (final MethodNode method : classNode.methods) {
       if ("<init>".equals(method.name)) {
-        for (final Iterator<AbstractInsnNode> iterator = method.instructions.iterator(); iterator.hasNext();) {
-          AbstractInsnNode next = iterator.next();
-          if (!(next instanceof FieldInsnNode)) {
-            continue;
-          }
-          
-          int aloadCounter = 0;
-          for (final FieldNode node : usedOnlyInConstructor) {
-            if (node.name.equals(NodeHelper.getFieldname(next))) {
-              while (true) {
-                final AbstractInsnNode toBeRemoved = next;
-                next = NodeHelper.getPrevious(next);
-                if (next instanceof FieldInsnNode) {
-                  aloadCounter++;
-                }
-                if (next instanceof MethodInsnNode) {
-                  if (next.getOpcode() != INVOKESTATIC) {
-                    if (((MethodInsnNode) next).owner.equals(classNode.name)) {
-                      aloadCounter++;
-                    }
-                  }
-                }
-                method.instructions.remove(toBeRemoved);
-                if (NodeHelper.isAload0(toBeRemoved)) {
-                  if (aloadCounter == 0) {
-                    break;
-                  }
-                  aloadCounter--;
-                }
-              }
-            }
-          }
-        }
+        correctConstructor(classNode, usedOnlyInConstructor, method);
       }
     }
+  }
+  
+  private static void correctConstructor(final ClassNode classNode, final Collection<FieldNode> usedOnlyInConstructor,
+      final MethodNode method) {
+    for (final Iterator<AbstractInsnNode> iterator = method.instructions.iterator(); iterator.hasNext();) {
+      final AbstractInsnNode next = iterator.next();
+      if (!isOnlyUsedInConstrucorField(usedOnlyInConstructor, next)) {
+        continue;
+      }
+      
+      AbstractInsnNode currentNode = NodeHelper.getPrevious(next);
+      method.instructions.remove(next);
+      
+      int aloadCounter = 0;
+      int conditionalCounter = 0;
+      int gotoCounter = 0;
+      
+      while (currentNode != null) {
+        
+        if (isSuperConstructorCall(classNode.superName, currentNode)) {
+          aloadCounter = 0;
+          conditionalCounter = 0;
+          gotoCounter = 0;
+          break;
+        }
+        
+        if (NodeHelper.isAload0(currentNode)) {
+          if ((aloadCounter == 0) && (conditionalCounter == 0) && (gotoCounter == 0)) {
+            method.instructions.remove(currentNode);
+            break;
+          }
+          aloadCounter++;
+          currentNode = getPrevAndRemove(method, currentNode);
+          
+        } else if (currentNode instanceof JumpInsnNode) {
+          if (currentNode.getOpcode() == GOTO) {
+            gotoCounter++;
+            if (gotoCounter > conditionalCounter) {
+              currentNode = getPrevAndRemove(method, currentNode);
+            } else {
+              currentNode = NodeHelper.getPrevious(currentNode);
+            }
+          } else {
+            if (conditionalCounter < gotoCounter) {
+              currentNode = getPrevAndRemove(method, currentNode);
+            } else {
+              currentNode = NodeHelper.getPrevious(currentNode);
+              conditionalCounter++;
+            }
+          }
+        } else {
+          currentNode = getPrevAndRemove(method, currentNode);
+        }
+        
+      }
+      
+    }
+  }
+  
+  private static AbstractInsnNode getPrevAndRemove(final MethodNode method, final AbstractInsnNode currentNode) {
+    final AbstractInsnNode prev = NodeHelper.getPrevious(currentNode);
+    method.instructions.remove(currentNode);
+    return prev;
+  }
+  
+  private static boolean isSuperConstructorCall(final String superClass, final AbstractInsnNode currentNode) {
+    if (currentNode.getOpcode() != INVOKESPECIAL) {
+      return false;
+    }
+    if (!"<init>".equals(NodeHelper.getMethodName(currentNode))) {
+      return false;
+    }
+    if (!superClass.equals(NodeHelper.getMethodOwner(currentNode))) {
+      return false;
+    }
+    AbstractInsnNode prev = NodeHelper.getPrevious(currentNode);
+    while (prev != null) {
+      if (prev.getOpcode() == NEW) {
+        return false;
+      }
+      prev = NodeHelper.getPrevious(prev);
+    }
+    return true;
+  }
+  
+  private static boolean isOnlyUsedInConstrucorField(final Collection<FieldNode> usedOnlyInConstructor,
+      final AbstractInsnNode next) {
+    if (!(next instanceof FieldInsnNode)) {
+      return false;
+    }
+    for (final FieldNode fieldNode : usedOnlyInConstructor) {
+      if (fieldNode.name.equals(NodeHelper.getFieldname(next))) {
+        return true;
+      }
+    }
+    return false;
   }
   
   private static void collectUsedFields(final ClassNode classNode, final Set<FieldNode> usedFields,

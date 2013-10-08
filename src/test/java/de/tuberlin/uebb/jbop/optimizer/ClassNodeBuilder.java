@@ -19,16 +19,29 @@
 package de.tuberlin.uebb.jbop.optimizer;
 
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.BIPUSH;
+import static org.objectweb.asm.Opcodes.DCMPG;
+import static org.objectweb.asm.Opcodes.DCONST_1;
 import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.JSR;
+import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.SIPUSH;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.ConstructorUtils;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -40,6 +53,9 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
@@ -61,20 +77,20 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 public final class ClassNodeBuilder {
   
   /** The class node. */
-  private ClassNode classNode;
+  private final ClassNode classNode;
   
   private MethodNode lastMethod;
+  private MethodNode lastConstructor;
   private FieldNode lastField;
   
   private Object lastElement;
   
-  /** The constructor. */
-  private MethodNode constructor;
+  /** The lastConstructor. */
   private Class<?> buildedClass;
   
   private int constructorVarIndex = 1;
   
-  private int lastConstructorVarIndex;
+  private int lastConstructorVarIndex = 1;
   
   private int methodVarIndex = 1;
   
@@ -82,29 +98,59 @@ public final class ClassNodeBuilder {
   
   private Type lastVarElementType;
   
-  private ClassNodeBuilder() {
-    //
+  private ClassNodeBuilder(final String className, final String superClass, final String constructorDesc,
+      final String superConstructorDesc) {
+    classNode = new ClassNode(Opcodes.ASM5);
+    classNode.access = ACC_PUBLIC;
+    classNode.name = className.replace(".", "/");
+    classNode.superName = superClass.replace(".", "/");
+    classNode.version = Opcodes.V1_7;
+    
+    addConstructor(constructorDesc, superConstructorDesc);
+    lastElement = null;
   }
   
   /**
-   * creates a new ClassNode with the given name and a default constructor.
+   * Creates a new ClassNode with the given name and a default Constructor.
    * 
    * @param className
    *          the class name
    * @return the abstract optimizer test
    */
   public static ClassNodeBuilder createClass(final String className) {
-    final ClassNodeBuilder builder = new ClassNodeBuilder();
-    builder.classNode = new ClassNode(Opcodes.ASM5);
-    builder.classNode.access = ACC_PUBLIC;
-    builder.classNode.name = className.replace(".", "/");
-    builder.classNode.superName = Type.getInternalName(Object.class);
-    builder.classNode.version = Opcodes.V1_7;
-    builder.addMethod("<init>", "()V").addInsn(new VarInsnNode(Opcodes.ALOAD, 0))
-        .addInsn(new MethodInsnNode(Opcodes.INVOKESPECIAL, builder.classNode.superName, "<init>", "()V"))
-        .addInsn(new InsnNode(Opcodes.RETURN));
-    builder.constructor = builder.lastMethod;
+    return createClass(className, "()V", Type.getInternalName(Object.class), "()V");
+  }
+  
+  /**
+   * Creates a new ClassNode with the given name , superClass and Constructor.
+   * 
+   * @param className
+   *          the class name
+   * @return the abstract optimizer test
+   */
+  public static ClassNodeBuilder createClass(final String className, final String constructorDesc,
+      final String superClass, final String superConstructorDesc) {
+    final ClassNodeBuilder builder = new ClassNodeBuilder(className, superClass, constructorDesc, superConstructorDesc);
     return builder;
+  }
+  
+  /**
+   * Appends a Constructor with the given descriptors.
+   */
+  public ClassNodeBuilder addConstructor(final String constructorDesc, final String superConstructorDesc) {
+    addMethod("<init>", constructorDesc);//
+    lastConstructorVarIndex = 1;
+    final InsnList list = new InsnList();
+    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    final Type methodType = Type.getMethodType(superConstructorDesc);
+    for (final Type parameterType : methodType.getArgumentTypes()) {
+      list.add(new VarInsnNode(parameterType.getOpcode(ILOAD), lastConstructorVarIndex));
+      lastConstructorVarIndex += parameterType.getSize();
+    }
+    list.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, classNode.superName, "<init>", superConstructorDesc));
+    list.add(new InsnNode(Opcodes.RETURN));
+    addToConstructor(list);
+    return this;
   }
   
   /**
@@ -158,6 +204,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder addEmptyMethod(final String methodName) {
+    if ("<init>".equals(methodName)) {
+      return this;
+    }
     addMethod(methodName, "()V");
     addInsn(new InsnNode(Opcodes.RETURN));
     return this;
@@ -182,8 +231,7 @@ public final class ClassNodeBuilder {
     method.invisibleAnnotations = new ArrayList<>();
     method.visibleAnnotations = new ArrayList<>();
     classNode.methods.add(method);
-    lastMethod = method;
-    lastElement = method;
+    setLastMethod(method);
     return this;
   }
   
@@ -218,6 +266,8 @@ public final class ClassNodeBuilder {
       lastMethod.visibleAnnotations.add(annotationNode);
     } else if (lastElement instanceof FieldNode) {
       lastField.visibleAnnotations.add(annotationNode);
+    } else {
+      classNode.visibleAnnotations.add(annotationNode);
     }
     return this;
   }
@@ -256,14 +306,16 @@ public final class ClassNodeBuilder {
     final int effectiveModifier = getEffectiveModifier(modifiers);
     if (lastElement instanceof MethodNode) {
       lastMethod.access = effectiveModifier;
-    } else {
+    } else if (lastElement instanceof FieldNode) {
       lastField.access = effectiveModifier;
+    } else {
+      classNode.access = effectiveModifier;
     }
     return this;
   }
   
   /**
-   * Initializes a classField in the default Constructor
+   * Initializes a classField in the default lastConstructor
    * (eg: if fieldType of field "field" is "TestObject", field = new TestObject() is called).
    * 
    * Numbers and Strings are used to assign "field", every other value leads to new Object.
@@ -273,24 +325,23 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder initWith(final Object object) {
-    final AbstractInsnNode returnNode = constructor.instructions.getLast();
+    final InsnList list = new InsnList();
     if ((object instanceof String) || (object instanceof Number) || (object instanceof Boolean)
         || (object instanceof Character)) {
-      constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+      list.add(new VarInsnNode(Opcodes.ALOAD, 0));
       final AbstractInsnNode numberNode = NodeHelper.getInsnNodeFor(object);
-      constructor.instructions.insertBefore(returnNode, numberNode);
+      list.add(numberNode);
       if (lastField.desc.startsWith("L") && (object instanceof Number)) {
-        constructor.instructions.insertBefore(returnNode, ConstructorBuilder.getBoxingNode(lastField));
+        list.add(ConstructorBuilder.getBoxingNode(lastField));
       }
-      constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.PUTFIELD, classNode.name,
-          lastField.name, lastField.desc));
+      list.add(new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, lastField.name, lastField.desc));
     } else {
-      constructor.instructions.insertBefore(returnNode, new VarInsnNode(ALOAD, 0));
-      constructor.instructions.insertBefore(returnNode, newObject(lastField.desc));
-      constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.PUTFIELD, classNode.name,
-          lastField.name, lastField.desc));
+      list.add(new VarInsnNode(ALOAD, 0));
+      list.add(newObject(lastField.desc));
+      list.add(new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, lastField.name, lastField.desc));
       
     }
+    addToConstructor(list);
     return this;
   }
   
@@ -344,24 +395,23 @@ public final class ClassNodeBuilder {
   }
   
   public ClassNodeBuilder initMultiArrayWith(final Object value, final int... indexes) {
-    final AbstractInsnNode returnNode = constructor.instructions.getLast();
-    constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
-    constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.GETFIELD, classNode.name,
-        lastField.name, lastField.desc));
+    final InsnList list = new InsnList();
+    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    list.add(new FieldInsnNode(Opcodes.GETFIELD, classNode.name, lastField.name, lastField.desc));
     for (int i = 0; i < (indexes.length - 1); ++i) {
-      constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(indexes[i]));
-      constructor.instructions.insertBefore(returnNode, new InsnNode(Opcodes.AALOAD));
+      list.add(NodeHelper.getInsnNodeFor(indexes[i]));
+      list.add(new InsnNode(Opcodes.AALOAD));
     }
-    constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(indexes[indexes.length - 1]));
-    constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(value));
+    list.add(NodeHelper.getInsnNodeFor(indexes[indexes.length - 1]));
+    list.add(NodeHelper.getInsnNodeFor(value));
     final Type elementType = Type.getType(lastField.desc).getElementType();
     if (elementType.getDescriptor().startsWith("L")) {
-      constructor.instructions.insertBefore(returnNode, new InsnNode(Opcodes.AASTORE));
+      list.add(new InsnNode(Opcodes.AASTORE));
     } else {
-      constructor.instructions.insertBefore(returnNode, new InsnNode(toPrimitive(Type.getType(value.getClass()))
-          .getOpcode(Opcodes.IASTORE)));
+      list.add(new InsnNode(toPrimitive(Type.getType(value.getClass())).getOpcode(Opcodes.IASTORE)));
       
     }
+    addToConstructor(list);
     return this;
   }
   
@@ -394,7 +444,7 @@ public final class ClassNodeBuilder {
   }
   
   /**
-   * Initializes a classField of type Array in the default Constructor.
+   * Initializes a classField of type Array in the default lastConstructor.
    * The array is initialized with the given Strings.
    * 
    * @param values
@@ -408,25 +458,26 @@ public final class ClassNodeBuilder {
   }
   
   private void initArrayInternal(final int opcode, final Object... values) {
-    final AbstractInsnNode returnNode = constructor.instructions.getLast();
+    final InsnList list = new InsnList();
     final int length = values.length;
     initArray(length);
     int index = 0;
     for (final Object number : values) {
-      constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, lastConstructorVarIndex));
+      list.add(new VarInsnNode(Opcodes.ALOAD, lastConstructorVarIndex));
       final AbstractInsnNode indexNode = NodeHelper.getInsnNodeFor(index++);
-      constructor.instructions.insertBefore(returnNode, indexNode);
+      list.add(indexNode);
       final AbstractInsnNode numberNode = NodeHelper.getInsnNodeFor(number);
-      constructor.instructions.insertBefore(returnNode, numberNode);
+      list.add(numberNode);
       if ((number instanceof Number) && (opcode == Opcodes.ASTORE)) {
-        constructor.instructions.insertBefore(returnNode, ConstructorBuilder.getBoxingNode(lastField));
+        list.add(ConstructorBuilder.getBoxingNode(lastField));
       }
-      constructor.instructions.insertBefore(returnNode, new InsnNode(opcode));
+      list.add(new InsnNode(opcode));
     }
+    addToConstructor(list);
   }
   
   /**
-   * Initializes a classField of type Array in the default Constructor with the given length.
+   * Initializes a classField of type Array in the default lastConstructor with the given length.
    * (eg: if fieldType of field "field" is "double[]", field = new double[length] is called).
    * 
    * @param length
@@ -434,12 +485,12 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder initArray(final int... length) {
-    final AbstractInsnNode returnNode = constructor.instructions.getLast();
-    constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+    final InsnList list = new InsnList();
+    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
     final AbstractInsnNode node;
     if (length.length == 1) {
       final Type elementType = Type.getType(lastField.desc).getElementType();
-      constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(Integer.valueOf(length[0])));
+      list.add(NodeHelper.getInsnNodeFor(Integer.valueOf(length[0])));
       if (elementType.getDescriptor().startsWith("L")) {
         node = new TypeInsnNode(Opcodes.ANEWARRAY, elementType.getInternalName());
       } else {
@@ -447,17 +498,17 @@ public final class ClassNodeBuilder {
       }
     } else {
       for (final int currentLength : length) {
-        constructor.instructions.insertBefore(returnNode, NodeHelper.getInsnNodeFor(Integer.valueOf(currentLength)));
+        list.add(NodeHelper.getInsnNodeFor(Integer.valueOf(currentLength)));
       }
       node = new MultiANewArrayInsnNode(lastField.desc, length.length);
     }
-    constructor.instructions.insertBefore(returnNode, node);
-    constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ASTORE, constructorVarIndex));
-    constructor.instructions.insertBefore(returnNode, new VarInsnNode(Opcodes.ALOAD, constructorVarIndex));
+    list.add(node);
+    list.add(new VarInsnNode(Opcodes.ASTORE, constructorVarIndex));
+    list.add(new VarInsnNode(Opcodes.ALOAD, constructorVarIndex));
     lastConstructorVarIndex = constructorVarIndex;
     constructorVarIndex++;
-    constructor.instructions.insertBefore(returnNode, new FieldInsnNode(Opcodes.PUTFIELD, classNode.name,
-        lastField.name, lastField.desc));
+    list.add(new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, lastField.name, lastField.desc));
+    addToConstructor(list);
     return this;
   }
   
@@ -543,28 +594,36 @@ public final class ClassNodeBuilder {
   }
   
   /**
-   * Adds the given node to the constructor.
+   * Adds the given node to the lastConstructor.
    * 
    * @param node
    *          the node
    * @return the class node builder
    */
   public ClassNodeBuilder addToConstructor(final AbstractInsnNode node) {
-    final AbstractInsnNode returnNode = constructor.instructions.getLast();
-    constructor.instructions.insertBefore(returnNode, node);
+    final AbstractInsnNode returnNode = lastConstructor.instructions.getLast();
+    if (returnNode == null) {
+      lastConstructor.instructions.add(node);
+    } else {
+      lastConstructor.instructions.insertBefore(returnNode, node);
+    }
     return this;
   }
   
   /**
-   * Adds the given nodes to the constructor.
+   * Adds the given nodes to the lastConstructor.
    * 
    * @param node
    *          the node
    * @return the class node builder
    */
   public ClassNodeBuilder addToConstructor(final InsnList nodes) {
-    final AbstractInsnNode returnNode = constructor.instructions.getLast();
-    constructor.instructions.insertBefore(returnNode, nodes);
+    final AbstractInsnNode returnNode = lastConstructor.instructions.getLast();
+    if (returnNode == null) {
+      lastConstructor.instructions.add(nodes);
+    } else {
+      lastConstructor.instructions.insertBefore(returnNode, nodes);
+    }
     return this;
   }
   
@@ -576,7 +635,11 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addInsn(final AbstractInsnNode node) {
-    lastMethod.instructions.add(node);
+    if ("<init>".equals(lastMethod.name)) {
+      addToConstructor(node);
+    } else {
+      lastMethod.instructions.add(node);
+    }
     return this;
   }
   
@@ -588,7 +651,11 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addInsn(final InsnList nodes) {
-    lastMethod.instructions.add(nodes);
+    if (lastMethod == null) {
+      addToConstructor(nodes);
+    } else {
+      lastMethod.instructions.add(nodes);
+    }
     return this;
   }
   
@@ -676,43 +743,41 @@ public final class ClassNodeBuilder {
   }
   
   /**
-   * Inits the real class.
-   * 
-   * @param className
-   *          the class name
-   * @param methodName
-   *          the method name
-   * @return the class node builder
-   * @throws Exception
-   *           the exception
-   */
-  public static ClassNodeBuilder initRealClass(final String className, final String methodName) throws Exception {
-    final ClassNodeBuilder builder = new ClassNodeBuilder();
-    builder.initClassNode(className);
-    builder.initMethodNode(methodName);
-    return builder;
-  }
-  
-  private void initClassNode(final String className) throws Exception {
-    classNode = new ClassNode(Opcodes.ASM5);
-    new ClassReader(className).accept(classNode, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-  }
-  
-  private void initMethodNode(final String methodName) {
-    lastMethod = getMethod(methodName);
-  }
-  
-  /**
-   * get the MethodNode with the given Name.
+   * get the first MethodNode with the given Name.
    * 
    * @param name
    *          the name
    * @return the method
    */
   public MethodNode getMethod(final String name) {
+    return getMethod(name, null);
+  }
+  
+  /**
+   * gets the lastConstructor with the given descriptor.
+   */
+  public MethodNode getConstructor(final String desc) {
+    return getMethod("<init>", desc);
+  }
+  
+  /**
+   * get the MethodNode with the given Name and descriptor.
+   * 
+   * @param name
+   *          the name
+   * @param desc
+   *          the methoddescriptor
+   * @return the method
+   */
+  public MethodNode getMethod(final String name, final String desc) {
     for (final MethodNode method : classNode.methods) {
       if (name.equals(method.name)) {
-        return method;
+        if (StringUtils.isBlank(desc)) {
+          return method;
+        }
+        if (method.desc.equals(desc)) {
+          return method;
+        }
       }
     }
     return null;
@@ -756,7 +821,10 @@ public final class ClassNodeBuilder {
    * 
    * @return the builded class
    */
-  public Class<?> getBuildedClass() {
+  public Class<?> getBuildedClass() throws Exception {
+    if (buildedClass == null) {
+      toClass();
+    }
     return buildedClass;
   }
   
@@ -783,4 +851,109 @@ public final class ClassNodeBuilder {
     return classNode;
   }
   
+  /**
+   * Select the Method as being "active".
+   */
+  public ClassNodeBuilder selectMethod(final String name, final String desc) {
+    setLastMethod(getMethod(name, desc));
+    return this;
+  }
+  
+  /**
+   * Select the given lastConstructor as being "active".
+   */
+  public ClassNodeBuilder selectConstructor(final String desc) {
+    setLastMethod(getMethod("<init>", desc));
+    return this;
+  }
+  
+  private void setLastMethod(final MethodNode method) {
+    if ("<init>".equals(method.name)) {
+      lastConstructor = method;
+      lastMethod = method;
+    } else {
+      lastMethod = method;
+    }
+    lastElement = method;
+  }
+  
+  public ClassNodeBuilder load(final int index) {
+    if ((index == 0) && ((lastMethod.access & ACC_STATIC) == 0)) {
+      addInsn(new VarInsnNode((ALOAD), 0));
+      return this;
+    }
+    addInsn(new VarInsnNode(getType(index).getOpcode(ILOAD), getVarIndex(index)));
+    return this;
+  }
+  
+  public ClassNodeBuilder store(final int index) {
+    addInsn(new VarInsnNode(getType(index).getOpcode(ISTORE), getVarIndex(index)));
+    return this;
+  }
+  
+  public ClassNodeBuilder addReturn() {
+    addInsn(new InsnNode(Type.getReturnType(lastMethod.desc).getOpcode(IRETURN)));
+    return this;
+  }
+  
+  public ClassNodeBuilder add(final int opcode, final Object... args) {
+    if (((opcode >= NOP) && (opcode <= DCONST_1)) || ((opcode >= POP) && (opcode <= DCMPG))) {
+      return addInsn(new InsnNode(opcode));
+    }
+    if (((opcode >= BIPUSH) && (opcode <= SIPUSH))) {
+      return addInsn(new IntInsnNode(opcode, (Integer) args[0]));
+    }
+    if (opcode == LDC) {
+      return addInsn(new LdcInsnNode(args[0]));
+    }
+    if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
+      return load((Integer) args[0]);
+    }
+    if ((opcode >= ISTORE) && (opcode <= ASTORE)) {
+      return store((Integer) args[0]);
+    }
+    if ((opcode >= IFEQ) && (opcode <= JSR)) {
+      return jump(opcode, (LabelNode) args[0]);
+    }
+    return this;
+  }
+  
+  public ClassNodeBuilder jump(final int opcode, final LabelNode labelNode) {
+    return addInsn(new JumpInsnNode(opcode, labelNode));
+  }
+  
+  private int getVarIndex(final int index) {
+    int varIndex = shiftStaticIndex(index);
+    
+    final Type[] parameterTypes = Type.getArgumentTypes(lastMethod.desc);
+    for (int i = 0; i < index; ++i) {
+      final Type pType = parameterTypes[i];
+      varIndex += pType.getSize();
+    }
+    
+    return varIndex;
+  }
+  
+  private int shiftStaticIndex(final int index) {
+    int varIndex = index;
+    if ((lastMethod.access & ACC_STATIC) == 0) {
+      varIndex--;
+    }
+    return varIndex;
+  }
+  
+  private Type getType(final int index) {
+    final int varIndex = shiftStaticIndex(index);
+    final Type[] parameterTypes = Type.getMethodType(lastMethod.desc).getArgumentTypes();
+    final Type type = parameterTypes[varIndex];
+    return type;
+  }
+  
+  public ClassNodeBuilder invoke(final int opcode, final String method) {
+    return invoke(opcode, this, method);
+  }
+  
+  public ClassNodeBuilder invoke(final int opcode, final ClassNodeBuilder classBuilder, final String method) {
+    return addInsn(new MethodInsnNode(opcode, classBuilder.classNode.name, method, classBuilder.getMethod(method).desc));
+  }
 }

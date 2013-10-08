@@ -30,6 +30,7 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 /**
@@ -932,6 +933,20 @@ public final class NodeHelper {
       return ((VarInsnNode) node).var;
     }
     return -1;
+  }
+  
+  public static String getMethodName(final AbstractInsnNode node) {
+    if (!(node instanceof MethodInsnNode)) {
+      return null;
+    }
+    return ((MethodInsnNode) node).name;
+  }
+  
+  public static String getMethodOwner(final AbstractInsnNode node) {
+    if (!(node instanceof MethodInsnNode)) {
+      return null;
+    }
+    return ((MethodInsnNode) node).owner;
   }
   
 }
