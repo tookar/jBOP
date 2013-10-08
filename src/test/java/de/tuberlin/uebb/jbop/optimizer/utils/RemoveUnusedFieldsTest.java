@@ -7,6 +7,7 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
@@ -176,5 +177,54 @@ public class RemoveUnusedFieldsTest {
     assertEquals(0, classNode.fields.size());
     
     classBuilder.instance();
+  }
+  
+  /**
+   * Test the removal code against if-branches.
+   * 
+   * @throws Exception
+   */
+  @Test
+  public void testIfIf() throws Exception {
+    // INIT
+    final LabelNode label_then = new LabelNode();
+    final LabelNode label_endif = new LabelNode();
+    final LabelNode label_then2 = new LabelNode();
+    final LabelNode label_endif2 = new LabelNode();
+    
+    classBuilder = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.utils.TestClass3b").//
+        addField("field1", "I");
+    
+    final MethodNode constructor = classBuilder.addConstructor("(II)V", "()V").//
+        load(0).//
+        load(1).//
+        add(IFEQ, label_then).//
+        load(0).//
+        load(2).//
+        add(IFEQ, label_then2).//
+        load(1).//
+        addPutField(classBuilder, "field1").//
+        add(GOTO, label_endif2).//
+        addInsn(label_then2).//
+        add(ICONST_0).//
+        addPutField(classBuilder, "field1").//
+        addInsn(label_endif2).//
+        add(GOTO, label_endif).//
+        addInsn(label_then).//
+        load(1).//
+        addPutField(classBuilder, "field1").//
+        addInsn(label_endif).//
+        getConstructor("(II)V");
+    
+    classNode = classBuilder.getClassNode();
+    
+    // RUN
+    RemoveUnusedFields.removeUnusedFields(classNode);
+    
+    assertEquals(7, constructor.instructions.size()); // 3 nodes + 4 labels
+    
+    assertEquals(0, classNode.fields.size());
+    
+    classBuilder.getBuildedClass().getConstructor(int.class, int.class).newInstance(1, 1);
   }
 }
