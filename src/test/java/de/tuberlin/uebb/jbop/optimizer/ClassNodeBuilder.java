@@ -1001,7 +1001,7 @@ public final class ClassNodeBuilder {
       return addInsn(new IntInsnNode(opcode, (Integer) args[0]));
     }
     if (opcode == LDC) {
-      return addInsn(new LdcInsnNode(args[0]));
+      return loadConstant(args[0]);
     }
     if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
       return load((Integer) args[0]);
@@ -1013,6 +1013,10 @@ public final class ClassNodeBuilder {
       return jump(opcode, (LabelNode) args[0]);
     }
     return this;
+  }
+  
+  public ClassNodeBuilder loadConstant(final Object arg) {
+    return addInsn(new LdcInsnNode(arg));
   }
   
   public ClassNodeBuilder jump(final int opcode, final LabelNode labelNode) {

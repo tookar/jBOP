@@ -104,9 +104,9 @@ public final class NodeHelper {
   }
   
   private static AbstractInsnNode getDoubleInsnNode(final Number newNumber) {
-    if (newNumber.longValue() == 0) {
+    if (newNumber.doubleValue() == 0) {
       return new InsnNode(Opcodes.DCONST_0);
-    } else if (newNumber.longValue() == 1) {
+    } else if (newNumber.doubleValue() == 1) {
       return new InsnNode(Opcodes.DCONST_1);
     } else {
       return new LdcInsnNode(newNumber);
@@ -116,9 +116,9 @@ public final class NodeHelper {
   private static AbstractInsnNode getFloatInsnNode(final Number newNumber) {
     if (newNumber.longValue() == 0) {
       return new InsnNode(Opcodes.FCONST_0);
-    } else if (newNumber.longValue() == 1) {
+    } else if (newNumber.floatValue() == 1) {
       return new InsnNode(Opcodes.FCONST_1);
-    } else if (newNumber.longValue() == 2) {
+    } else if (newNumber.floatValue() == 2) {
       return new InsnNode(Opcodes.FCONST_2);
     } else {
       return new LdcInsnNode(newNumber);

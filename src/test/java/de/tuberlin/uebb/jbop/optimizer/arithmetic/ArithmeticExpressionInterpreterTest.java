@@ -21,6 +21,16 @@ package de.tuberlin.uebb.jbop.optimizer.arithmetic;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.objectweb.asm.Opcodes.DADD;
+import static org.objectweb.asm.Opcodes.DCONST_1;
+import static org.objectweb.asm.Opcodes.DDIV;
+import static org.objectweb.asm.Opcodes.DMUL;
+import static org.objectweb.asm.Opcodes.I2D;
+import static org.objectweb.asm.Opcodes.IAND;
+import static org.objectweb.asm.Opcodes.ICONST_3;
+import static org.objectweb.asm.Opcodes.ICONST_4;
+import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.IOR;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -234,5 +244,35 @@ public class ArithmeticExpressionInterpreterTest {
     
     assertEquals(2, optimized.size());
     assertEquals(1l, NodeHelper.getNumberValue(optimized.get(0)));
+  }
+  
+  /**
+   * Tests that arithmeticExpressionInterpreter() of the Testobject is working correctly
+   * for logical and expressions.
+   */
+  @Test
+  public void testArithmeticExpressionComplexChain() {
+    // INIT
+    builder.getMethod("testMethod").desc = "()D";
+    builder.add(DCONST_1).//
+        loadConstant(2.0).//
+        loadConstant(5.0).//
+        add(DMUL).//
+        add(DADD).//
+        loadConstant(6.0).//
+        add(DDIV).//
+        add(ICONST_3).//
+        add(ICONST_4).//
+        add(IOR).//
+        add(ICONST_5).//
+        add(IAND).//
+        add(I2D).//
+        add(DMUL).//
+        addReturn();
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(9.166666666666666, NodeHelper.getNumberValue(optimized.get(0)).doubleValue(), .0000001);
   }
 }
