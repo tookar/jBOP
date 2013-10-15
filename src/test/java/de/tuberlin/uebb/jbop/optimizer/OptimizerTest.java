@@ -18,7 +18,9 @@
  */
 package de.tuberlin.uebb.jbop.optimizer;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -59,6 +61,8 @@ public class OptimizerTest {
   private Object input;
   
   private static final List<Class<? extends IOptimizer>> DEFAULT_OPTIMIZER_STEPS;
+  private ClassNodeBuilder interfaceBuilder;
+  private ClassNodeBuilder builder;
   static {
     final List<Class<? extends IOptimizer>> optimizers = new ArrayList<>();
     optimizers.add(FinalFieldInliner.class);
@@ -81,8 +85,10 @@ public class OptimizerTest {
    */
   @Before
   public void before() throws Exception {
-    final ClassNodeBuilder builder = ClassNodeBuilder
-        .createClass("de.tuberlin.uebb.jbop.optimizer.OptimizerTestTestClass").//
+    interfaceBuilder = ClassNodeBuilder.createInterface("de.tuberlin.uebb.jbop.optimizer.IOptimizerTestTestClass");
+    interfaceBuilder.toClass();
+    builder = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.OptimizerTestTestClass").//
+        implementInterface(interfaceBuilder).//
         addEmptyMethod("unmodified").//
         addEmptyMethod("simpleOptimization").//
         withAnnotation(Optimizable.class).//
@@ -185,6 +191,21 @@ public class OptimizerTest {
       }
     }
     return null;
+  }
+  
+  @Test
+  public void testOptimize() throws JBOPClassException {
+    // RUN
+    final Object optimized = optimizer.optimize(input, "_test");
+    final Object optimized2 = optimizer.optimize(input, "_test");
+    
+    // ASSERT
+    assertTrue(optimized == optimized2);
+    
+    final Class<? extends Object> optimizedClass = optimized.getClass();
+    final Class<? extends Object> inputClass = input.getClass();
+    assertEquals(inputClass.getName() + "_test", optimizedClass.getName());
+    assertArrayEquals(inputClass.getInterfaces(), optimizedClass.getInterfaces());
   }
   
 }

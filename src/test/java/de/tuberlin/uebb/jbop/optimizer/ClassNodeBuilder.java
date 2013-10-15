@@ -18,6 +18,8 @@
  */
 package de.tuberlin.uebb.jbop.optimizer;
 
+import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ALOAD;
@@ -98,15 +100,24 @@ public final class ClassNodeBuilder {
   
   private Type lastVarElementType;
   
+  private final boolean isInterface;
+  
   private ClassNodeBuilder(final String className, final String superClass, final String constructorDesc,
-      final String superConstructorDesc) {
+      final String superConstructorDesc, final boolean isInterface) {
+    this.isInterface = isInterface;
     classNode = new ClassNode(Opcodes.ASM5);
     classNode.access = ACC_PUBLIC;
     classNode.name = className.replace(".", "/");
-    classNode.superName = superClass.replace(".", "/");
+    if (superClass != null) {
+      classNode.superName = superClass.replace(".", "/");
+    }
     classNode.version = Opcodes.V1_7;
-    
-    addConstructor(constructorDesc, superConstructorDesc);
+    if (!isInterface) {
+      addConstructor(constructorDesc, superConstructorDesc);
+    } else {
+      classNode.access |= ACC_INTERFACE;
+      classNode.access |= ACC_ABSTRACT;
+    }
     lastElement = null;
   }
   
@@ -122,6 +133,17 @@ public final class ClassNodeBuilder {
   }
   
   /**
+   * Creates a new ClassNode with the given name and a default Constructor.
+   * 
+   * @param className
+   *          the class name
+   * @return the abstract optimizer test
+   */
+  public static ClassNodeBuilder createInterface(final String className) {
+    return new ClassNodeBuilder(className, Type.getInternalName(Object.class), null, null, true);
+  }
+  
+  /**
    * Creates a new ClassNode with the given name , superClass and Constructor.
    * 
    * @param className
@@ -130,7 +152,8 @@ public final class ClassNodeBuilder {
    */
   public static ClassNodeBuilder createClass(final String className, final String constructorDesc,
       final String superClass, final String superConstructorDesc) {
-    final ClassNodeBuilder builder = new ClassNodeBuilder(className, superClass, constructorDesc, superConstructorDesc);
+    final ClassNodeBuilder builder = new ClassNodeBuilder(className, superClass, constructorDesc, superConstructorDesc,
+        false);
     return builder;
   }
   
@@ -138,6 +161,9 @@ public final class ClassNodeBuilder {
    * Appends a Constructor with the given descriptors.
    */
   public ClassNodeBuilder addConstructor(final String constructorDesc, final String superConstructorDesc) {
+    if (isInterface) {
+      return this;
+    }
     addMethod("<init>", constructorDesc);//
     lastConstructorVarIndex = 1;
     final InsnList list = new InsnList();
@@ -159,6 +185,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder withGetter() {
+    if (isInterface) {
+      return this;
+    }
     final String name = lastField.name;
     final String desc = lastField.desc;
     addMethod("get" + Character.toUpperCase(name.charAt(0)) + name.substring(1), "()" + desc);
@@ -175,6 +204,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder withSetter() {
+    if (isInterface) {
+      return this;
+    }
     final String name = lastField.name;
     final String desc = lastField.desc;
     addMethod("set" + Character.toUpperCase(name.charAt(0)) + name.substring(1), "(" + desc + ")V");
@@ -192,6 +224,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder withGetterAndSetter() {
+    if (isInterface) {
+      return this;
+    }
     withGetter().withSetter();
     return this;
   }
@@ -208,6 +243,9 @@ public final class ClassNodeBuilder {
       return this;
     }
     addMethod(methodName, "()V");
+    if (isInterface) {
+      return this;
+    }
     addInsn(new InsnNode(Opcodes.RETURN));
     return this;
   }
@@ -232,6 +270,9 @@ public final class ClassNodeBuilder {
     method.visibleAnnotations = new ArrayList<>();
     classNode.methods.add(method);
     setLastMethod(method);
+    if (isInterface) {
+      method.access |= ACC_ABSTRACT;
+    }
     return this;
   }
   
@@ -285,6 +326,9 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addField(final String fieldName, final String descriptor, final Object... value) {
+    if (isInterface) {
+      return this;
+    }
     final FieldNode fieldNode = new FieldNode(Opcodes.ACC_PRIVATE, fieldName, descriptor, null, value == null ? null
         : value.length > 0 ? value[0] : null);
     classNode.fields.add(fieldNode);
@@ -325,6 +369,9 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder initWith(final Object object) {
+    if (isInterface) {
+      return this;
+    }
     final InsnList list = new InsnList();
     if ((object instanceof String) || (object instanceof Number) || (object instanceof Boolean)
         || (object instanceof Character)) {
@@ -363,6 +410,20 @@ public final class ClassNodeBuilder {
   }
   
   /**
+   * Creates Instruction to instantiate a new Object of the given type.
+   * 
+   * @param desc
+   *          the desc
+   * @return the insn list
+   */
+  public ClassNodeBuilder addNewObject(final ClassNodeBuilder builder) {
+    if (isInterface) {
+      return this;
+    }
+    return addNewObject(builder.getDesc());
+  }
+  
+  /**
    * Creates Instruction to instantiate a new Object of type "desc".
    * 
    * @param desc
@@ -370,6 +431,9 @@ public final class ClassNodeBuilder {
    * @return the insn list
    */
   public ClassNodeBuilder addNewObject(final String desc) {
+    if (isInterface) {
+      return this;
+    }
     final InsnList newObject = newObject(desc);
     return addInsn(newObject);
   }
@@ -384,6 +448,9 @@ public final class ClassNodeBuilder {
    * @see AbstractOptimizerTest#initArrayInConstructor(String, int)
    */
   public ClassNodeBuilder initArrayWith(final Number... values) {
+    if (isInterface) {
+      return this;
+    }
     final Type elementType = Type.getType(lastField.desc).getElementType();
     if (elementType.getDescriptor().startsWith("L")) {
       initArrayInternal(Opcodes.AASTORE, (Object[]) values);
@@ -395,6 +462,9 @@ public final class ClassNodeBuilder {
   }
   
   public ClassNodeBuilder initMultiArrayWith(final Object value, final int... indexes) {
+    if (isInterface) {
+      return this;
+    }
     final InsnList list = new InsnList();
     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
     list.add(new FieldInsnNode(Opcodes.GETFIELD, classNode.name, lastField.name, lastField.desc));
@@ -453,6 +523,9 @@ public final class ClassNodeBuilder {
    * @see AbstractOptimizerTest#initArrayInConstructor(String, int)
    */
   public ClassNodeBuilder initArrayWith(final String... values) {
+    if (isInterface) {
+      return this;
+    }
     initArrayInternal(Opcodes.AASTORE, (Object[]) values);
     return this;
   }
@@ -485,6 +558,9 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder initArray(final int... length) {
+    if (isInterface) {
+      return this;
+    }
     final InsnList list = new InsnList();
     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
     final AbstractInsnNode node;
@@ -522,6 +598,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder addArray(final String desc, final int... length) {
+    if (isInterface) {
+      return this;
+    }
     final Type elementType = Type.getType(desc).getElementType();
     if (length.length == 1) {
       
@@ -554,6 +633,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder withValue(final Object value, final int... indexes) {
+    if (isInterface) {
+      return this;
+    }
     addInsn(new VarInsnNode(Opcodes.ALOAD, lastMethodVarIndex));
     for (int i = 0; i < (indexes.length - 1); ++i) {
       addInsn(NodeHelper.getInsnNodeFor(indexes[i]));
@@ -601,6 +683,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder addToConstructor(final AbstractInsnNode node) {
+    if (isInterface) {
+      return this;
+    }
     final AbstractInsnNode returnNode = lastConstructor.instructions.getLast();
     if (returnNode == null) {
       lastConstructor.instructions.add(node);
@@ -618,6 +703,9 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder addToConstructor(final InsnList nodes) {
+    if (isInterface) {
+      return this;
+    }
     final AbstractInsnNode returnNode = lastConstructor.instructions.getLast();
     if (returnNode == null) {
       lastConstructor.instructions.add(nodes);
@@ -635,6 +723,9 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addInsn(final AbstractInsnNode node) {
+    if (isInterface) {
+      return this;
+    }
     if ("<init>".equals(lastMethod.name)) {
       addToConstructor(node);
     } else {
@@ -651,6 +742,9 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addInsn(final InsnList nodes) {
+    if (isInterface) {
+      return this;
+    }
     if (lastMethod == null) {
       addToConstructor(nodes);
     } else {
@@ -791,6 +885,9 @@ public final class ClassNodeBuilder {
    * @return the field
    */
   public FieldNode getField(final String name) {
+    if (isInterface) {
+      return null;
+    }
     for (final FieldNode field : classNode.fields) {
       if (name.equals(field.name)) {
         return field;
@@ -955,5 +1052,18 @@ public final class ClassNodeBuilder {
   
   public ClassNodeBuilder invoke(final int opcode, final ClassNodeBuilder classBuilder, final String method) {
     return addInsn(new MethodInsnNode(opcode, classBuilder.classNode.name, method, classBuilder.getMethod(method).desc));
+  }
+  
+  public String getDesc() {
+    return classNode.name;
+  }
+  
+  public ClassNodeBuilder implementInterface(final ClassNodeBuilder builder) {
+    return implementInterface(builder.getDesc());
+  }
+  
+  public ClassNodeBuilder implementInterface(final String desc) {
+    classNode.interfaces.add(desc);
+    return this;
   }
 }

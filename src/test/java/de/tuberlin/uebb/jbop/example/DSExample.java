@@ -18,6 +18,8 @@
  */
 package de.tuberlin.uebb.jbop.example;
 
+import org.junit.Test;
+
 /**
  * The Class DSExample.
  * 
@@ -33,6 +35,11 @@ public class DSExample {
    *          the arguments
    */
   public static void main(final String[] args) {
+    new DSExample().run();
+  }
+  
+  @Test
+  public void run() {
     final double x0 = 15.0;
     final DerivativeStructure x = new DerivativeStructure(3, 3, 0, x0);
     final double y0 = 15.0;
