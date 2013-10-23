@@ -143,8 +143,11 @@ public class FieldArrayValueInliner implements IOptimizer, IInputObjectAware, IC
       fieldChainInliner.setInputObject(value);
       fieldChainInliner.optimize(newList, null);
       if (fieldChainInliner.isOptimized()) {
+        // the new valuenode is already put in the list, the chain-nodes are consumed.
+        // but aload, getfield... have to be removed yet.
         replacementNode = null;
       } else {
+        // this is not a value we can handle, but its definitly not null.
         final NonNullArrayValue arrayValue = new NonNullArrayValue(aload, arrayHelper.getFieldNode(),
             arrayHelper.getIndexes(), arrayHelper.getArrayloads());
         nonNullArrayValues.add(arrayValue);
