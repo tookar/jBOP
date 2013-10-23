@@ -26,6 +26,8 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IClassNodeAware;
+import de.tuberlin.uebb.jbop.optimizer.IInputObjectAware;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.var.GetFieldChainInliner;
 
@@ -75,26 +77,13 @@ import de.tuberlin.uebb.jbop.optimizer.var.GetFieldChainInliner;
  * 
  * @author Christopher Ewest
  */
-public class FieldArrayLengthInliner implements IOptimizer {
+public class FieldArrayLengthInliner implements IOptimizer, IInputObjectAware, IClassNodeAware {
   
   private boolean optimized = false;
   
-  private final Object instance;
+  private Object instance;
   
-  private final ClassNode classNode;
-  
-  /**
-   * Instantiates a new FieldArrayLengthInliner.
-   * 
-   * @param names
-   *          the names
-   * @param instance
-   *          the instance
-   */
-  public FieldArrayLengthInliner(final ClassNode classNode, final Object instance) {
-    this.classNode = classNode;
-    this.instance = instance;
-  }
+  private ClassNode classNode;
   
   @Override
   public boolean isOptimized() {
@@ -114,10 +103,6 @@ public class FieldArrayLengthInliner implements IOptimizer {
       if (!arrayHelper.isArrayLength()) {
         continue;
       }
-      // arrayHelper.addArrayLoad();
-      // final int length = arrayHelper.getLength(instance);
-      //
-      // replaceNodes(original, aload, arrayHelper, length);
       final GetFieldChainInliner fieldChainInliner = new GetFieldChainInliner();
       fieldChainInliner.setIterator(iterator);
       fieldChainInliner.setInputObject(instance);
@@ -130,19 +115,13 @@ public class FieldArrayLengthInliner implements IOptimizer {
     return original;
   }
   
-  // private void replaceNodes(final InsnList original, final AbstractInsnNode aload, final ArrayHelper arrayHelper,
-  // final Integer length) {
-  // final AbstractInsnNode replacementNode = NodeHelper.getInsnNodeFor(length);
-  // original.insert(aload, replacementNode);
-  // original.remove(aload);
-  // for (final AbstractInsnNode node : arrayHelper.getIndexes()) {
-  // original.remove(node);
-  // }
-  // for (final AbstractInsnNode node : arrayHelper.getArrayloads()) {
-  // original.remove(node);
-  // }
-  // original.remove(arrayHelper.getFieldNode());
-  // optimized = true;
-  // }
+  @Override
+  public void setInputObject(final Object input) {
+    instance = input;
+  }
   
+  @Override
+  public void setClassNode(final ClassNode classNode) {
+    this.classNode = classNode;
+  }
 }

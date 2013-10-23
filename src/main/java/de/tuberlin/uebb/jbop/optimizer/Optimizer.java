@@ -138,19 +138,17 @@ public class Optimizer {
     
     final List<IOptimizer> optimizers = new ArrayList<>();
     final FinalFieldInliner finalFieldInliner = new FinalFieldInliner();
-    finalFieldInliner.setInputObject(input);
     optimizers.add(finalFieldInliner);
     
-    initAdditionalSteps(methodNode, optimizers, classNode, input);
+    initAdditionalSteps(methodNode, optimizers);
     
-    final IOptimizer arrayLength = new FieldArrayLengthInliner(classNode, input);
+    final IOptimizer arrayLength = new FieldArrayLengthInliner();
     optimizers.add(arrayLength);
     
     final LocalArrayLengthInliner localArrayLengthInliner = new LocalArrayLengthInliner();
-    localArrayLengthInliner.setInputObject(input);
     optimizers.add(localArrayLengthInliner);
     
-    final FieldArrayValueInliner arrayValue = new FieldArrayValueInliner(classNode, input);
+    final FieldArrayValueInliner arrayValue = new FieldArrayValueInliner();
     optimizers.add(arrayValue);
     
     final IOptimizer localVars = new LocalVarInliner();
@@ -162,7 +160,7 @@ public class Optimizer {
     final IOptimizer constantIf = new ConstantIfInliner(arrayValue);
     optimizers.add(constantIf);
     
-    initLoopOptimizers(methodNode, optimizers);
+    initLoopOptimizer(methodNode, optimizers);
     
     final LocalArrayValueInliner localArrayValue = new LocalArrayValueInliner();
     localArrayValue.setInputObject(input);
@@ -171,10 +169,17 @@ public class Optimizer {
     final IOptimizer unusedLocals = new RemoveUnusedLocalVars();
     optimizers.add(unusedLocals);
     
+    init(optimizers, classNode, input);
     return optimizers;
   }
   
-  private void initLoopOptimizers(final MethodNode methodNode, final List<IOptimizer> optimizers) {
+  private void init(final List<IOptimizer> optimizers, final ClassNode classNode, final Object input) {
+    for (final IOptimizer optimizer : optimizers) {
+      init(optimizer, classNode, input);
+    }
+  }
+  
+  private void initLoopOptimizer(final MethodNode methodNode, final List<IOptimizer> optimizers) {
     final String strictLoops = Type.getType(StrictLoops.class).getDescriptor();
     for (final AnnotationNode annotation : methodNode.visibleAnnotations) {
       if (strictLoops.equals(annotation.desc)) {
@@ -185,8 +190,8 @@ public class Optimizer {
     }
   }
   
-  private void initAdditionalSteps(final MethodNode methodNode, final List<IOptimizer> optimizers,
-      final ClassNode classNode, final Object input) throws JBOPClassException {
+  private void initAdditionalSteps(final MethodNode methodNode, final List<IOptimizer> optimizers)
+      throws JBOPClassException {
     final String additionalSteps = Type.getType(AdditionalSteps.class).getDescriptor();
     for (final AnnotationNode annotation : methodNode.visibleAnnotations) {
       if (additionalSteps.equals(annotation.desc)) {
@@ -200,7 +205,6 @@ public class Optimizer {
             final Class<? extends IOptimizer> additionalOptimizerClass = (Class<? extends IOptimizer>) Class
                 .forName(additionalOptimizerType.getClassName());
             final IOptimizer optimizer = additionalOptimizerClass.newInstance();
-            init(optimizer, classNode, input);
             optimizers.add(optimizer);
           } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
             throw new JBOPClassException("Additional optimizationstep ('" + additionalOptimizerType.getClassName()

@@ -55,8 +55,9 @@ public class FieldArrayLengthInlinerTest {
         addInsn(new InsnNode(Opcodes.IADD)).//
         addInsn(new InsnNode(Opcodes.IRETURN));
     
-    final FieldArrayLengthInliner inliner = new FieldArrayLengthInliner(builder.getClassNode(), builder.toClass()
-        .instance());
+    final FieldArrayLengthInliner inliner = new FieldArrayLengthInliner();
+    inliner.setClassNode(builder.getClassNode());
+    inliner.setInputObject(builder.toClass().instance());
     
     // RUN STEP 1
     final MethodNode method = builder.getMethod("sumArrayLength");

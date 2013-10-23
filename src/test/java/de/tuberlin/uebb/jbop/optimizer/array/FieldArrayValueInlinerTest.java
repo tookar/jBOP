@@ -47,7 +47,6 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
-import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
@@ -87,7 +86,9 @@ public class FieldArrayValueInlinerTest {
         addInsn(new InsnNode(Opcodes.DRETURN));// 1
     //
     
-    final IOptimizer inliner = new FieldArrayValueInliner(builder.getClassNode(), builder.toClass().instance());
+    final FieldArrayValueInliner inliner = new FieldArrayValueInliner();
+    inliner.setClassNode(builder.getClassNode());
+    inliner.setInputObject(builder.instance());
     
     final MethodNode method = builder.getMethod("sumArrayValues");
     assertEquals(30, method.instructions.size());
@@ -164,7 +165,9 @@ public class FieldArrayValueInlinerTest {
     final Object instance = builderTestClass.instance();
     
     // RUN
-    final FieldArrayValueInliner inliner = new FieldArrayValueInliner(builderTestClass.getClassNode(), instance);
+    final FieldArrayValueInliner inliner = new FieldArrayValueInliner();
+    inliner.setClassNode(builderTestClass.getClassNode());
+    inliner.setInputObject(instance);
     final MethodNode method = builderTestClass.getMethod("get");
     final InsnList optimized = inliner.optimize(method.instructions, method);
     

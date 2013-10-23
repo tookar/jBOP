@@ -32,6 +32,8 @@ import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IClassNodeAware;
+import de.tuberlin.uebb.jbop.optimizer.IInputObjectAware;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
@@ -80,28 +82,15 @@ import de.tuberlin.uebb.jbop.optimizer.var.GetFieldChainInliner;
  * 
  * @author Christopher Ewest
  */
-public class FieldArrayValueInliner implements IOptimizer {
+public class FieldArrayValueInliner implements IOptimizer, IInputObjectAware, IClassNodeAware {
   
   private final ArrayList<NonNullArrayValue> nonNullArrayValues = new ArrayList<>();
   
   private boolean optimized = false;
   
-  private final Object instance;
+  private Object instance;
   
-  private final ClassNode classNode;
-  
-  /**
-   * Instantiates a new ArrayValueInliner.
-   * 
-   * @param names
-   *          the names
-   * @param instance
-   *          the instance
-   */
-  public FieldArrayValueInliner(final ClassNode classNode, final Object instance) {
-    this.classNode = classNode;
-    this.instance = instance;
-  }
+  private ClassNode classNode;
   
   @Override
   public boolean isOptimized() {
@@ -191,6 +180,16 @@ public class FieldArrayValueInliner implements IOptimizer {
    */
   public List<NonNullArrayValue> getNonNullArrayValues() {
     return Collections.unmodifiableList(nonNullArrayValues);
+  }
+  
+  @Override
+  public void setInputObject(final Object input) {
+    instance = input;
+  }
+  
+  @Override
+  public void setClassNode(final ClassNode classNode) {
+    this.classNode = classNode;
   }
   
 }
