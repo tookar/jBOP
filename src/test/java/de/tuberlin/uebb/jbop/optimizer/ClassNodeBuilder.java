@@ -984,7 +984,8 @@ public final class ClassNodeBuilder {
   }
   
   public ClassNodeBuilder store(final int index) {
-    addInsn(new VarInsnNode(getType(index).getOpcode(ISTORE), getVarIndex(index)));
+    final Type type = getType(index);
+    addInsn(new VarInsnNode(type.getOpcode(ISTORE), getVarIndex(index)));
     return this;
   }
   
@@ -1027,6 +1028,9 @@ public final class ClassNodeBuilder {
     int varIndex = shiftStaticIndex(index);
     
     final Type[] parameterTypes = Type.getArgumentTypes(lastMethod.desc);
+    if (parameterTypes.length <= index) {
+      return index;
+    }
     for (int i = 0; i < index; ++i) {
       final Type pType = parameterTypes[i];
       varIndex += pType.getSize();
@@ -1046,15 +1050,25 @@ public final class ClassNodeBuilder {
   private Type getType(final int index) {
     final int varIndex = shiftStaticIndex(index);
     final Type[] parameterTypes = Type.getMethodType(lastMethod.desc).getArgumentTypes();
+    if (parameterTypes.length <= varIndex) {
+      return Type.INT_TYPE;
+    }
     final Type type = parameterTypes[varIndex];
     return type;
   }
   
-  public ClassNodeBuilder invoke(final int opcode, final String method) {
-    return invoke(opcode, this, method);
+  public ClassNodeBuilder invoke(final int opcode, final String method, final Object... args) {
+    add(ALOAD, 0);
+    return invoke(opcode, this, method, args);
   }
   
-  public ClassNodeBuilder invoke(final int opcode, final ClassNodeBuilder classBuilder, final String method) {
+  public ClassNodeBuilder invoke(final int opcode, final ClassNodeBuilder classBuilder, final String method,
+      final Object... args) {
+    if (args != null) {
+      for (final Object arg : args) {
+        add(((Number) arg).intValue());
+      }
+    }
     return addInsn(new MethodInsnNode(opcode, classBuilder.classNode.name, method, classBuilder.getMethod(method).desc));
   }
   

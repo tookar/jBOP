@@ -18,12 +18,27 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
+import static org.objectweb.asm.Opcodes.AALOAD;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.DREM;
 import static org.objectweb.asm.Opcodes.I2L;
 import static org.objectweb.asm.Opcodes.I2S;
+import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.IALOAD;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LDC;
 
+import java.io.PrintStream;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.exception.NotANumberException;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnNode;
@@ -33,7 +48,10 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 /**
  * The Class NodeHelper.
@@ -951,4 +969,67 @@ public final class NodeHelper {
     return ((MethodInsnNode) node).owner;
   }
   
+  /**
+   * returns the first Element of the "Stack" that produces the value, that is stored
+   * by this node.
+   * 
+   * returns null if node is null.
+   * returns null if node is not a store.
+   */
+  public static AbstractInsnNode getFirstOfStack(final AbstractInsnNode node) {
+    if (node == null) {
+      return null;
+    }
+    int opcode = node.getOpcode();
+    if ((opcode < ISTORE) || (opcode > ASTORE)) {
+      return null;
+    }
+    int stackCounter = 1;
+    AbstractInsnNode prev = getPrevious(node);
+    while (prev != null) {
+      opcode = prev.getOpcode();
+      if ((opcode >= ACONST_NULL) && (opcode <= LDC)) {
+        stackCounter--;
+      } else if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
+        stackCounter--;
+      } else if ((opcode >= IALOAD) && (opcode <= AALOAD)) {
+        stackCounter++;
+      } else if ((opcode >= IADD) && (opcode <= DREM)) {
+        stackCounter++;
+      } else if ((opcode >= INVOKEVIRTUAL) && (opcode <= INVOKEDYNAMIC)) {
+        final String desc = ((MethodInsnNode) prev).desc;
+        final Type methodType = Type.getMethodType(desc);
+        final Type[] argumentTypes = methodType.getArgumentTypes();
+        final int length = argumentTypes.length;
+        if (length == 0) {
+          stackCounter++;
+        } else {
+          stackCounter += length;
+        }
+      } else if (prev instanceof LabelNode) {
+        stackCounter++;
+      } else if (prev instanceof JumpInsnNode) {
+        // if (isIf(prev)) {
+        // stackCounter--;
+        // }
+      }
+      
+      if (stackCounter == 0) {
+        return prev;
+      }
+      prev = prev.getPrevious();
+    }
+    return null;
+  }
+  
+  public static void printMethod(final MethodNode node) {
+    printMethod(node, System.out);
+  }
+  
+  public static void printMethod(final MethodNode node, final PrintStream stream) {
+    final Textifier p = new Textifier();
+    final TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(p);
+    node.accept(traceMethodVisitor);
+    stream.println(StringUtils.join(p.getText(), ""));
+  }
 }
