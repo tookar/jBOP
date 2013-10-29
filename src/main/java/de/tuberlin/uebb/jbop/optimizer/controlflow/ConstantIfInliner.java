@@ -53,13 +53,13 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * a <= b
  * a >= b
  * 
- * where a and b are integers (i_const or bipush / sipush / ldc)
+ * where a and b are numbers (x_const / bipush / sipush / ldc)
  * 
  * <pre>
  * @ImmutableArray
  * double d = {1.0, 2.0, 3.0}
  * ...
- * if(d.length==3){
+ * if(d.length==3){ //after run of {@link de.tuberlin.uebb.jbop.optimizer.array.FieldArrayLengthInliner} this is 3==3
  *   a
  *   b
  *   c
@@ -166,7 +166,7 @@ public class ConstantIfInliner implements IOptimizer {
       if (node1.getOpcode() == Opcodes.ACONST_NULL) {
         eval = evalSingleOpValue(null, currentNode.getOpcode());
       } else {
-        // doesn't wotk for multiarrays yet
+        // doesn't work for multiarrays yet
         final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
         final AbstractInsnNode node3 = NodeHelper.getPrevious(node2);
         final AbstractInsnNode node4 = NodeHelper.getPrevious(node3);

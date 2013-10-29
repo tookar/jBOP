@@ -19,6 +19,8 @@
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.I2L;
+import static org.objectweb.asm.Opcodes.I2S;
 
 import org.apache.commons.math3.exception.NotANumberException;
 import org.objectweb.asm.Opcodes;
@@ -846,7 +848,7 @@ public final class NodeHelper {
     if (numberNode == null) {
       return false;
     }
-    if ((numberNode.getOpcode() >= 0x85) && (numberNode.getOpcode() <= 0x93)) {
+    if ((numberNode.getOpcode() >= I2L) && (numberNode.getOpcode() <= I2S)) {
       return true;
     }
     return false;
