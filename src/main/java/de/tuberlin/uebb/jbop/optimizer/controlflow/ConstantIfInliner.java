@@ -29,6 +29,9 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import de.tuberlin.uebb.jbop.access.ClassAccessor;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.IInputObjectAware;
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.array.NonNullArrayValue;
@@ -105,11 +108,12 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * 
  * @author Christopher Ewest
  */
-public class ConstantIfInliner implements IOptimizer {
+public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
   
   private static final BigDecimal NONNULL = BigDecimal.ZERO;
   private boolean optimized;
   private final FieldArrayValueInliner arrayValue;
+  private Object input;
   
   /**
    * Instantiates a new {@link ConstantIfInliner}.
@@ -127,7 +131,7 @@ public class ConstantIfInliner implements IOptimizer {
   }
   
   @Override
-  public InsnList optimize(final InsnList original, final MethodNode methodNode) {
+  public InsnList optimize(final InsnList original, final MethodNode methodNode) throws JBOPClassException {
     optimized = false;
     
     final Iterator<AbstractInsnNode> iterator = original.iterator();
@@ -149,7 +153,7 @@ public class ConstantIfInliner implements IOptimizer {
   }
   
   private void handle(final AbstractInsnNode currentNode, final AbstractInsnNode node1, final AbstractInsnNode node2,
-      final InsnList list, final Iterator<AbstractInsnNode> iterator) {
+      final InsnList list, final Iterator<AbstractInsnNode> iterator) throws JBOPClassException {
     if (handleNumberInstruction(currentNode, node1, node2, list, iterator)) {
       optimized = true;
       return;
@@ -160,14 +164,32 @@ public class ConstantIfInliner implements IOptimizer {
   }
   
   private boolean handleNullInstruction(final AbstractInsnNode currentNode, final AbstractInsnNode node1,
-      final InsnList list, final Iterator<AbstractInsnNode> iterator) {
+      final InsnList list, final Iterator<AbstractInsnNode> iterator) throws JBOPClassException {
     if ((currentNode.getOpcode() == Opcodes.IFNULL) || (currentNode.getOpcode() == Opcodes.IFNONNULL)) {
       final boolean eval;
       if (node1.getOpcode() == Opcodes.ACONST_NULL) {
+        final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
+        if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
+          final Object currentValue = ClassAccessor.getCurrentValue(input, NodeHelper.getFieldname(node1));
+          if (currentValue != null) {
+            return false;
+          }
+          removeNodes(currentNode, node1, node2, null, list, iterator, evalSingleOpValue(null, currentNode.getOpcode()));
+          return false;
+        }
         eval = evalSingleOpValue(null, currentNode.getOpcode());
       } else {
-        // doesn't work for multiarrays yet
         final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
+        if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
+          final Object currentValue = ClassAccessor.getCurrentValue(input, NodeHelper.getFieldname(node1));
+          if (currentValue == null) {
+            return false;
+          }
+          removeNodes(currentNode, node1, node2, null, list, iterator,
+              evalSingleOpValue(NONNULL, currentNode.getOpcode()));
+          return false;
+        }
+        // doesn't work for multiarrays yet
         final AbstractInsnNode node3 = NodeHelper.getPrevious(node2);
         final AbstractInsnNode node4 = NodeHelper.getPrevious(node3);
         boolean isNonNullArrayValue = false;
@@ -246,7 +268,7 @@ public class ConstantIfInliner implements IOptimizer {
   private boolean evaluate(final AbstractInsnNode currentNode, final AbstractInsnNode node1, final Number op1,
       final Number op2) {
     final boolean eval;
-    if (NodeHelper.isIf(node1)) {
+    if (NodeHelper.isIf(currentNode)) {
       eval = evalTwoOpValue(op2, op1, currentNode.getOpcode());
     } else {
       final Number operator = calculateOparator(node1, op1, op2);
@@ -380,5 +402,10 @@ public class ConstantIfInliner implements IOptimizer {
       default:
         return false;
     }
+  }
+  
+  @Override
+  public void setInputObject(final Object input) {
+    this.input = input;
   }
 }

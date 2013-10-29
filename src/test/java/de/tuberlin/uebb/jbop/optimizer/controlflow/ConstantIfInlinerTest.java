@@ -41,6 +41,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.array.NonNullArrayValue;
@@ -88,7 +89,7 @@ public class ConstantIfInlinerTest {
    */
   
   @Test
-  public void testConstantIfInlinerIF_CMPEG() {
+  public void testConstantIfInlinerIF_CMPEG() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
@@ -119,7 +120,7 @@ public class ConstantIfInlinerTest {
    */
   
   @Test
-  public void testConstantIfInlinerIF_ICMPGT() {
+  public void testConstantIfInlinerIF_ICMPGT() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
@@ -150,7 +151,7 @@ public class ConstantIfInlinerTest {
    */
   
   @Test
-  public void testConstantIfInlinerIF_ICMPLE() {
+  public void testConstantIfInlinerIF_ICMPLE() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_2)).//
@@ -181,7 +182,7 @@ public class ConstantIfInlinerTest {
    */
   
   @Test
-  public void testConstantIfInlinerIF_ICMPLT() {
+  public void testConstantIfInlinerIF_ICMPLT() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_2)).//
@@ -211,7 +212,7 @@ public class ConstantIfInlinerTest {
    * </pre>
    */
   @Test
-  public void testConstantIfInlinerIF_ICMPNE() {
+  public void testConstantIfInlinerIF_ICMPNE() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
@@ -241,7 +242,7 @@ public class ConstantIfInlinerTest {
    * </pre>
    */
   @Test
-  public void testConstantIfInlinerIF_ICMPEQ() {
+  public void testConstantIfInlinerIF_ICMPEQ() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
@@ -273,7 +274,7 @@ public class ConstantIfInlinerTest {
    * where a is true
    */
   @Test
-  public void testConstantIfInlinerIFEQ() {
+  public void testConstantIfInlinerIFEQ() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
@@ -304,7 +305,7 @@ public class ConstantIfInlinerTest {
    * where a is false
    */
   @Test
-  public void testConstantIfInlinerIFNE() {
+  public void testConstantIfInlinerIFNE() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ICONST_0)).//
@@ -335,7 +336,7 @@ public class ConstantIfInlinerTest {
    * where a is not null
    */
   @Test
-  public void testConstantIfInlinerIFNULL() {
+  public void testConstantIfInlinerIFNULL() throws JBOPClassException {
     // INIT
     when(
         nonNullValue.is(Matchers.<AbstractInsnNode> any(), Matchers.<AbstractInsnNode> any(),
@@ -370,7 +371,7 @@ public class ConstantIfInlinerTest {
    * where a is null
    */
   @Test
-  public void testConstantIfInlinerIFNONNULL() {
+  public void testConstantIfInlinerIFNONNULL() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     builder.addInsn(new InsnNode(Opcodes.ACONST_NULL)).//
@@ -401,7 +402,7 @@ public class ConstantIfInlinerTest {
    * </pre>
    */
   @Test
-  public void testConstantIfInlinerIF_ICMPLEWithElseChooseIf() {
+  public void testConstantIfInlinerIF_ICMPLEWithElseChooseIf() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     final LabelNode label2 = new LabelNode();
@@ -439,12 +440,12 @@ public class ConstantIfInlinerTest {
    * </pre>
    */
   @Test
-  public void testConstantIfInlinerIF_ICMPLEWithElseChooseElse() {
+  public void testConstantIfInlinerIF_ICMPLEWithElseChooseElse() throws JBOPClassException {
     // INIT
     final LabelNode label = new LabelNode();
     final LabelNode label2 = new LabelNode();
-    builder.addInsn(new InsnNode(Opcodes.ICONST_1)).//
-        addInsn(new InsnNode(Opcodes.ICONST_2)).//
+    builder.addInsn(new InsnNode(Opcodes.ICONST_2)).//
+        addInsn(new InsnNode(Opcodes.ICONST_1)).//
         addInsn(new JumpInsnNode(Opcodes.IF_ICMPLE, label)).//
         addInsn(new InsnNode(Opcodes.NOP)).//
         addInsn(new JumpInsnNode(Opcodes.GOTO, label2)).//
