@@ -102,6 +102,7 @@ public class RemoveUnusedLocalVars implements IOptimizer {
         }
         final AbstractInsnNode firstOfStack = NodeHelper.getFirstOfStack(currentNode);
         if (firstOfStack != null) {
+          optimized = true;
           AbstractInsnNode remove = firstOfStack;
           while (remove != currentNode) {
             final AbstractInsnNode toRemove = remove;
