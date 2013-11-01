@@ -29,6 +29,7 @@ import static org.objectweb.asm.Opcodes.IADD;
 import static org.objectweb.asm.Opcodes.IALOAD;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.LDC;
@@ -1005,6 +1006,9 @@ public final class NodeHelper {
           stackCounter++;
         } else {
           stackCounter += length;
+        }
+        if (opcode == INVOKESTATIC) {
+          stackCounter--;
         }
       } else if (prev instanceof LabelNode) {
         stackCounter++;

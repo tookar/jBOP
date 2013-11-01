@@ -1,6 +1,14 @@
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import static org.junit.Assert.assertEquals;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.DALOAD;
+import static org.objectweb.asm.Opcodes.DASTORE;
+import static org.objectweb.asm.Opcodes.DDIV;
+import static org.objectweb.asm.Opcodes.DLOAD;
+import static org.objectweb.asm.Opcodes.DREM;
+import static org.objectweb.asm.Opcodes.DSTORE;
+import static org.objectweb.asm.Opcodes.DSUB;
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IADD;
 import static org.objectweb.asm.Opcodes.IALOAD;
@@ -8,6 +16,7 @@ import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
 
@@ -19,6 +28,7 @@ import org.junit.Test;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
@@ -116,6 +126,57 @@ public class NodeHelperTest {
     
     // ASSERT
     assertEquals(method.instructions.get(12), firstOfStack);
+  }
+  
+  @Test
+  public void testGetFirstOfStack5() {
+    // INIT
+    final ClassNodeBuilder builder = ClassNodeBuilder.createClass("de.tuberlin.uebb.example.Test").//
+        addMethod("remainder", "([D[D[D)V").//
+        add(ALOAD, 1).//
+        add(ICONST_0).//
+        add(DALOAD).//
+        add(ALOAD, 2).//
+        add(ICONST_0).//
+        add(DALOAD).//
+        add(DREM).//
+        add(DSTORE, 4).//
+        add(ALOAD, 1).//
+        add(ICONST_0).//
+        add(DALOAD).//
+        add(DLOAD, 4).//
+        add(DSUB).//
+        add(ALOAD, 2).//
+        add(ICONST_0).//
+        add(DALOAD).//
+        add(DDIV).//
+        addInsn(new MethodInsnNode(INVOKESTATIC, "org/apache/commons/math3/util/FastMath", "rint", "(D)D")).//
+        add(DSTORE, 6).//
+        add(ALOAD, 3).//
+        add(ICONST_0).//
+        add(DLOAD, 4).//
+        add(DASTORE).//
+        add(ICONST_1).//
+        add(ISTORE, 8).//
+        addReturn();
+    final MethodNode method = builder.getMethod("remainder");
+    assertEquals(26, method.instructions.size());
+    
+    // RUN
+    final AbstractInsnNode store = method.instructions.get(24);
+    final AbstractInsnNode firstOfStack = NodeHelper.getFirstOfStack(store);
+    
+    // ASSERT
+    final AbstractInsnNode first = method.instructions.get(23);
+    assertEquals(first, firstOfStack);
+    
+    // RUN
+    final AbstractInsnNode store2 = method.instructions.get(18);
+    final AbstractInsnNode firstOfStack2 = NodeHelper.getFirstOfStack(store2);
+    
+    // ASSERT
+    final AbstractInsnNode first2 = method.instructions.get(8);
+    assertEquals(method.instructions.indexOf(first2), method.instructions.indexOf(firstOfStack2));
   }
   
   @Test

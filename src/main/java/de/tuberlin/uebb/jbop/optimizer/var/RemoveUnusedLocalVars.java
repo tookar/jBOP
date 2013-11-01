@@ -90,7 +90,7 @@ public class RemoveUnusedLocalVars implements IOptimizer {
         toBeRemoved.addAll(iincsContains(iincs, node));
       }
     }
-    final InsnList newList = new InsnList();
+    // final InsnList newList = new InsnList();
     final Iterator<AbstractInsnNode> iterator = original.iterator();
     while (iterator.hasNext()) {
       final AbstractInsnNode currentNode = iterator.next();
@@ -100,23 +100,19 @@ public class RemoveUnusedLocalVars implements IOptimizer {
           optimized = true;
           continue;
         }
-        final AbstractInsnNode prev = prevs.get(currentNode);
-        if (NodeHelper.isValue(prev)) {
-          newList.remove(prev);
+        final AbstractInsnNode firstOfStack = NodeHelper.getFirstOfStack(currentNode);
+        if (firstOfStack != null) {
+          AbstractInsnNode remove = firstOfStack;
+          while (remove != currentNode) {
+            final AbstractInsnNode toRemove = remove;
+            remove = remove.getNext();
+            original.remove(toRemove);
+          }
           original.remove(currentNode);
-          optimized = true;
-        } else {
-          original.remove(currentNode);
-          // POP value instead?
-          newList.add(currentNode);
         }
-        
-      } else {
-        original.remove(currentNode);
-        newList.add(currentNode);
       }
     }
-    return newList;
+    return original;
   }
   
   private List<AbstractInsnNode> iincsContains(final List<IincInsnNode> iincs, final VarInsnNode node) {

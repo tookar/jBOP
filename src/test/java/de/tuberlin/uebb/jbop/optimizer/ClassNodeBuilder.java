@@ -28,7 +28,10 @@ import static org.objectweb.asm.Opcodes.BIPUSH;
 import static org.objectweb.asm.Opcodes.DCMPG;
 import static org.objectweb.asm.Opcodes.DCONST_1;
 import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.IALOAD;
+import static org.objectweb.asm.Opcodes.IASTORE;
 import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
@@ -37,6 +40,8 @@ import static org.objectweb.asm.Opcodes.JSR;
 import static org.objectweb.asm.Opcodes.LDC;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.SALOAD;
+import static org.objectweb.asm.Opcodes.SASTORE;
 import static org.objectweb.asm.Opcodes.SIPUSH;
 
 import java.util.ArrayList;
@@ -52,6 +57,7 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
@@ -833,7 +839,11 @@ public final class ClassNodeBuilder {
   public ClassNodeBuilder addArrayLoad(final String field, final int index) {
     final FieldNode fieldNode = getField(field);
     addInsn(NodeHelper.getInsnNodeFor(index));
-    return addInsn(new InsnNode(Type.getType(fieldNode.desc).getElementType().getOpcode(Opcodes.IALOAD)));
+    Type elementType = Type.getType(fieldNode.desc).getElementType();
+    if (fieldNode.desc.startsWith("[[")) {
+      elementType = Type.getType(Object.class);
+    }
+    return addInsn(new InsnNode(elementType.getOpcode(Opcodes.IALOAD)));
   }
   
   /**
@@ -983,8 +993,17 @@ public final class ClassNodeBuilder {
     return this;
   }
   
+  public ClassNodeBuilder load(final Type type, final int index) {
+    addInsn(new VarInsnNode(type.getOpcode(ILOAD), index));
+    return this;
+  }
+  
   public ClassNodeBuilder store(final int index) {
     final Type type = getType(index);
+    return store(type, index);
+  }
+  
+  public ClassNodeBuilder store(final Type type, final int index) {
     addInsn(new VarInsnNode(type.getOpcode(ISTORE), getVarIndex(index)));
     return this;
   }
@@ -995,7 +1014,11 @@ public final class ClassNodeBuilder {
   }
   
   public ClassNodeBuilder add(final int opcode, final Object... args) {
-    if (((opcode >= NOP) && (opcode <= DCONST_1)) || ((opcode >= POP) && (opcode <= DCMPG))) {
+    if (opcode == IINC) {
+      return addInsn(new IincInsnNode((Integer) args[0], (Integer) args[1]));
+    }
+    if (((opcode >= NOP) && (opcode <= DCONST_1)) || ((opcode >= POP) && (opcode <= DCMPG))
+        || ((opcode >= IALOAD) && (opcode <= SALOAD)) || ((opcode >= IASTORE) && (opcode <= SASTORE))) {
       return addInsn(new InsnNode(opcode));
     }
     if (((opcode >= BIPUSH) && (opcode <= SIPUSH))) {
@@ -1005,10 +1028,10 @@ public final class ClassNodeBuilder {
       return loadConstant(args[0]);
     }
     if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
-      return load((Integer) args[0]);
+      return addInsn(new VarInsnNode(opcode, (Integer) args[0]));
     }
     if ((opcode >= ISTORE) && (opcode <= ASTORE)) {
-      return store((Integer) args[0]);
+      return addInsn(new VarInsnNode(opcode, (Integer) args[0]));
     }
     if ((opcode >= IFEQ) && (opcode <= JSR)) {
       return jump(opcode, (LabelNode) args[0]);
