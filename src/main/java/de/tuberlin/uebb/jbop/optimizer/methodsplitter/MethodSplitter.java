@@ -19,6 +19,7 @@
 package de.tuberlin.uebb.jbop.optimizer.methodsplitter;
 
 import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.NOP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -297,7 +298,7 @@ public class MethodSplitter implements IOptimizer {
     
     while (iterator.hasNext()) {
       final AbstractInsnNode next = iterator.next();
-      if (next instanceof SplitMarkNode) {
+      if ((next instanceof SplitMarkNode) || (next.getOpcode() == NOP)) {
         original.remove(next);
       }
     }
