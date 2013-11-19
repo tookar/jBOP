@@ -76,6 +76,9 @@ public class ForLoopBody {
    */
   public InsnList getInsnList(final int i, final ForLoopFooter footer, final MethodNode method) {
     final InsnList list = new InsnList();
+    if (body.isEmpty()) {
+      return list;
+    }
     final LabelMap labelMap = new LabelMap();
     final int newLocalVar = method.maxLocals + 1;
     final int oldLocalVar = footer.getVarIndex();

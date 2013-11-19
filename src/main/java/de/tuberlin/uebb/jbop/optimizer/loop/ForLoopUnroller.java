@@ -173,6 +173,8 @@ public class ForLoopUnroller implements IOptimizer {
     final AbstractInsnNode iinc = NodeHelper.getPrevious(endNode);  // IINC
     bodyNodes.remove(iinc);
     
+    bodyNodes.remove(0);// Label is not used anymore
+    bodyNodes.remove(bodyNodes.size() - 1);// Label is not used anymore
     final ForLoopBody body = new ForLoopBody(bodyNodes);
     return body;
   }

@@ -19,6 +19,13 @@
 package de.tuberlin.uebb.jbop.optimizer.loop;
 
 import static org.junit.Assert.assertEquals;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.IF_ICMPLT;
+import static org.objectweb.asm.Opcodes.IINC;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.ISTORE;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -86,21 +93,19 @@ public class ForLoopUnrollerTest {
     final InsnList optimized = optimizer.optimize(method.instructions, method);
     
     // ASSERT
-    assertEquals(27, optimized.size());
+    assertEquals(21, optimized.size());
     
     int node = 2;
     for (int i = 0; i < 3; ++i) {
       assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
       node++;
       assertEquals(Opcodes.ISTORE, optimized.get(node).getOpcode());
-      node++;// skip label
       node++;
       assertEquals(Opcodes.ILOAD, optimized.get(node).getOpcode());
       node++;
       assertEquals(Opcodes.ILOAD, optimized.get(node).getOpcode());
       node++;
       assertEquals(Opcodes.IADD, optimized.get(node).getOpcode());
-      node++;// skip label
       node++;
       assertEquals(Opcodes.NOP, optimized.get(node).getOpcode()); // this is the SkipMarkNode
       node++;
@@ -137,24 +142,52 @@ public class ForLoopUnrollerTest {
     final InsnList optimized = optimizer.optimize(method.instructions, method);
     
     // ASSERT
-    assertEquals(27, optimized.size());
+    assertEquals(21, optimized.size());
     
     int node = 2;
     for (int i = 6; i > 0; i -= 2) {
       assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
       node++;
       assertEquals(Opcodes.ISTORE, optimized.get(node).getOpcode());
-      node++;// skip label
       node++;
       assertEquals(Opcodes.ILOAD, optimized.get(node).getOpcode());
       node++;
       assertEquals(Opcodes.ILOAD, optimized.get(node).getOpcode());
       node++;
       assertEquals(Opcodes.IADD, optimized.get(node).getOpcode());
-      node++;// skip label
       node++;
       assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
       node++;
+    }
+  }
+  
+  @Test
+  public void testForLoopUnrollerEmptyLoop() {
+    // INIT
+    final LabelNode label1 = new LabelNode();
+    final LabelNode label2 = new LabelNode();
+    builder.add(ICONST_0).//
+        add(ISTORE, 1).//
+        add(GOTO, label1).//
+        addInsn(label2).//
+        add(IINC, 1, 1).//
+        addInsn(label1).//
+        add(ILOAD, 1).//
+        add(ICONST_5).//
+        add(IF_ICMPLT, label2).//
+        addReturn();
+    
+    // RUN
+    assertEquals(10, method.instructions.size());
+    final InsnList optimized = optimizer.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertEquals(3, optimized.size()); //
+  }
+  
+  void blub() {
+    for (int i = 0; i < 5; ++i) {
+      //
     }
   }
 }

@@ -19,10 +19,8 @@
 package de.tuberlin.uebb.jbop.optimizer.var;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -68,8 +66,6 @@ public class RemoveUnusedLocalVars implements IOptimizer {
   
   private boolean optimized;
   
-  private final Map<AbstractInsnNode, AbstractInsnNode> prevs = new HashMap<>();
-  
   @Override
   public boolean isOptimized() {
     return optimized;
@@ -78,7 +74,6 @@ public class RemoveUnusedLocalVars implements IOptimizer {
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) {
     optimized = false;
-    prevs.clear();
     final List<VarInsnNode> stores = new ArrayList<>();
     final List<VarInsnNode> users = new ArrayList<>();
     final List<IincInsnNode> iincs = new ArrayList<>();
@@ -142,7 +137,6 @@ public class RemoveUnusedLocalVars implements IOptimizer {
       final AbstractInsnNode node = iterator.next();
       if ((node.getOpcode() >= Opcodes.ISTORE) && (node.getOpcode() <= Opcodes.ASTORE)) {
         stores.add((VarInsnNode) node);
-        prevs.put(node, NodeHelper.getPrevious(node));
       } else if ((node.getOpcode() >= Opcodes.ILOAD) && (node.getOpcode() <= Opcodes.ALOAD)) {
         users.add((VarInsnNode) node);
       } else if (node.getOpcode() == Opcodes.IINC) {
