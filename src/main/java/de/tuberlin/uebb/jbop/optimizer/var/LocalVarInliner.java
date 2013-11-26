@@ -33,15 +33,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
+import de.tuberlin.uebb.jbop.optimizer.utils.LoopMatcher;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
@@ -115,23 +116,27 @@ public class LocalVarInliner implements IOptimizer {
     } else if (NodeHelper.isIf(currentNode)) {
       return handleIf(currentNode, knownValues, original, methodNode);
     } else if (opcode == GOTO) {
-      if (isLoop(currentNode)) {
-        // skip loop body
-        final Collection<Integer> vars = getVarsInRange(currentNode, ((JumpInsnNode) currentNode).label);
-        for (final Integer varInLoop : vars) {
-          knownValues.remove(varInLoop);
-        }
-        return findIf(currentNode).getNext();
+      if (LoopMatcher.isGotoOfLoop(currentNode)) {
+        return skipVars(currentNode, knownValues);
       }
       return currentNode.getNext();
     }
     return currentNode.getNext();
   }
   
-  private Collection<Integer> getVarsInRange(final AbstractInsnNode start, final LabelNode end) {
+  private AbstractInsnNode skipVars(final AbstractInsnNode currentNode, final Map<Integer, Object> knownValues) {
+    final Pair<AbstractInsnNode, AbstractInsnNode> loopBounds = LoopMatcher.getLoopBounds(currentNode);
+    final Collection<Integer> vars = getVarsInRange(loopBounds.getLeft(), loopBounds.getRight());
+    for (final Integer varInLoop : vars) {
+      knownValues.remove(varInLoop);
+    }
+    return loopBounds.getRight().getNext();
+  }
+  
+  private Collection<Integer> getVarsInRange(final AbstractInsnNode start, final AbstractInsnNode end) {
     final Set<Integer> vars = new HashSet<>();
     AbstractInsnNode current = start;
-    while (current != end) {
+    while ((current != null) && (current != end)) {
       final int opcode = current.getOpcode();
       if (((opcode >= ISTORE) && (opcode <= ASTORE)) || (opcode == IINC)) {
         vars.add(NodeHelper.getVarIndex(current));
@@ -143,8 +148,8 @@ public class LocalVarInliner implements IOptimizer {
   
   private AbstractInsnNode handleIf(final AbstractInsnNode currentNode, final Map<Integer, Object> knownValues,
       final InsnList original, final MethodNode methodNode) {
-    if (isLoop(currentNode)) {
-      return currentNode.getNext();
+    if (LoopMatcher.isIfOfLoop(currentNode)) {
+      return skipVars(currentNode, knownValues);
     }
     final LabelNode endIf = ((JumpInsnNode) currentNode).label;
     final AbstractInsnNode end1 = endIf.getNext();
@@ -182,7 +187,7 @@ public class LocalVarInliner implements IOptimizer {
   }
   
   private void handleIInc(final AbstractInsnNode currentNode, final Map<Integer, Object> knownValues) {
-    if (isLoop(currentNode)) {
+    if (LoopMatcher.isIIncOfLoop(currentNode)) {
       return;
     }
     final IincInsnNode iinc = (IincInsnNode) currentNode;
@@ -196,9 +201,6 @@ public class LocalVarInliner implements IOptimizer {
   
   private void hanldeLoad(final InsnList original, final AbstractInsnNode currentNode,
       final Map<Integer, Object> knownValues) {
-    if (isLoop(currentNode)) {
-      return;
-    }
     final int index = NodeHelper.getVarIndex(currentNode);
     if (knownValues.containsKey(index)) {
       final Object value = knownValues.get(index);
@@ -208,118 +210,9 @@ public class LocalVarInliner implements IOptimizer {
     }
   }
   
-  private boolean isLoop(final AbstractInsnNode currentNode) {
-    if (currentNode == null) {
-      return false;
-    }
-    
-    if (NodeHelper.isIf(currentNode)) {
-      return isIfOfLoop(currentNode);
-    }
-    final AbstractInsnNode next;
-    final AbstractInsnNode varNode;
-    if (currentNode instanceof VarInsnNode) {
-      next = currentNode.getNext();
-      varNode = currentNode;
-    } else if (currentNode instanceof JumpInsnNode) {
-      next = currentNode;
-      varNode = currentNode.getPrevious();
-    } else {
-      return false;
-    }
-    if (!(next instanceof JumpInsnNode)) {
-      return false;
-    }
-    final AbstractInsnNode target = ((JumpInsnNode) next).label.getNext();
-    if (NodeHelper.getVarIndex(varNode) != NodeHelper.getVarIndex(target)) {
-      return false;
-    }
-    if (target == null) {
-      return false;
-    }
-    final AbstractInsnNode isLoop = findIf(next);
-    
-    return isLoop != null;
-    // if (currentNode instanceof IincInsnNode) {
-    // return isIIncOfLoop((IincInsnNode) currentNode);
-    // }
-    // if (currentNode instanceof VarInsnNode) {
-    // return isVarOfLoop(currentNode);
-    // }
-    //
-    // return false;
-    
-  }
-  
-  private AbstractInsnNode findIf(final AbstractInsnNode jumpInstruction) {
-    final AbstractInsnNode target = ((JumpInsnNode) jumpInstruction).label.getNext();
-    AbstractInsnNode maybeIf = target.getNext();
-    while (maybeIf != null) {
-      if (NodeHelper.isIf(maybeIf)) {
-        if (((JumpInsnNode) maybeIf).label == jumpInstruction.getNext()) {
-          return maybeIf;
-        }
-      }
-      maybeIf = maybeIf.getNext();
-    }
-    return null;
-  }
-  
-  private boolean isIfOfLoop(final AbstractInsnNode currentNode) {
-    AbstractInsnNode previous = currentNode.getPrevious();
-    if ((previous != null) && !(previous instanceof VarInsnNode)) {
-      previous = previous.getPrevious();
-    }
-    if (!(previous instanceof VarInsnNode)) {
-      return false;
-    }
-    final AbstractInsnNode previous2 = previous.getPrevious();
-    if (!(previous2 instanceof LabelNode)) {
-      return false;
-    }
-    final AbstractInsnNode previous3 = previous2.getPrevious();
-    if (!(previous3 instanceof IincInsnNode)) {
-      return false;
-    }
-    
-    return isIIncOfLoop((IincInsnNode) previous3);
-    
-  }
-  
-  //
-  // private boolean isVarOfLoop(final AbstractInsnNode currentNode) {
-  // final AbstractInsnNode previous = currentNode.getPrevious();
-  // if (!(previous instanceof LabelNode)) {
-  // return false;
-  // }
-  // final AbstractInsnNode previous2 = previous.getPrevious();
-  // if (!(previous2 instanceof IincInsnNode)) {
-  // return false;
-  // }
-  // return isIIncOfLoop((IincInsnNode) previous2);
-  //
-  // }
-  //
-  private boolean isIIncOfLoop(final IincInsnNode currentNode) {
-    final AbstractInsnNode next = currentNode.getNext();
-    if (!(next instanceof LabelNode)) {
-      return false;
-    }
-    final AbstractInsnNode next2 = next.getNext();
-    if (!(next2 instanceof VarInsnNode)) {
-      return false;
-    }
-    final AbstractInsnNode next3 = next2.getNext();
-    if (!((next2.getNext() instanceof JumpInsnNode) || (next3.getNext() instanceof JumpInsnNode))) {
-      return false;
-    }
-    
-    return true;
-  }
-  
   private void handleStore(final AbstractInsnNode currentNode, final Map<Integer, Object> knownValues) {
     final int index = NodeHelper.getVarIndex(currentNode);
-    if (isLoop(currentNode)) {
+    if (LoopMatcher.isStoreOfLoop(currentNode)) {
       knownValues.remove(index);
       return;
     }

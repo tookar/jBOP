@@ -40,12 +40,14 @@ import static org.objectweb.asm.Opcodes.ICONST_2;
 import static org.objectweb.asm.Opcodes.ICONST_3;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.IFGT;
+import static org.objectweb.asm.Opcodes.IF_ICMPGE;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.NOP;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -342,10 +344,34 @@ public class LocalVarInlinerTest {
         add(DSTORE, 2).//
         add(IINC, 1, 1).//
         addInsn(label1).//
-        add(ILOAD, 1).//
         addInsn(NodeHelper.getInsnNodeFor(3)).//
+        add(ILOAD, 1).//
         add(Opcodes.IF_ICMPLT, label2).//
         add(DLOAD, 2).//
+        addReturn();
+    
+    // RUN
+    optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertFalse(optimizer.isOptimized());
+  }
+  
+  @Test
+  public void testLocalVarInlinerAlternativeLoop() {
+    // INIT
+    final LabelNode check = new LabelNode();
+    final LabelNode loopEnd = new LabelNode();
+    builder.add(ICONST_0).//
+        add(ISTORE, 1).//
+        addInsn(check).//
+        add(ICONST_2).//
+        add(ILOAD, 1).//
+        add(IF_ICMPGE, loopEnd).//
+        add(NOP).//
+        add(IINC, 1, 1).//
+        add(GOTO, check).//
+        addInsn(loopEnd).//
         addReturn();
     
     // RUN
@@ -364,11 +390,11 @@ public class LocalVarInlinerTest {
         add(ISTORE, 1).//
         add(GOTO, label1).//
         addInsn(label2).//
+        add(IINC, 1, 1).//
         addInsn(label1).//
-        add(ILOAD, 1).//
         add(ALOAD, 2).//
         add(ARRAYLENGTH).//
-        addInsn(NodeHelper.getInsnNodeFor(3)).//
+        add(ILOAD, 1).//
         add(Opcodes.IF_ICMPLT, label2).//
         add(DLOAD, 2).//
         addReturn();
@@ -391,8 +417,8 @@ public class LocalVarInlinerTest {
         addInsn(label2).//
         add(IINC, 1, 1).//
         addInsn(label1).//
-        add(ILOAD, 1).//
         add(ICONST_3).//
+        add(ILOAD, 1).//
         add(Opcodes.IF_ICMPLT, label2).//
         addReturn();
     
@@ -446,13 +472,6 @@ public class LocalVarInlinerTest {
     
     // ASSERT
     assertFalse(optimizer.isOptimized());
-  }
-  
-  void blubb() {
-    final double[] d = {};
-    for (int i = 0; i < d.length; ++i) {
-      ;
-    }
   }
   
 }
