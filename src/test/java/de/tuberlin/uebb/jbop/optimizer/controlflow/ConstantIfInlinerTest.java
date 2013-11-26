@@ -52,7 +52,6 @@ import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.array.NonNullArrayValue;
-import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * Tests for {@link ConstantIfInliner}.
@@ -445,10 +444,8 @@ public class ConstantIfInlinerTest {
         add(ICONST_1).add(ICONST_2).add(IF_ICMPLT, label).//
         add(DLOAD, 1).//
         addReturn();
-    NodeHelper.printMethod(method);
     final InsnList optimized = constantIfInliner.optimize(method.instructions, method);
     method.instructions = optimized;
-    NodeHelper.printMethod(method);
   }
   
   /**

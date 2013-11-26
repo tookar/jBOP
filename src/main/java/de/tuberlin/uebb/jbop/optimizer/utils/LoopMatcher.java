@@ -108,7 +108,7 @@ public final class LoopMatcher {
     if (previous2 instanceof IincInsnNode) {
       return ((JumpInsnNode) previous).label.getPrevious();
     }
-    return node.getPrevious();
+    return previous2;
   }
   
   public static boolean isIfOfLoop(final AbstractInsnNode node) {

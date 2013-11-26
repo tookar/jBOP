@@ -40,7 +40,7 @@ public class Loop {
     return endValue;
   }
   
-  protected boolean isPlain() {
+  public boolean isPlain() {
     return NodeHelper.isNumberNode(getStartValue()) && NodeHelper.isNumberNode(getEndValue());
   }
   

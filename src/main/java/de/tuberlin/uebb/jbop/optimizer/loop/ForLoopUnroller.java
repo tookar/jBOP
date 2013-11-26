@@ -115,7 +115,7 @@ public class ForLoopUnroller implements IOptimizer {
       final AbstractInsnNode currentNode = iterator.next();
       final Loop loop = LoopMatcher.getLoop(currentNode);
       
-      if (loop == null) {
+      if ((loop == null) || !loop.isPlain()) {
         skipped.add(currentNode);
         continue;
       }
@@ -129,7 +129,8 @@ public class ForLoopUnroller implements IOptimizer {
       }
       skipped.clear();
       original.remove(last);
-      insn.add(LoopMatcher.toForLoop(loop).getInsnList(method));
+      final ForLoop forLoop = LoopMatcher.toForLoop(loop);
+      insn.add(forLoop.getInsnList(method));
     }
     for (final AbstractInsnNode node : skipped) {
       insn.add(node);
