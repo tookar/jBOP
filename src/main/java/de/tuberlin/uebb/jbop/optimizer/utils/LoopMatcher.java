@@ -1,5 +1,11 @@
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFGE;
+import static org.objectweb.asm.Opcodes.IFGT;
+import static org.objectweb.asm.Opcodes.IFLE;
+import static org.objectweb.asm.Opcodes.IFLT;
+import static org.objectweb.asm.Opcodes.IFNE;
 import static org.objectweb.asm.Opcodes.IF_ICMPEQ;
 import static org.objectweb.asm.Opcodes.IF_ICMPGE;
 import static org.objectweb.asm.Opcodes.IF_ICMPGT;
@@ -86,6 +92,18 @@ public final class LoopMatcher {
         return new JumpInsnNode(IF_ICMPGE, ifNode.label);
       case IF_ICMPNE:
         return new JumpInsnNode(IF_ICMPEQ, ifNode.label);
+      case IFEQ:
+        return new JumpInsnNode(IFNE, ifNode.label);
+      case IFNE:
+        return new JumpInsnNode(IFEQ, ifNode.label);
+      case IFLT:
+        return new JumpInsnNode(IFGE, ifNode.label);
+      case IFGE:
+        return new JumpInsnNode(IFLT, ifNode.label);
+      case IFGT:
+        return new JumpInsnNode(IFLE, ifNode.label);
+      case IFLE:
+        return new JumpInsnNode(IFGT, ifNode.label);
       default:
         return null;
     }
