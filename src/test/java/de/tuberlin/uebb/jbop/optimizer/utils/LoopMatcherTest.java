@@ -51,8 +51,8 @@ public class LoopMatcherTest {
         add(IINC, 2, 4).//
         add(IINC, 1, 1).//
         addInsn(check).//
-        add(ICONST_5).//
         add(ILOAD, 1).//
+        add(ICONST_5).//
         add(IF_ICMPLE, startLoop).//
         addReturn();
     final MethodNode method = builder.getMethod("test");
@@ -108,8 +108,8 @@ public class LoopMatcherTest {
         add(ICONST_0).//
         add(ISTORE, 1).//
         addInsn(check).//
-        add(ICONST_5).//
         add(ILOAD, 1).//
+        add(ICONST_5).//
         add(IF_ICMPGT, endLoop).//
         add(ICONST_0).//
         add(ISTORE, 2).//

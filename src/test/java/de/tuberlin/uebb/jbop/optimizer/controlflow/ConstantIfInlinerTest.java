@@ -19,13 +19,21 @@
 package de.tuberlin.uebb.jbop.optimizer.controlflow;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.when;
+import static org.objectweb.asm.Opcodes.DADD;
 import static org.objectweb.asm.Opcodes.DCONST_0;
 import static org.objectweb.asm.Opcodes.DLOAD;
 import static org.objectweb.asm.Opcodes.DSTORE;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.ICONST_2;
+import static org.objectweb.asm.Opcodes.IF_ICMPGE;
 import static org.objectweb.asm.Opcodes.IF_ICMPLT;
+import static org.objectweb.asm.Opcodes.IINC;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.NOP;
 
 import java.util.ArrayList;
@@ -52,6 +60,7 @@ import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 import de.tuberlin.uebb.jbop.optimizer.array.FieldArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.array.NonNullArrayValue;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * Tests for {@link ConstantIfInliner}.
@@ -484,5 +493,59 @@ public class ConstantIfInlinerTest {
     assertEquals(3, optimized.size());
     assertEquals(Opcodes.NOP, optimized.get(0).getOpcode());
     assertEquals(-1, optimized.get(1).getOpcode());
+  }
+  
+  @Test
+  public void testLocalVarInlinerLoop() throws JBOPClassException {
+    // INIT
+    final LabelNode label1 = new LabelNode();
+    final LabelNode label2 = new LabelNode();
+    builder.add(DCONST_0).//
+        add(DSTORE, 2).//
+        add(ICONST_1).//
+        add(ISTORE, 1).//
+        add(GOTO, label1).//
+        addInsn(label2).//
+        add(DCONST_0).//
+        add(DLOAD, 2).//
+        add(DADD).//
+        add(DSTORE, 2).//
+        add(IINC, 1, 1).//
+        addInsn(label1).//
+        addInsn(NodeHelper.getInsnNodeFor(3)).//
+        add(ILOAD, 1).//
+        add(Opcodes.IF_ICMPLT, label2).//
+        add(DLOAD, 2).//
+        addReturn();
+    
+    // RUN
+    constantIfInliner.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertFalse(constantIfInliner.isOptimized());
+  }
+  
+  @Test
+  public void testLocalVarInlinerAlternativeLoop() throws JBOPClassException {
+    // INIT
+    final LabelNode check = new LabelNode();
+    final LabelNode loopEnd = new LabelNode();
+    builder.add(ICONST_0).//
+        add(ISTORE, 1).//
+        addInsn(check).//
+        add(ICONST_2).//
+        add(ILOAD, 1).//
+        add(IF_ICMPGE, loopEnd).//
+        add(NOP).//
+        add(IINC, 1, 1).//
+        add(GOTO, check).//
+        addInsn(loopEnd).//
+        addReturn();
+    
+    // RUN
+    constantIfInliner.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertFalse(constantIfInliner.isOptimized());
   }
 }

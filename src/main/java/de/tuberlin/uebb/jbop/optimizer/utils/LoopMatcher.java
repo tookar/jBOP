@@ -193,15 +193,22 @@ public final class LoopMatcher {
       return null;
     }
     
-    final AbstractInsnNode previous = NodeHelper.getPrevious(ifNode);
+    AbstractInsnNode previous = NodeHelper.getPrevious(ifNode);
+    AbstractInsnNode endValue = previous.getPrevious();
+    
     final int varIndex = NodeHelper.getVarIndex(counter);
-    final int varIndex2 = NodeHelper.getVarIndex(previous);
+    int varIndex2 = NodeHelper.getVarIndex(previous);
+    if (varIndex2 == -1) {
+      previous = target;
+      endValue = previous.getNext();
+      varIndex2 = NodeHelper.getVarIndex(counter);
+      
+    }
     if (varIndex != varIndex2) {
       return null;
     }
     
     final AbstractInsnNode iinc = labelOfJump.getPrevious();
-    AbstractInsnNode endValue = previous.getPrevious();
     if (endValue instanceof LabelNode) {
       endValue = NodeHelper.getInsnNodeFor(0);
     }
@@ -264,13 +271,20 @@ public final class LoopMatcher {
       return null;
     }
     
-    final AbstractInsnNode previous = ifNode.getPrevious();
-    if (NodeHelper.getVarIndex(counter) != NodeHelper.getVarIndex(previous)) {
+    AbstractInsnNode previous = ifNode.getPrevious();
+    AbstractInsnNode endValue = previous.getPrevious();
+    int varIndex2 = NodeHelper.getVarIndex(previous);
+    if (varIndex2 == -1) {
+      previous = label.getNext();
+      varIndex2 = NodeHelper.getVarIndex(previous);
+      endValue = previous.getNext();
+    }
+    final int varIndex = NodeHelper.getVarIndex(counter);
+    if (varIndex != varIndex2) {
       return null;
     }
     
     final AbstractInsnNode startValue = counter.getPrevious();
-    AbstractInsnNode endValue = previous.getPrevious();
     if (endValue instanceof LabelNode) {
       endValue = NodeHelper.getInsnNodeFor(0);
     }
