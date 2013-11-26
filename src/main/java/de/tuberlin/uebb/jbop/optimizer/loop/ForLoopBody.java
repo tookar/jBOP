@@ -23,11 +23,11 @@ import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.LabelMap;
+import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
  * The Class ForLoopBody.
@@ -82,7 +82,7 @@ public class ForLoopBody {
     final LabelMap labelMap = new LabelMap();
     final int newLocalVar = method.maxLocals + 1;
     final int oldLocalVar = footer.getVarIndex();
-    list.add(new IntInsnNode(Opcodes.BIPUSH, i));
+    list.add(NodeHelper.getInsnNodeFor(i));
     list.add(new VarInsnNode(Opcodes.ISTORE, newLocalVar));
     for (final AbstractInsnNode node : body) {
       final AbstractInsnNode copyNode = node.clone(labelMap);

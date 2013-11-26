@@ -22,10 +22,12 @@ import static org.junit.Assert.assertEquals;
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.IF_ICMPGT;
 import static org.objectweb.asm.Opcodes.IF_ICMPLT;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.NOP;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -83,8 +85,8 @@ public class ForLoopUnrollerTest {
         addInsn(new InsnNode(Opcodes.IADD)).//
         addInsn(new IincInsnNode(1, 1)).//
         addInsn(label1).//
-        addInsn(new VarInsnNode(Opcodes.ILOAD, 1)).//
         addInsn(NodeHelper.getInsnNodeFor(3)).//
+        addInsn(new VarInsnNode(Opcodes.ILOAD, 1)).//
         addInsn(new JumpInsnNode(Opcodes.IF_ICMPLT, label2)).//
         addInsn(new InsnNode(Opcodes.RETURN));
     
@@ -93,9 +95,9 @@ public class ForLoopUnrollerTest {
     final InsnList optimized = optimizer.optimize(method.instructions, method);
     
     // ASSERT
-    assertEquals(21, optimized.size());
+    assertEquals(19, optimized.size());
     
-    int node = 2;
+    int node = 0;
     for (int i = 0; i < 3; ++i) {
       assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
       node++;
@@ -142,9 +144,9 @@ public class ForLoopUnrollerTest {
     final InsnList optimized = optimizer.optimize(method.instructions, method);
     
     // ASSERT
-    assertEquals(21, optimized.size());
+    assertEquals(19, optimized.size());
     
-    int node = 2;
+    int node = 0;
     for (int i = 6; i > 0; i -= 2) {
       assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
       node++;
@@ -172,8 +174,8 @@ public class ForLoopUnrollerTest {
         addInsn(label2).//
         add(IINC, 1, 1).//
         addInsn(label1).//
-        add(ILOAD, 1).//
         add(ICONST_5).//
+        add(ILOAD, 1).//
         add(IF_ICMPLT, label2).//
         addReturn();
     
@@ -182,12 +184,53 @@ public class ForLoopUnrollerTest {
     final InsnList optimized = optimizer.optimize(method.instructions, method);
     
     // ASSERT
-    assertEquals(3, optimized.size()); //
+    assertEquals(1, optimized.size()); //
   }
   
-  void blub() {
-    for (int i = 0; i < 5; ++i) {
-      //
+  @Test
+  public void testForLoopTypeTwo() {
+    // INIT
+    final LabelNode check = new LabelNode();
+    final LabelNode ende = new LabelNode();
+    builder.add(ICONST_0)//
+        .add(ISTORE, 1)//
+        .addInsn(check)//
+        .add(ICONST_5)//
+        .add(ILOAD, 1)//
+        .add(IF_ICMPGT, ende)//
+        .add(NOP)//
+        .add(NOP)//
+        .add(NOP)//
+        .add(IINC, 1, 1)//
+        .add(GOTO, check)//
+        .addInsn(ende)//
+        .add(NOP)//
+        .addReturn();
+    
+    // RUN
+    assertEquals(14, method.instructions.size());
+    final InsnList optimized = optimizer.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertEquals(38, optimized.size()); //
+    int node = 0;
+    for (int i = 0; i < 6; ++i) {
+      assertEquals(i, NodeHelper.getNumberValue(optimized.get(node)).intValue());
+      node++;
+      assertEquals(Opcodes.ISTORE, optimized.get(node).getOpcode());
+      node++;
+      assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
+      node++;
+      assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
+      node++;
+      assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
+      node++;
+      assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
+      node++;
     }
+    assertEquals(Opcodes.NOP, optimized.get(node).getOpcode());
+    node++;
+    assertEquals(Opcodes.RETURN, optimized.get(node).getOpcode());
+    node++;
   }
 }

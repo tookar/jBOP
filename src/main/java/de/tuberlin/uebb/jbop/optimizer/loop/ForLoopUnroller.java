@@ -18,22 +18,16 @@
  */
 package de.tuberlin.uebb.jbop.optimizer.loop;
 
-import static org.objectweb.asm.Opcodes.IFEQ;
-import static org.objectweb.asm.Opcodes.IFLE;
-
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedList;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.IOptimizer;
-import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
+import de.tuberlin.uebb.jbop.optimizer.utils.Loop;
+import de.tuberlin.uebb.jbop.optimizer.utils.LoopMatcher;
 
 /**
  * Unrolls strict loops (see {@link de.tuberlin.uebb.jbop.modifier.annotations.StrictLoops}). <br>
@@ -105,9 +99,6 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 public class ForLoopUnroller implements IOptimizer {
   
   private boolean optimized = false;
-  private int countervar;
-  private AbstractInsnNode gotoNode;
-  private Number start;
   
   @Override
   public boolean isOptimized() {
@@ -119,116 +110,40 @@ public class ForLoopUnroller implements IOptimizer {
     optimized = false;
     final Iterator<AbstractInsnNode> iterator = original.iterator();
     final InsnList insn = new InsnList();
+    final LinkedList<AbstractInsnNode> skipped = new LinkedList<>();
     while (iterator.hasNext()) {
-      final ForLoop loop = findForloop(iterator, insn);
+      final AbstractInsnNode currentNode = iterator.next();
+      final Loop loop = LoopMatcher.getLoop(currentNode);
+      
       if (loop == null) {
+        skipped.add(currentNode);
         continue;
       }
+      final AbstractInsnNode last = skipped.getLast();
+      skipped.remove(last);
+      correctIteratorPosition(iterator, loop.getEndOfLoop());
+      
       optimized = true;
-      insn.add(loop.getInsnList(method));
+      for (final AbstractInsnNode node : skipped) {
+        insn.add(node);
+      }
+      skipped.clear();
+      original.remove(last);
+      insn.add(LoopMatcher.toForLoop(loop).getInsnList(method));
+    }
+    for (final AbstractInsnNode node : skipped) {
+      insn.add(node);
     }
     return insn;
     
   }
   
-  private ForLoop findForloop(final Iterator<AbstractInsnNode> iterator, final InsnList skipped) {
-    start = null;
-    final AbstractInsnNode endNode = getEndNode(iterator, skipped);
-    if (endNode == null) {
-      return null;
-    }
-    
-    final ForLoopFooter footer = getFooter(endNode);
-    if (footer == null) {
-      skipped.add(gotoNode);
-      gotoNode = null;
-      return null;
-    }
-    gotoNode = null;
-    final ForLoopBody body = getBody(iterator, endNode);
-    
-    correctIteratorPosition(iterator, footer);
-    
-    return new ForLoop(body, footer, start);
-  }
-  
-  private void correctIteratorPosition(final Iterator<AbstractInsnNode> iterator, final ForLoopFooter footer) {
+  private void correctIteratorPosition(final Iterator<AbstractInsnNode> iterator, final AbstractInsnNode endOfLoop) {
     while (iterator.hasNext()) {
-      if (iterator.next() == footer.getIfNode()) {
+      if (iterator.next() == endOfLoop) {
         break;
       }
     }
-  }
-  
-  private ForLoopBody getBody(final Iterator<AbstractInsnNode> iterator, final AbstractInsnNode endNode) {
-    final List<AbstractInsnNode> bodyNodes = new ArrayList<>();
-    while (iterator.hasNext()) {
-      final AbstractInsnNode bodyNode = iterator.next();
-      bodyNodes.add(bodyNode);
-      if (bodyNode == endNode) {
-        break;
-      }
-    }
-    
-    final AbstractInsnNode iinc = NodeHelper.getPrevious(endNode);  // IINC
-    bodyNodes.remove(iinc);
-    
-    bodyNodes.remove(0);// Label is not used anymore
-    bodyNodes.remove(bodyNodes.size() - 1);// Label is not used anymore
-    final ForLoopBody body = new ForLoopBody(bodyNodes);
-    return body;
-  }
-  
-  private ForLoopFooter getFooter(final AbstractInsnNode endNode) {
-    final AbstractInsnNode node4 = NodeHelper.getNext(endNode);
-    final AbstractInsnNode node5 = NodeHelper.getNext(node4);
-    final AbstractInsnNode node6 = NodeHelper.getNext(node5);
-    final boolean isIload = NodeHelper.isIload(node4, countervar);
-    final boolean isInt5 = NodeHelper.isNumberNode(node5);
-    final boolean isJump6 = NodeHelper.isIf(node6);
-    final boolean isInt6 = NodeHelper.isNumberNode(node6);
-    final boolean isJump5 = NodeHelper.isIf(node5);
-    final boolean isSingleValueJump = (node5.getOpcode() >= IFEQ) && (node5.getOpcode() <= IFLE);
-    final boolean isJump = (isInt5 && isJump6) || ((isInt6 || isSingleValueJump) && isJump5);
-    final boolean isForLoopFooter = isIload && isJump;
-    if (!isForLoopFooter) {
-      return null;
-    }
-    final AbstractInsnNode iinc = NodeHelper.getPrevious(endNode);
-    final ForLoopFooter footer;
-    if (isJump5) {
-      footer = new ForLoopFooter((VarInsnNode) node4, isSingleValueJump ? null : node6, (JumpInsnNode) node5,
-          ((IincInsnNode) iinc));
-    } else {
-      footer = new ForLoopFooter((VarInsnNode) node4, node5, (JumpInsnNode) node6, ((IincInsnNode) iinc));
-    }
-    
-    return footer;
-  }
-  
-  private AbstractInsnNode getEndNode(final Iterator<AbstractInsnNode> iterator, final InsnList skipped) {
-    final AbstractInsnNode node3 = iterator.next();
-    final AbstractInsnNode node2 = NodeHelper.getPrevious(node3);
-    final AbstractInsnNode node1 = NodeHelper.getPrevious(node2);
-    final boolean isForLoop = NodeHelper.isNumberNode(node1) && NodeHelper.isIstor(node2, -1)
-        && NodeHelper.isGoto(node3);
-    if (!isForLoop) {
-      add(node3, skipped);
-      return null;
-    }
-    
-    countervar = ((VarInsnNode) node2).var;
-    start = NodeHelper.getNumberValue(node1);
-    gotoNode = node3;
-    final AbstractInsnNode endNode = ((JumpInsnNode) node3).label;
-    return endNode;
-  }
-  
-  private void add(final AbstractInsnNode node, final InsnList skipped) {
-    if (node == null) {
-      return;
-    }
-    skipped.add(node);
   }
   
 }
