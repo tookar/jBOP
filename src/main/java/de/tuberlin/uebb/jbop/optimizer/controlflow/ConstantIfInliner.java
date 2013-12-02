@@ -193,10 +193,12 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
         final AbstractInsnNode node3 = NodeHelper.getPrevious(node2);
         final AbstractInsnNode node4 = NodeHelper.getPrevious(node3);
         boolean isNonNullArrayValue = false;
-        for (final NonNullArrayValue nonNullarrayValue : arrayValue.getNonNullArrayValues()) {
-          if (nonNullarrayValue.is(node4, node3, Arrays.asList(node2), Arrays.asList(node1))) {
-            isNonNullArrayValue = true;
-            break;
+        if (arrayValue != null) {
+          for (final NonNullArrayValue nonNullarrayValue : arrayValue.getNonNullArrayValues()) {
+            if (nonNullarrayValue.is(node4, node3, Arrays.asList(node2), Arrays.asList(node1))) {
+              isNonNullArrayValue = true;
+              break;
+            }
           }
         }
         if (!isNonNullArrayValue) {
