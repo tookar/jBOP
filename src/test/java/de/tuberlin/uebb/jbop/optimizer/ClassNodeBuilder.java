@@ -967,15 +967,17 @@ public final class ClassNodeBuilder {
   /**
    * Instantiate the classObject.
    * 
+   * @param params
+   *          the params
    * @return the object
    * @throws Exception
    *           the exception
    */
-  public Object instance() throws Exception {
+  public Object instance(final Object... params) throws Exception {
     if (buildedClass == null) {
       toClass();
     }
-    return ConstructorUtils.invokeConstructor(buildedClass);
+    return ConstructorUtils.invokeConstructor(buildedClass, params);
   }
   
   /**
