@@ -62,7 +62,7 @@ import de.tuberlin.uebb.jbop.optimizer.var.RemoveUnusedLocalVars;
  * 
  * @author Christopher Ewest
  */
-public class Optimizer {
+public class Optimizer implements IOptimizerSuite {
   
   private final Predicate<MethodNode> optimizeThis = new OptimizablePredicate();
   private int methodLength = MethodSplitter.MAX_LENGTH;
@@ -80,6 +80,7 @@ public class Optimizer {
    * @throws JBOPClassException
    *           if on of the steps fails.
    */
+  @Override
   public <T> T optimize(final T input, final String suffix) throws JBOPClassException {
     if (OptimizerUtils.existsInstance(input)) {
       return OptimizerUtils.getInstanceFor(input);
