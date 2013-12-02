@@ -36,7 +36,7 @@ import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
  * Removes unused local variables. <br>
  * Variables are unused if they are stored but never read via load.<br>
  * If a variable is stored and only used by iinc operations,<br>
- * these iinc operations are removed too. <br>
+ * these iinc operations are removed too (not, if this belongs to a loop). <br>
  * eg:
  * 
  * <pre>

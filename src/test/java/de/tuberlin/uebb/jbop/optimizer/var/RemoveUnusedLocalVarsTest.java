@@ -19,6 +19,7 @@
 package de.tuberlin.uebb.jbop.optimizer.var;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASTORE;
@@ -32,6 +33,7 @@ import static org.objectweb.asm.Opcodes.DSTORE;
 import static org.objectweb.asm.Opcodes.DSUB;
 import static org.objectweb.asm.Opcodes.FCONST_1;
 import static org.objectweb.asm.Opcodes.FSTORE;
+import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IALOAD;
 import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
@@ -39,6 +41,8 @@ import static org.objectweb.asm.Opcodes.ICONST_2;
 import static org.objectweb.asm.Opcodes.ICONST_3;
 import static org.objectweb.asm.Opcodes.ICONST_4;
 import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.IF_ICMPGT;
+import static org.objectweb.asm.Opcodes.IF_ICMPLT;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
@@ -51,6 +55,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -201,6 +206,60 @@ public class RemoveUnusedLocalVarsTest {
     
     // ASSERT
     assertEquals(2, optimized.size());
+  }
+  
+  /**
+   * Tests that RemoveUnusedLocalVars is working correctly.
+   */
+  @Test
+  public void testRemoveUnusedLocalVarsWithLoop() {
+    // INIT
+    final LabelNode label1 = new LabelNode();
+    final LabelNode label2 = new LabelNode();
+    builder.add(ICONST_0).//
+        add(ISTORE, 1).//
+        add(GOTO, label1).//
+        addInsn(label2).//
+        add(IINC, 1, 1).//
+        addInsn(label1).//
+        add(ICONST_5).//
+        add(ILOAD, 1).//
+        add(IF_ICMPLT, label2).//
+        addReturn();
+    // RUN
+    
+    assertEquals(10, methodNode.instructions.size());
+    optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertFalse(optimizer.isOptimized());
+  }
+  
+  /**
+   * Tests that RemoveUnusedLocalVars is working correctly.
+   */
+  @Test
+  public void testRemoveUnusedLocalVarsWithLoopTypeTwo() {
+    // INIT
+    final LabelNode check = new LabelNode();
+    final LabelNode ende = new LabelNode();
+    builder.add(ICONST_0)//
+        .add(ISTORE, 1)//
+        .addInsn(check)//
+        .add(ICONST_5)//
+        .add(ILOAD, 1)//
+        .add(IF_ICMPGT, ende)//
+        .add(IINC, 1, 1)//
+        .add(GOTO, check)//
+        .addInsn(ende)//
+        .addReturn();
+    // RUN
+    
+    assertEquals(10, methodNode.instructions.size());
+    optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertFalse(optimizer.isOptimized());
   }
   
   /**
