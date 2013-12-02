@@ -98,6 +98,8 @@ public class ClassDescriptor {
   
   /**
    * Get the Package of the class.
+   * 
+   * @return the package
    */
   public String getPackage() {
     return StringUtils.substringBeforeLast(name, ".");
@@ -106,6 +108,8 @@ public class ClassDescriptor {
   /**
    * Get the Package of the class as folder
    * ('.' replaced by '/').
+   * 
+   * @return the package dir
    */
   public String getPackageDir() {
     return StringUtils.replace(getPackage(), ".", "/");
@@ -113,6 +117,8 @@ public class ClassDescriptor {
   
   /**
    * Get the Simple name (without package) of the class.
+   * 
+   * @return the simple name
    */
   public String getSimpleName() {
     return StringUtils.substringAfterLast(name, ".");

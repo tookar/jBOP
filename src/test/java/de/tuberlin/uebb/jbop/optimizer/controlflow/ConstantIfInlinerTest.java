@@ -102,6 +102,9 @@ public class ConstantIfInlinerTest {
    * if(1<2)
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   
   @Test
@@ -133,6 +136,9 @@ public class ConstantIfInlinerTest {
    * if(1<=2)
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   
   @Test
@@ -164,6 +170,9 @@ public class ConstantIfInlinerTest {
    * if(2>1)
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   
   @Test
@@ -195,6 +204,9 @@ public class ConstantIfInlinerTest {
    * if(2>=1)
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   
   @Test
@@ -226,6 +238,9 @@ public class ConstantIfInlinerTest {
    * if(1==1)
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIF_ICMPNE() throws JBOPClassException {
@@ -256,6 +271,9 @@ public class ConstantIfInlinerTest {
    * if(1!=2)
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIF_ICMPEQ() throws JBOPClassException {
@@ -288,6 +306,9 @@ public class ConstantIfInlinerTest {
    * </pre>
    * 
    * where a is true
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIFEQ() throws JBOPClassException {
@@ -319,6 +340,9 @@ public class ConstantIfInlinerTest {
    * </pre>
    * 
    * where a is false
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIFNE() throws JBOPClassException {
@@ -350,6 +374,9 @@ public class ConstantIfInlinerTest {
    * </pre>
    * 
    * where a is not null
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIFNULL() throws JBOPClassException {
@@ -385,6 +412,9 @@ public class ConstantIfInlinerTest {
    * </pre>
    * 
    * where a is null
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIFNONNULL() throws JBOPClassException {
@@ -416,6 +446,9 @@ public class ConstantIfInlinerTest {
    * else
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIF_ICMPLEWithElseChooseIf() throws JBOPClassException {
@@ -443,6 +476,12 @@ public class ConstantIfInlinerTest {
     assertEquals(Opcodes.NOP, optimized.get(1).getOpcode());
   }
   
+  /**
+   * Tests that () of the Testobject is working correctly.
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
+   */
   @Test
   public void test() throws JBOPClassException {
     final LabelNode label = new LabelNode();
@@ -468,6 +507,9 @@ public class ConstantIfInlinerTest {
    * else
    * ...
    * </pre>
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   @Test
   public void testConstantIfInlinerIF_ICMPLEWithElseChooseElse() throws JBOPClassException {
@@ -495,6 +537,12 @@ public class ConstantIfInlinerTest {
     assertEquals(-1, optimized.get(1).getOpcode());
   }
   
+  /**
+   * Tests that localVarInlinerLoop() of the Testobject is working correctly.
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
+   */
   @Test
   public void testLocalVarInlinerLoop() throws JBOPClassException {
     // INIT
@@ -525,6 +573,12 @@ public class ConstantIfInlinerTest {
     assertFalse(constantIfInliner.isOptimized());
   }
   
+  /**
+   * Tests that localVarInlinerAlternativeLoop() of the Testobject is working correctly.
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
+   */
   @Test
   public void testLocalVarInlinerAlternativeLoop() throws JBOPClassException {
     // INIT

@@ -105,10 +105,12 @@ class ArrayHelper {
   /**
    * Checks if is array instruction.
    * 
+   * @param classNode
+   *          the class node
    * @param node
    *          the node
-   * @param fieldPredicate
-   *          the field predicate
+   * @param annotationClass
+   *          the annotation class
    * @return true, if is array instruction
    */
   boolean isArrayInstruction(final ClassNode classNode, final AbstractInsnNode node, final Class<?> annotationClass) {

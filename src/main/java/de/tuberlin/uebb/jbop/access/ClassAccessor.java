@@ -168,9 +168,9 @@ public final class ClassAccessor {
    * 
    * @param classDescriptor
    *          the class descriptor
+   * @return the path of the written File
    * @throws JBOPClassException
    *           the jBOP class exception
-   * @return the path of the written File
    */
   public static Path store(final ClassDescriptor classDescriptor) throws JBOPClassException {
     
@@ -264,6 +264,8 @@ public final class ClassAccessor {
   
   /**
    * returns the used tmp dir.
+   * 
+   * @return the tmpdir
    */
   public static Path getTmpdir() {
     return TMP_DIR;
@@ -271,6 +273,8 @@ public final class ClassAccessor {
   
   /**
    * Returns the Classloader for created Classes.
+   * 
+   * @return the classloader
    */
   public static ClassLoader getClassloader() {
     return TMP_CLASS_LOADER;
@@ -278,6 +282,14 @@ public final class ClassAccessor {
   
   /**
    * Returns the current value of the Field 'fieldName' of the given object.
+   * 
+   * @param instance
+   *          the instance
+   * @param fieldName
+   *          the field name
+   * @return the current value
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   public static Object getCurrentValue(final Object instance, final String fieldName) throws JBOPClassException {
     final PrivilegedGetFieldValue getter = new PrivilegedGetFieldValue(instance);
@@ -287,6 +299,16 @@ public final class ClassAccessor {
   
   /**
    * Returns the current value of the array 'fieldName' of the given object at the specified index.
+   * 
+   * @param instance
+   *          the instance
+   * @param fieldName
+   *          the field name
+   * @param indexes
+   *          the indexes
+   * @return the current value
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   public static Object getCurrentValue(final Object instance, final String fieldName, final int... indexes)
       throws JBOPClassException {

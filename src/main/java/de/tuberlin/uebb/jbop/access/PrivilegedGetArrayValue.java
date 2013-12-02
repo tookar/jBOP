@@ -34,19 +34,20 @@ class PrivilegedGetArrayValue extends PrivilegedGetFieldValue {
   /**
    * Instantiates a new {@link PrivilegedGetArrayValue}.
    * 
-   * @param originalName
-   *          the original name
-   * @param field
-   *          the field
    * @param instance
    *          the instance
-   * @param indexes
-   *          the indexes
    */
   public PrivilegedGetArrayValue(final Object instance) {
     super(instance);
   }
   
+  /**
+   * Transform.
+   * 
+   * @param value
+   *          the value
+   * @return the object
+   */
   @Override
   protected Object transform(final Object value) {
     Object array = value;
@@ -56,6 +57,12 @@ class PrivilegedGetArrayValue extends PrivilegedGetFieldValue {
     return array;
   }
   
+  /**
+   * Sets the indexes.
+   * 
+   * @param indexes
+   *          the new indexes
+   */
   public void setIndexes(final int... indexes) {
     this.indexes = indexes;
   }

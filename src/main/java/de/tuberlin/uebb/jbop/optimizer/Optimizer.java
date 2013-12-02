@@ -132,6 +132,16 @@ public class Optimizer {
   
   /**
    * Init the Optimizersteps that could / should be performed.
+   * 
+   * @param classNode
+   *          the class node
+   * @param methodNode
+   *          the method node
+   * @param input
+   *          the input
+   * @return the list
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   List<IOptimizer> initOptimizers(final ClassNode classNode, final MethodNode methodNode, final Object input)
       throws JBOPClassException {
@@ -227,6 +237,9 @@ public class Optimizer {
   
   /**
    * sets the maximum Length for generated methods in kilobytes.
+   * 
+   * @param methodLength
+   *          the new method length
    */
   public void setMethodLength(final int methodLength) {
     this.methodLength = methodLength;

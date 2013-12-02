@@ -80,8 +80,8 @@ public class OptimizerTest {
   /**
    * Init for every test.
    * 
-   * @throws IOException
-   *           Signals that an I/O exception has occurred.
+   * @throws Exception
+   *           the exception
    */
   @Before
   public void before() throws Exception {
@@ -193,6 +193,12 @@ public class OptimizerTest {
     return null;
   }
   
+  /**
+   * Tests that optimize() of the Testobject is working correctly.
+   * 
+   * @throws JBOPClassException
+   *           the jBOP class exception
+   */
   @Test
   public void testOptimize() throws JBOPClassException {
     // RUN

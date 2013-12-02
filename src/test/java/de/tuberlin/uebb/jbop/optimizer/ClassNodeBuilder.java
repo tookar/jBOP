@@ -154,6 +154,12 @@ public final class ClassNodeBuilder {
    * 
    * @param className
    *          the class name
+   * @param constructorDesc
+   *          the constructor desc
+   * @param superClass
+   *          the super class
+   * @param superConstructorDesc
+   *          the super constructor desc
    * @return the abstract optimizer test
    */
   public static ClassNodeBuilder createClass(final String className, final String constructorDesc,
@@ -165,6 +171,12 @@ public final class ClassNodeBuilder {
   
   /**
    * Appends a Constructor with the given descriptors.
+   * 
+   * @param constructorDesc
+   *          the constructor desc
+   * @param superConstructorDesc
+   *          the super constructor desc
+   * @return the class node builder
    */
   public ClassNodeBuilder addConstructor(final String constructorDesc, final String superConstructorDesc) {
     if (isInterface) {
@@ -418,9 +430,9 @@ public final class ClassNodeBuilder {
   /**
    * Creates Instruction to instantiate a new Object of the given type.
    * 
-   * @param desc
-   *          the desc
-   * @return the insn list
+   * @param builder
+   *          the builder
+   * @return this ClassNodeBuilder
    */
   public ClassNodeBuilder addNewObject(final ClassNodeBuilder builder) {
     if (isInterface) {
@@ -467,6 +479,15 @@ public final class ClassNodeBuilder {
     return this;
   }
   
+  /**
+   * Inits the multi array with.
+   * 
+   * @param value
+   *          the value
+   * @param indexes
+   *          the indexes
+   * @return the class node builder
+   */
   public ClassNodeBuilder initMultiArrayWith(final Object value, final int... indexes) {
     if (isInterface) {
       return this;
@@ -704,8 +725,8 @@ public final class ClassNodeBuilder {
   /**
    * Adds the given nodes to the lastConstructor.
    * 
-   * @param node
-   *          the node
+   * @param nodes
+   *          the nodes
    * @return the class node builder
    */
   public ClassNodeBuilder addToConstructor(final InsnList nodes) {
@@ -743,9 +764,9 @@ public final class ClassNodeBuilder {
   /**
    * adds a the given instructions to the method that was created last via {@link #addMethod(String, String)}.
    * 
-   * @param node
-   *          the node
-   * @return the abstract optimizer test
+   * @param nodes
+   *          the nodes
+   * @return this ClassNodeBuilder
    */
   public ClassNodeBuilder addInsn(final InsnList nodes) {
     if (isInterface) {
@@ -774,6 +795,8 @@ public final class ClassNodeBuilder {
   /**
    * adds a FieldInsnNode for the given Field.
    * 
+   * @param builder
+   *          the builder
    * @param field
    *          the field
    * @return the abstract optimizer test
@@ -803,9 +826,11 @@ public final class ClassNodeBuilder {
   /**
    * adds a FieldInsnNode for the given Field.
    * 
+   * @param builder
+   *          the builder
    * @param field
    *          the field
-   * @return the abstract optimizer test
+   * @return this ClassNodeBuilder
    */
   public ClassNodeBuilder addPutField(final ClassNodeBuilder builder, final String field) {
     final FieldNode fieldNode = builder.getField(field);
@@ -859,6 +884,10 @@ public final class ClassNodeBuilder {
   
   /**
    * gets the lastConstructor with the given descriptor.
+   * 
+   * @param desc
+   *          the desc
+   * @return the constructor
    */
   public MethodNode getConstructor(final String desc) {
     return getMethod("<init>", desc);
@@ -960,6 +989,12 @@ public final class ClassNodeBuilder {
   
   /**
    * Select the Method as being "active".
+   * 
+   * @param name
+   *          the name
+   * @param desc
+   *          the desc
+   * @return the class node builder
    */
   public ClassNodeBuilder selectMethod(final String name, final String desc) {
     setLastMethod(getMethod(name, desc));
@@ -968,6 +1003,10 @@ public final class ClassNodeBuilder {
   
   /**
    * Select the given lastConstructor as being "active".
+   * 
+   * @param desc
+   *          the desc
+   * @return the class node builder
    */
   public ClassNodeBuilder selectConstructor(final String desc) {
     setLastMethod(getMethod("<init>", desc));
@@ -984,6 +1023,13 @@ public final class ClassNodeBuilder {
     lastElement = method;
   }
   
+  /**
+   * Loads the given method-local variable.
+   * 
+   * @param index
+   *          the index
+   * @return the class node builder
+   */
   public ClassNodeBuilder load(final int index) {
     if ((index == 0) && ((lastMethod.access & ACC_STATIC) == 0)) {
       addInsn(new VarInsnNode((ALOAD), 0));
@@ -993,26 +1039,65 @@ public final class ClassNodeBuilder {
     return this;
   }
   
+  /**
+   * Load the variable index of given type.
+   * 
+   * @param type
+   *          the type
+   * @param index
+   *          the index
+   * @return the class node builder
+   */
   public ClassNodeBuilder load(final Type type, final int index) {
     addInsn(new VarInsnNode(type.getOpcode(ILOAD), index));
     return this;
   }
   
+  /**
+   * Stores the given method-local variable.
+   * 
+   * @param index
+   *          the index
+   * @return the class node builder
+   */
   public ClassNodeBuilder store(final int index) {
     final Type type = getType(index);
     return store(type, index);
   }
   
+  /**
+   * Stores the given variable index of type type.
+   * 
+   * @param type
+   *          the type
+   * @param index
+   *          the index
+   * @return the class node builder
+   */
   public ClassNodeBuilder store(final Type type, final int index) {
     addInsn(new VarInsnNode(type.getOpcode(ISTORE), getVarIndex(index)));
     return this;
   }
   
+  /**
+   * Adds the return statement.
+   * 
+   * @return the class node builder
+   */
   public ClassNodeBuilder addReturn() {
     addInsn(new InsnNode(Type.getReturnType(lastMethod.desc).getOpcode(IRETURN)));
     return this;
   }
   
+  /**
+   * Adds the given operation.
+   * 
+   * @param opcode
+   *          the opcode
+   * @param args
+   *          the args
+   * @return the class node builder
+   */
   public ClassNodeBuilder add(final int opcode, final Object... args) {
     if (opcode == IINC) {
       return addInsn(new IincInsnNode((Integer) args[0], (Integer) args[1]));
@@ -1039,10 +1124,26 @@ public final class ClassNodeBuilder {
     return this;
   }
   
+  /**
+   * Load constant.
+   * 
+   * @param arg
+   *          the arg
+   * @return the class node builder
+   */
   public ClassNodeBuilder loadConstant(final Object arg) {
     return addInsn(new LdcInsnNode(arg));
   }
   
+  /**
+   * Jump.
+   * 
+   * @param opcode
+   *          the opcode
+   * @param labelNode
+   *          the label node
+   * @return the class node builder
+   */
   public ClassNodeBuilder jump(final int opcode, final LabelNode labelNode) {
     return addInsn(new JumpInsnNode(opcode, labelNode));
   }
@@ -1080,11 +1181,35 @@ public final class ClassNodeBuilder {
     return type;
   }
   
+  /**
+   * Invoke.
+   * 
+   * @param opcode
+   *          the opcode
+   * @param method
+   *          the method
+   * @param args
+   *          the args
+   * @return the class node builder
+   */
   public ClassNodeBuilder invoke(final int opcode, final String method, final Object... args) {
     add(ALOAD, 0);
     return invoke(opcode, this, method, args);
   }
   
+  /**
+   * Invoke.
+   * 
+   * @param opcode
+   *          the opcode
+   * @param classBuilder
+   *          the class builder
+   * @param method
+   *          the method
+   * @param args
+   *          the args
+   * @return the class node builder
+   */
   public ClassNodeBuilder invoke(final int opcode, final ClassNodeBuilder classBuilder, final String method,
       final Object... args) {
     if (args != null) {
@@ -1095,14 +1220,33 @@ public final class ClassNodeBuilder {
     return addInsn(new MethodInsnNode(opcode, classBuilder.classNode.name, method, classBuilder.getMethod(method).desc));
   }
   
+  /**
+   * Gets the desc.
+   * 
+   * @return the desc
+   */
   public String getDesc() {
     return classNode.name;
   }
   
+  /**
+   * Implement interface.
+   * 
+   * @param builder
+   *          the builder
+   * @return the class node builder
+   */
   public ClassNodeBuilder implementInterface(final ClassNodeBuilder builder) {
     return implementInterface(builder.getDesc());
   }
   
+  /**
+   * Implement interface.
+   * 
+   * @param desc
+   *          the desc
+   * @return the class node builder
+   */
   public ClassNodeBuilder implementInterface(final String desc) {
     classNode.interfaces.add(desc);
     return this;

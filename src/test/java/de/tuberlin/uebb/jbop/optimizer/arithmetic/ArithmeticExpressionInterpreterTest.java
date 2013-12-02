@@ -52,6 +52,9 @@ public class ArithmeticExpressionInterpreterTest {
   private final ArithmeticExpressionInterpreter interpreter = new ArithmeticExpressionInterpreter();
   private ClassNodeBuilder builder;
   
+  /**
+   * Init for every test.
+   */
   @Before
   public void before() {
     builder = ClassNodeBuilder.createClass("TestClass").addMethod("testMethod", "()V");

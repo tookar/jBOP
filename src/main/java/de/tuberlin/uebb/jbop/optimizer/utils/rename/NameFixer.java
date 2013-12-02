@@ -86,6 +86,11 @@ class NameFixer {
     return oldNames.contains(s);
   }
   
+  /**
+   * Gets the new name.
+   * 
+   * @return the new name
+   */
   String getNewName() {
     return newName;
   }

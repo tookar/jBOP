@@ -163,6 +163,9 @@ public class ForLoopUnrollerTest {
     }
   }
   
+  /**
+   * Tests the LoopUnroller for an empty loop.
+   */
   @Test
   public void testForLoopUnrollerEmptyLoop() {
     // INIT
@@ -187,6 +190,9 @@ public class ForLoopUnrollerTest {
     assertEquals(1, optimized.size()); //
   }
   
+  /**
+   * Tests the Loopunroller for a loop with the test-instructions at the beginning.
+   */
   @Test
   public void testForLoopTypeTwo() {
     // INIT

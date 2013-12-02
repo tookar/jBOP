@@ -32,6 +32,11 @@ import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
+/**
+ * Tests for {@link FieldArrayLengthInliner}.
+ * 
+ * @author Christopher Ewest
+ */
 public class FieldArrayLengthInlinerTest {
   
   /**

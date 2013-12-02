@@ -428,7 +428,7 @@ public class LocalVarInlinerTest {
     // ASSERT
     assertFalse(optimizer.isOptimized());
   }
-  
+
   @Test
   public void testLocalVarInlinerArray() {
     // INIT
@@ -447,7 +447,7 @@ public class LocalVarInlinerTest {
     // ASSERT
     assertTrue(optimizer.isOptimized());
   }
-  
+
   @Test
   public void testLocalVarLoopMin() {
     // INIT

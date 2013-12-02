@@ -82,6 +82,11 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
   private boolean optimized;
   private Object input;
   
+  /**
+   * Checks if is optimized.
+   * 
+   * @return true, if is optimized
+   */
   @Override
   public boolean isOptimized() {
     return optimized;
@@ -102,9 +107,31 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
     return original;
   }
   
+  /**
+   * Handle values.
+   * 
+   * @param original
+   *          the original
+   * @param knownArrays
+   *          the known arrays
+   * @param currentNode
+   *          the current node
+   * @return true, if successful
+   */
   abstract boolean handleValues(final InsnList original, final Map<Integer, Object> knownArrays,
       final AbstractInsnNode currentNode);
   
+  /**
+   * Register values.
+   * 
+   * @param currentNode
+   *          the current node
+   * @param knownArrays
+   *          the known arrays
+   * @return true, if successful
+   * @throws JBOPClassException
+   *           the jBOP class exception
+   */
   protected boolean registerValues(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
       throws JBOPClassException {
     if (currentNode.getOpcode() == Opcodes.ASTORE) {
@@ -128,6 +155,17 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
     return false;
   }
   
+  /**
+   * Register get array.
+   * 
+   * @param currentNode
+   *          the current node
+   * @param knownArrays
+   *          the known arrays
+   * @return true, if successful
+   * @throws JBOPClassException
+   *           the jBOP class exception
+   */
   protected boolean registerGetArray(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
       throws JBOPClassException {
     final List<AbstractInsnNode> previous = new ArrayList<>();

@@ -42,10 +42,6 @@ class PrivilegedGetFieldValue implements PrivilegedAction<Object> {
   /**
    * Instantiates a new {@link PrivilegedGetFieldValue}.
    * 
-   * @param originalName
-   *          the original name
-   * @param field
-   *          the field
    * @param instance
    *          the instance
    */
@@ -54,6 +50,11 @@ class PrivilegedGetFieldValue implements PrivilegedAction<Object> {
     clazz = instance.getClass();
   }
   
+  /**
+   * Run.
+   * 
+   * @return the object
+   */
   @Override
   public Object run() {
     final Field field = getField();
@@ -79,6 +80,10 @@ class PrivilegedGetFieldValue implements PrivilegedAction<Object> {
   /**
    * Hook for subclasses to perform additional actions with 'value'
    * before returning it.
+   * 
+   * @param value
+   *          the value
+   * @return the object
    */
   protected Object transform(final Object value) {
     return value;

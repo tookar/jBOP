@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2013 uebb.tu-berlin.de.
+ *
+ * This file is part of JBOP (Java Bytecode OPtimizer).
+ *
+ * JBOP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JBOP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import static org.objectweb.asm.Opcodes.IFEQ;
@@ -36,6 +54,13 @@ public final class LoopMatcher {
     //
   }
   
+  /**
+   * Gets the loop.
+   * 
+   * @param node
+   *          the node
+   * @return the loop
+   */
   public static Loop getLoop(final AbstractInsnNode node) {
     if (node == null) {
       return null;
@@ -54,6 +79,13 @@ public final class LoopMatcher {
     return getTypeTwoLoop(node, next);
   }
   
+  /**
+   * To for loop.
+   * 
+   * @param loop
+   *          the loop
+   * @return the for loop
+   */
   public static ForLoop toForLoop(final Loop loop) {
     if (loop == null) {
       return null;
@@ -129,6 +161,13 @@ public final class LoopMatcher {
     return previous2;
   }
   
+  /**
+   * Checks if node is if of loop.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is if of loop
+   */
   public static boolean isIfOfLoop(final AbstractInsnNode node) {
     return isStoreOfLoop(getStoreOfLoopForIf(node));
   }
@@ -156,6 +195,13 @@ public final class LoopMatcher {
     return null;
   }
   
+  /**
+   * Checks if node is goto of loop.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is goto of loop
+   */
   public static boolean isGotoOfLoop(final AbstractInsnNode node) {
     return isStoreOfLoop(getStoreOfLoopForGoto(node));
   }
@@ -174,10 +220,24 @@ public final class LoopMatcher {
     return node.getPrevious();
   }
   
+  /**
+   * Checks if node is iinc of loop.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is iinc of loop
+   */
   public static boolean isIIncOfLoop(final AbstractInsnNode node) {
     return isStoreOfLoop(getStoreOfLoopForIInc(node));
   }
   
+  /**
+   * Checks if node is store of loop.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is store of loop
+   */
   public static boolean isStoreOfLoop(final AbstractInsnNode node) {
     if (node == null) {
       return false;
@@ -236,6 +296,15 @@ public final class LoopMatcher {
     return new Loop(ifNode, startValue, endValue, iinc, firstOfBody, ifNode, counter);
   }
   
+  /**
+   * Find if.
+   * 
+   * @param target
+   *          the target
+   * @param desiredLabel
+   *          the desired label
+   * @return the abstract insn node
+   */
   public static AbstractInsnNode findIf(final AbstractInsnNode target, final AbstractInsnNode desiredLabel) {
     if (target == null) {
       return null;
@@ -313,6 +382,13 @@ public final class LoopMatcher {
         counter);
   }
   
+  /**
+   * Gets the loop bounds.
+   * 
+   * @param currentNode
+   *          the current node
+   * @return the loop bounds
+   */
   public static Pair<AbstractInsnNode, AbstractInsnNode> getLoopBounds(final AbstractInsnNode currentNode) {
     final AbstractInsnNode storeOfLoop;
     if (NodeHelper.isGoto(currentNode)) {
@@ -332,10 +408,24 @@ public final class LoopMatcher {
     
   }
   
+  /**
+   * Gets the end of loop.
+   * 
+   * @param currentNode
+   *          the current node
+   * @return the end of loop
+   */
   public static AbstractInsnNode getEndOfLoop(final AbstractInsnNode currentNode) {
     return getLoopBounds(currentNode).getRight();
   }
   
+  /**
+   * Gets the start of loop.
+   * 
+   * @param currentNode
+   *          the current node
+   * @return the start of loop
+   */
   public static AbstractInsnNode getStartOfLoop(final AbstractInsnNode currentNode) {
     return getLoopBounds(currentNode).getLeft();
   }

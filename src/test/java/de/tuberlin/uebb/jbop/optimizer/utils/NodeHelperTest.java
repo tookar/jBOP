@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2013 uebb.tu-berlin.de.
+ *
+ * This file is part of JBOP (Java Bytecode OPtimizer).
+ *
+ * JBOP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JBOP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.tuberlin.uebb.jbop.optimizer.utils;
 
 import static org.junit.Assert.assertEquals;
@@ -33,6 +51,11 @@ import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
 
+/**
+ * Tests for {@link NodeHelper}.
+ * 
+ * @author Christopher Ewest
+ */
 public class NodeHelperTest {
   
   @Test
@@ -127,7 +150,7 @@ public class NodeHelperTest {
     // ASSERT
     assertEquals(method.instructions.get(12), firstOfStack);
   }
-  
+
   @Test
   public void testGetFirstOfStack5() {
     // INIT
@@ -214,6 +237,12 @@ public class NodeHelperTest {
     assertEquals(method.instructions.get(0), firstOfStack);
   }
   
+  /**
+   * Tests that printMethod() of the Testobject is working correctly.
+   * 
+   * @throws UnsupportedEncodingException
+   *           the unsupported encoding exception
+   */
   @Test
   public void testPrintMethod() throws UnsupportedEncodingException {
     // INIT

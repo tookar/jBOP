@@ -118,6 +118,12 @@ public class LocalArrayLengthInliner extends AbstractLocalArrayOptimizer {
   
   /**
    * Registers values for local arrays that are created via NEWARRAY / ANEWARRAY or MULTIANEWARRAY.
+   * 
+   * @param currentNode
+   *          the current node
+   * @param knownArrays
+   *          the known arrays
+   * @return true, if successful
    */
   @Override
   protected boolean registerAdditionalValues(final AbstractInsnNode currentNode, //

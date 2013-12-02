@@ -59,8 +59,6 @@ class Var implements Comparable<Var> {
    *          the var type
    * @param type2
    *          the type2
-   * @param node
-   *          the node
    */
   Var(final int index, final int position, final VarType varType, final Type type2) {
     super();
@@ -70,6 +68,11 @@ class Var implements Comparable<Var> {
     this.type2 = type2;
   }
   
+  /**
+   * Hash code.
+   * 
+   * @return the int
+   */
   @Override
   public int hashCode() {
     return toString().hashCode();

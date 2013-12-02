@@ -61,6 +61,13 @@ public class FinalFieldInliner implements IOptimizer, IInputObjectAware {
   private boolean optimized;
   private Object instance;
   
+  /**
+   * Checks if desc is a built in type.
+   * 
+   * @param desc
+   *          the desc
+   * @return true if desc is built in
+   */
   static boolean isBuiltIn(final String desc) {
     final Type type = Type.getType(desc);
     if (isPrimitive(type)) {
@@ -69,6 +76,13 @@ public class FinalFieldInliner implements IOptimizer, IInputObjectAware {
     return isPrimitiveWrapper(type);
   }
   
+  /**
+   * Checks if type is a primitive wrapper.
+   * 
+   * @param type
+   *          the type
+   * @return true if type is primitive wrapper
+   */
   static boolean isPrimitiveWrapper(final Type type) {
     if (INT_OBJECT_TYPE.equals(type)) {
       return true;
@@ -100,6 +114,13 @@ public class FinalFieldInliner implements IOptimizer, IInputObjectAware {
     return false;
   }
   
+  /**
+   * Checks if type is a primitive type.
+   * 
+   * @param type
+   *          the type
+   * @return true if type is primitive
+   */
   static boolean isPrimitive(final Type type) {
     if (INT_TYPE.equals(type)) {
       return true;

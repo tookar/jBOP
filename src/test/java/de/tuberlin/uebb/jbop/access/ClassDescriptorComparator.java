@@ -23,9 +23,9 @@ import java.util.Comparator;
 import de.tuberlin.uebb.jbop.access.ClassDescriptor;
 
 /**
+ * The Class ClassDescriptorComparator.
  * 
- * @author tolina GmbH
- * 
+ * @author Christopher Ewest
  */
 public class ClassDescriptorComparator implements Comparator<ClassDescriptor> {
   

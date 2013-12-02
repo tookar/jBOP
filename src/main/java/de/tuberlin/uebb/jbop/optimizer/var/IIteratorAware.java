@@ -31,6 +31,9 @@ public interface IIteratorAware<T> {
   
   /**
    * Sets the iterator.
+   * 
+   * @param iterator
+   *          the new iterator
    */
   void setIterator(ListIterator<T> iterator);
 }

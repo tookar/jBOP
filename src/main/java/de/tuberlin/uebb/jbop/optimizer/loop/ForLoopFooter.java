@@ -45,6 +45,8 @@ public class ForLoopFooter {
    *          the bi push node
    * @param ifNode
    *          the if node
+   * @param iinc
+   *          the iinc
    */
   public ForLoopFooter(final VarInsnNode iLoadNode, final AbstractInsnNode biPushNode, final JumpInsnNode ifNode,
       final IincInsnNode iinc) {

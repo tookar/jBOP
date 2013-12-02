@@ -657,6 +657,8 @@ public final class NodeHelper {
    * @param valueNode
    *          the value node
    * @return the value
+   * @throws NotANumberException
+   *           the not a number exception
    */
   public static Object getValue(final AbstractInsnNode valueNode) throws NotANumberException {
     try {
@@ -862,6 +864,10 @@ public final class NodeHelper {
    * i2b 0x91 value → result convert an int into a byte<br/>
    * i2c 0x92 value → result convert an int into a character<br/>
    * i2s 0x93 value → result convert an int into a short
+   * 
+   * @param numberNode
+   *          the number node
+   * @return true if numberNode is cast
    */
   public static boolean isCast(final AbstractInsnNode numberNode) {
     if (numberNode == null) {
@@ -891,6 +897,10 @@ public final class NodeHelper {
   
   /**
    * Returns true if node is an if-Statement.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is if
    */
   public static boolean isIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -901,6 +911,10 @@ public final class NodeHelper {
   
   /**
    * Returns true if node is an one-param-if-Statement.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is one value if
    */
   public static boolean isOneValueIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -920,6 +934,10 @@ public final class NodeHelper {
   
   /**
    * Returns true if node is an two-param-if-Statement.
+   * 
+   * @param node
+   *          the node
+   * @return true if node is two value if
    */
   public static boolean isTwoValueIf(final AbstractInsnNode node) {
     if (node == null) {
@@ -956,6 +974,13 @@ public final class NodeHelper {
     return -1;
   }
   
+  /**
+   * Gets the method name.
+   * 
+   * @param node
+   *          the node
+   * @return the method name
+   */
   public static String getMethodName(final AbstractInsnNode node) {
     if (!(node instanceof MethodInsnNode)) {
       return null;
@@ -963,6 +988,13 @@ public final class NodeHelper {
     return ((MethodInsnNode) node).name;
   }
   
+  /**
+   * Gets the method owner.
+   * 
+   * @param node
+   *          the node
+   * @return the method owner
+   */
   public static String getMethodOwner(final AbstractInsnNode node) {
     if (!(node instanceof MethodInsnNode)) {
       return null;
@@ -976,6 +1008,10 @@ public final class NodeHelper {
    * 
    * returns null if node is null.
    * returns null if node is not a store.
+   * 
+   * @param node
+   *          the node
+   * @return the first of stack
    */
   public static AbstractInsnNode getFirstOfStack(final AbstractInsnNode node) {
     if (node == null) {
@@ -1026,10 +1062,24 @@ public final class NodeHelper {
     return null;
   }
   
+  /**
+   * Prints the method.
+   * 
+   * @param node
+   *          the node
+   */
   public static void printMethod(final MethodNode node) {
     printMethod(node, System.out);
   }
   
+  /**
+   * Prints the method.
+   * 
+   * @param node
+   *          the node
+   * @param stream
+   *          the stream
+   */
   public static void printMethod(final MethodNode node, final PrintStream stream) {
     final Textifier p = new Textifier();
     final TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(p);

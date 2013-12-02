@@ -57,6 +57,8 @@ public final class OptimizerUtils {
    * @param input
    *          the input
    * @return the class node
+   * @throws JBOPClassException
+   *           the jBOP class exception
    */
   public static ClassNode readClass(final Object input) throws JBOPClassException {
     final ClassReader classReader = new ClassReader(ClassAccessor.toBytes(input));
@@ -128,6 +130,8 @@ public final class OptimizerUtils {
   /**
    * Gets the specialized instance for input.
    * 
+   * @param <T>
+   *          the generic type
    * @param input
    *          the input
    * @return the instance

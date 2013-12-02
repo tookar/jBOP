@@ -80,6 +80,8 @@ class Block {
    *          the number of the block
    * @param args
    *          the top-Level parameters of the method
+   * @param returnType
+   *          the return type
    */
   Block(final int num, final Type[] args, final Type returnType) {
     this.args = args;
@@ -124,19 +126,28 @@ class Block {
   /**
    * Gets the current Size of the method.
    * 
-   * @see CodeSizeEvaluator
-   * 
    * @return the size
+   * @see CodeSizeEvaluator
    */
   int getSize() {
     return sizeEvaluator.getMaxSize();
   }
   
+  /**
+   * To string.
+   * 
+   * @return the string
+   */
   @Override
   public String toString() {
     return "Block " + num + ": " + getSize() + "bytes, " + getDescriptor();
   }
   
+  /**
+   * Gets the descriptor.
+   * 
+   * @return the descriptor
+   */
   String getDescriptor() {
     return descBuilder.toString() + ")" + returnType.getDescriptor();
   }
@@ -479,6 +490,9 @@ class Block {
   /**
    * Rename insns.
    * This means: correct the indexes of the local variables to match the parameters.
+   * 
+   * @param paramRenameMap
+   *          the param rename map
    */
   void renameInsns(final Map<Integer, Integer> paramRenameMap) {
     for (final AbstractInsnNode node : insns) {
@@ -538,18 +552,38 @@ class Block {
     return null;
   }
   
+  /**
+   * Gets the block number.
+   * 
+   * @return the block number
+   */
   int getBlockNumber() {
     return num;
   }
   
+  /**
+   * Gets the instructions.
+   * 
+   * @return the instructions
+   */
   List<AbstractInsnNode> getInstructions() {
     return Collections.unmodifiableList(insns);
   }
   
+  /**
+   * Gets the parameters.
+   * 
+   * @return the parameters
+   */
   VarList getParameters() {
     return parameters;
   }
   
+  /**
+   * Gets the var map.
+   * 
+   * @return the var map
+   */
   Map<Integer, Integer> getVarMap() {
     return Collections.unmodifiableMap(varMap);
   }

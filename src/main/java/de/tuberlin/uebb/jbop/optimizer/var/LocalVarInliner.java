@@ -78,11 +78,25 @@ public class LocalVarInliner implements IOptimizer {
   // private static final Logger LOG = Logger.getLogger("LocalVarInliner");
   private boolean optimized;
   
+  /**
+   * Checks if is optimized.
+   * 
+   * @return true, if is optimized
+   */
   @Override
   public boolean isOptimized() {
     return optimized;
   }
   
+  /**
+   * Optimize.
+   * 
+   * @param original
+   *          the original
+   * @param methodNode
+   *          the method node
+   * @return the insn list
+   */
   @Override
   public InsnList optimize(final InsnList original, final MethodNode methodNode) {
     optimized = false;
