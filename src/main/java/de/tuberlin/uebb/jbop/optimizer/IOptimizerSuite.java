@@ -8,7 +8,7 @@ import de.tuberlin.uebb.jbop.exception.JBOPClassException;
 public interface IOptimizerSuite {
   
   /**
-   * Optimize the given Object
+   * Optimize the given Object.
    */
-  public <T> T optimize(final T input, String suffix) throws JBOPClassException;
+  <T> T optimize(final T input, String suffix) throws JBOPClassException;
 }

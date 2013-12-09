@@ -113,7 +113,7 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
   private static final BigDecimal NONNULL = BigDecimal.ZERO;
   private boolean optimized;
   private final FieldArrayValueInliner arrayValue;
-  private Object input;
+  private Object inputObject;
   
   /**
    * Instantiates a new {@link ConstantIfInliner}.
@@ -170,18 +170,19 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
       if (node1.getOpcode() == Opcodes.ACONST_NULL) {
         final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
         if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
-          final Object currentValue = ClassAccessor.getCurrentValue(input, NodeHelper.getFieldname(node1));
+          final Object currentValue = ClassAccessor.getCurrentValue(inputObject, NodeHelper.getFieldname(node1));
           if (currentValue != null) {
             return false;
           }
-          removeNodes(currentNode, node1, node2, null, list, iterator, evalSingleOpValue(null, currentNode.getOpcode()));
+          removeNodes(currentNode, node1, node2, null, list, iterator, //
+              evalSingleOpValue(null, currentNode.getOpcode()));
           return false;
         }
         eval = evalSingleOpValue(null, currentNode.getOpcode());
       } else {
         final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
         if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
-          final Object currentValue = ClassAccessor.getCurrentValue(input, NodeHelper.getFieldname(node1));
+          final Object currentValue = ClassAccessor.getCurrentValue(inputObject, NodeHelper.getFieldname(node1));
           if (currentValue == null) {
             return false;
           }
@@ -407,7 +408,7 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
   }
   
   @Override
-  public void setInputObject(final Object input) {
-    this.input = input;
+  public void setInputObject(final Object inputObject) {
+    this.inputObject = inputObject;
   }
 }

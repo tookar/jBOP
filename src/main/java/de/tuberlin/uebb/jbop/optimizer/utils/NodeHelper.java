@@ -1021,6 +1021,7 @@ public final class NodeHelper {
     if ((opcode < ISTORE) || (opcode > ASTORE)) {
       return null;
     }
+    
     int stackCounter = 1;
     AbstractInsnNode prev = getPrevious(node);
     while (prev != null) {
@@ -1048,10 +1049,6 @@ public final class NodeHelper {
         }
       } else if (prev instanceof LabelNode) {
         stackCounter++;
-      } else if (prev instanceof JumpInsnNode) {
-        // if (isIf(prev)) {
-        // stackCounter--;
-        // }
       }
       
       if (stackCounter == 0) {

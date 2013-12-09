@@ -115,9 +115,7 @@ public final class RemoveUnusedFields {
       if (!fieldNode.name.equals(fieldname)) {
         continue;
       }
-      if ("<init>".equals(methodNode.name)) {
-        // skip
-      } else {
+      if (!"<init>".equals(methodNode.name)) {
         usedFields.add(fieldNode);
       }
     }

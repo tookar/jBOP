@@ -42,8 +42,6 @@ public @interface AdditionalSteps {
   
   /**
    * array with additional Optimizer-Steps.
-   * 
-   * @return the class<? extends i optimizer>[]
    */
   Class<? extends IOptimizer>[] steps();
 }
