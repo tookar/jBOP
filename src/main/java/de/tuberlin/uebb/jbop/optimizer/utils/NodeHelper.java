@@ -1081,6 +1081,9 @@ public final class NodeHelper {
    *          the stream
    */
   public static void printMethod(final MethodNode node, final PrintStream stream) {
+    
+    stream.println(Type.getReturnType(node.desc).toString() + " " + node.name + "("
+        + StringUtils.join(Type.getArgumentTypes(node.desc), ", ") + ")");
     final Textifier p = new Textifier();
     final TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(p);
     node.accept(traceMethodVisitor);

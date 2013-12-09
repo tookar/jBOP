@@ -23,6 +23,7 @@ import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.BIPUSH;
 import static org.objectweb.asm.Opcodes.DCMPG;
@@ -38,6 +39,7 @@ import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.JSR;
 import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.NEWARRAY;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP;
 import static org.objectweb.asm.Opcodes.SALOAD;
@@ -1105,10 +1107,11 @@ public final class ClassNodeBuilder {
       return addInsn(new IincInsnNode((Integer) args[0], (Integer) args[1]));
     }
     if (((opcode >= NOP) && (opcode <= DCONST_1)) || ((opcode >= POP) && (opcode <= DCMPG))
-        || ((opcode >= IALOAD) && (opcode <= SALOAD)) || ((opcode >= IASTORE) && (opcode <= SASTORE))) {
+        || ((opcode >= IALOAD) && (opcode <= SALOAD)) || ((opcode >= IASTORE) && (opcode <= SASTORE))
+        || (opcode == ARRAYLENGTH)) {
       return addInsn(new InsnNode(opcode));
     }
-    if (((opcode >= BIPUSH) && (opcode <= SIPUSH))) {
+    if (((opcode >= BIPUSH) && (opcode <= SIPUSH)) || (opcode == NEWARRAY)) {
       return addInsn(new IntInsnNode(opcode, (Integer) args[0]));
     }
     if (opcode == LDC) {
@@ -1251,6 +1254,15 @@ public final class ClassNodeBuilder {
    */
   public ClassNodeBuilder implementInterface(final String desc) {
     classNode.interfaces.add(desc);
+    return this;
+  }
+  
+  /**
+   * Removes the method from this class.
+   */
+  public ClassNodeBuilder removeMethod(final String name, final String desc) {
+    final MethodNode method = getMethod(name, desc);
+    classNode.methods.remove(method);
     return this;
   }
 }

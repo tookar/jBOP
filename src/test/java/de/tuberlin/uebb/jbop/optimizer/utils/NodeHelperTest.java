@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2013 uebb.tu-berlin.de.
- *
+ * 
  * This file is part of JBOP (Java Bytecode OPtimizer).
- *
+ * 
  * JBOP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * JBOP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -150,7 +150,7 @@ public class NodeHelperTest {
     // ASSERT
     assertEquals(method.instructions.get(12), firstOfStack);
   }
-
+  
   @Test
   public void testGetFirstOfStack5() {
     // INIT
@@ -258,7 +258,7 @@ public class NodeHelperTest {
     
     // ASSERT
     final String methodContent = byteArrayOutputStream.toString("UTF8");
-    assertEquals("    ALOAD 0\n" + "    INVOKESPECIAL java/lang/Object.<init> ()V\n" + "    ALOAD 0\n"
+    assertEquals("V <init>()\n    ALOAD 0\n" + "    INVOKESPECIAL java/lang/Object.<init> ()V\n" + "    ALOAD 0\n"
         + "    ICONST_1\n" + "    PUTFIELD de/tuberlin/Class.f1 : I\n" + "    ALOAD 0\n" + "    LDC 2.0\n"
         + "    PUTFIELD de/tuberlin/Class.f2 : D\n" + "    ALOAD 0\n" + "    ICONST_2\n" + "    NEWARRAY T_DOUBLE\n"
         + "    ASTORE 1\n" + "    ALOAD 1\n" + "    PUTFIELD de/tuberlin/Class.f3 : [D\n" + "    ALOAD 1\n"

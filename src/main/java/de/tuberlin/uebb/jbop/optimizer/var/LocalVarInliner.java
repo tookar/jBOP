@@ -24,6 +24,7 @@ import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.NEWARRAY;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -231,7 +232,7 @@ public class LocalVarInliner implements IOptimizer {
       return;
     }
     final AbstractInsnNode previous = currentNode.getPrevious();
-    if (NodeHelper.isValue(previous)) {
+    if ((previous.getOpcode() != NEWARRAY) && NodeHelper.isValue(previous)) {
       final Object value = NodeHelper.getValue(previous);
       knownValues.put(index, value);
     } else {
