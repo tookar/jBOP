@@ -25,6 +25,7 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
 import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.ATHROW;
 import static org.objectweb.asm.Opcodes.BIPUSH;
 import static org.objectweb.asm.Opcodes.DCMPG;
 import static org.objectweb.asm.Opcodes.DCONST_1;
@@ -34,7 +35,6 @@ import static org.objectweb.asm.Opcodes.IASTORE;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
-import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.JSR;
@@ -425,7 +425,7 @@ public final class ClassNodeBuilder {
     final TypeInsnNode node = new TypeInsnNode(Opcodes.NEW, fieldDesc);
     list.add(node);
     list.add(new InsnNode(DUP));
-    list.add(new MethodInsnNode(INVOKESPECIAL, fieldDesc, "<init>", "()V"));
+    // list.add(new MethodInsnNode(INVOKESPECIAL, fieldDesc, "<init>", "()V"));
     return list;
   }
   
@@ -815,6 +815,21 @@ public final class ClassNodeBuilder {
   /**
    * adds a FieldInsnNode for the given Field.
    * 
+   * @param builder
+   *          the builder
+   * @param field
+   *          the field
+   * @return the abstract optimizer test
+   */
+  public ClassNodeBuilder addGetField(final String owner, final String field, final String desc) {
+    
+    final FieldInsnNode node = new FieldInsnNode(Opcodes.GETFIELD, owner, field, desc);
+    return addInsn(node);
+  }
+  
+  /**
+   * adds a FieldInsnNode for the given Field.
+   * 
    * @param field
    *          the field
    * @return the abstract optimizer test
@@ -1108,7 +1123,7 @@ public final class ClassNodeBuilder {
     }
     if (((opcode >= NOP) && (opcode <= DCONST_1)) || ((opcode >= POP) && (opcode <= DCMPG))
         || ((opcode >= IALOAD) && (opcode <= SALOAD)) || ((opcode >= IASTORE) && (opcode <= SASTORE))
-        || (opcode == ARRAYLENGTH)) {
+        || (opcode == ARRAYLENGTH) || (opcode == ATHROW)) {
       return addInsn(new InsnNode(opcode));
     }
     if (((opcode >= BIPUSH) && (opcode <= SIPUSH)) || (opcode == NEWARRAY)) {
@@ -1197,7 +1212,7 @@ public final class ClassNodeBuilder {
    *          the args
    * @return the class node builder
    */
-  public ClassNodeBuilder invoke(final int opcode, final String method, final Object... args) {
+  public ClassNodeBuilder invoke(final int opcode, final String method, final Number... args) {
     add(ALOAD, 0);
     return invoke(opcode, this, method, args);
   }
@@ -1216,13 +1231,33 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder invoke(final int opcode, final ClassNodeBuilder classBuilder, final String method,
-      final Object... args) {
+      final Number... args) {
+    return invoke(opcode, classBuilder.classNode.name, method, classBuilder.getMethod(method).desc, args);
+  }
+  
+  /**
+   * Invoke.
+   * 
+   * @param opcode
+   *          the opcode
+   * @param owner
+   *          the owner
+   * @param method
+   *          the method
+   * @param desc
+   *          the desc
+   * @param args
+   *          the args
+   * @return the class node builder
+   */
+  public ClassNodeBuilder invoke(final int opcode, final String owner, final String method, final String desc,
+      final Number... args) {
     if (args != null) {
       for (final Object arg : args) {
         add(((Number) arg).intValue());
       }
     }
-    return addInsn(new MethodInsnNode(opcode, classBuilder.classNode.name, method, classBuilder.getMethod(method).desc));
+    return addInsn(new MethodInsnNode(opcode, owner, method, desc));
   }
   
   /**
