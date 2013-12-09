@@ -1026,30 +1026,7 @@ public final class NodeHelper {
     AbstractInsnNode prev = getPrevious(node);
     while (prev != null) {
       opcode = prev.getOpcode();
-      if ((opcode >= ACONST_NULL) && (opcode <= LDC)) {
-        stackCounter--;
-      } else if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
-        stackCounter--;
-      } else if ((opcode >= IALOAD) && (opcode <= AALOAD)) {
-        stackCounter++;
-      } else if ((opcode >= IADD) && (opcode <= DREM)) {
-        stackCounter++;
-      } else if ((opcode >= INVOKEVIRTUAL) && (opcode <= INVOKEDYNAMIC)) {
-        final String desc = ((MethodInsnNode) prev).desc;
-        final Type methodType = Type.getMethodType(desc);
-        final Type[] argumentTypes = methodType.getArgumentTypes();
-        final int length = argumentTypes.length;
-        if (length == 0) {
-          stackCounter++;
-        } else {
-          stackCounter += length;
-        }
-        if (opcode == INVOKESTATIC) {
-          stackCounter--;
-        }
-      } else if (prev instanceof LabelNode) {
-        stackCounter++;
-      }
+      stackCounter = getStackCounter(opcode, stackCounter, prev);
       
       if (stackCounter == 0) {
         return prev;
@@ -1057,6 +1034,35 @@ public final class NodeHelper {
       prev = prev.getPrevious();
     }
     return null;
+  }
+  
+  private static int getStackCounter(final int opcode, final int currentStackCounter, final AbstractInsnNode prev) {
+    int localStackCounter = currentStackCounter;
+    if ((opcode >= ACONST_NULL) && (opcode <= LDC)) {
+      localStackCounter--;
+    } else if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
+      localStackCounter--;
+    } else if ((opcode >= IALOAD) && (opcode <= AALOAD)) {
+      localStackCounter++;
+    } else if ((opcode >= IADD) && (opcode <= DREM)) {
+      localStackCounter++;
+    } else if ((opcode >= INVOKEVIRTUAL) && (opcode <= INVOKEDYNAMIC)) {
+      final String desc = ((MethodInsnNode) prev).desc;
+      final Type methodType = Type.getMethodType(desc);
+      final Type[] argumentTypes = methodType.getArgumentTypes();
+      final int length = argumentTypes.length;
+      if (length == 0) {
+        localStackCounter++;
+      } else {
+        localStackCounter += length;
+      }
+      if (opcode == INVOKESTATIC) {
+        localStackCounter--;
+      }
+    } else if (prev instanceof LabelNode) {
+      localStackCounter++;
+    }
+    return localStackCounter;
   }
   
   /**

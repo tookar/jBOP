@@ -168,26 +168,13 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
     if ((currentNode.getOpcode() == Opcodes.IFNULL) || (currentNode.getOpcode() == Opcodes.IFNONNULL)) {
       final boolean eval;
       if (node1.getOpcode() == Opcodes.ACONST_NULL) {
-        final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
-        if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
-          final Object currentValue = ClassAccessor.getCurrentValue(inputObject, NodeHelper.getFieldname(node1));
-          if (currentValue != null) {
-            return false;
-          }
-          removeNodes(currentNode, node1, node2, null, list, iterator, //
-              evalSingleOpValue(null, currentNode.getOpcode()));
+        if (!checkNullInstruction(node1, currentNode, list, iterator)) {
           return false;
         }
         eval = evalSingleOpValue(null, currentNode.getOpcode());
       } else {
         final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
-        if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
-          final Object currentValue = ClassAccessor.getCurrentValue(inputObject, NodeHelper.getFieldname(node1));
-          if (currentValue == null) {
-            return false;
-          }
-          removeNodes(currentNode, node1, node2, null, list, iterator,
-              evalSingleOpValue(NONNULL, currentNode.getOpcode()));
+        if (!checkNumberInstruction(node1, node2, currentNode, list, iterator)) {
           return false;
         }
         // doesn't work for multiarrays yet
@@ -220,6 +207,35 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
       return true;
     }
     return false;
+  }
+  
+  private boolean checkNumberInstruction(final AbstractInsnNode node1, final AbstractInsnNode node2,
+      final AbstractInsnNode currentNode, final InsnList list, final Iterator<AbstractInsnNode> iterator)
+      throws JBOPClassException {
+    if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
+      final Object currentValue = ClassAccessor.getCurrentValue(inputObject, NodeHelper.getFieldname(node1));
+      if (currentValue == null) {
+        return false;
+      }
+      removeNodes(currentNode, node1, node2, null, list, iterator, evalSingleOpValue(NONNULL, currentNode.getOpcode()));
+      return false;
+    }
+    return true;
+  }
+  
+  private boolean checkNullInstruction(final AbstractInsnNode node1, final AbstractInsnNode currentNode,
+      final InsnList list, final Iterator<AbstractInsnNode> iterator) throws JBOPClassException {
+    final AbstractInsnNode node2 = NodeHelper.getPrevious(node1);
+    if ((NodeHelper.getFieldname(node1) != null) && (NodeHelper.getVarIndex(node2) == 0)) {
+      final Object currentValue = ClassAccessor.getCurrentValue(inputObject, NodeHelper.getFieldname(node1));
+      if (currentValue != null) {
+        return false;
+      }
+      removeNodes(currentNode, node1, node2, null, list, iterator, //
+          evalSingleOpValue(null, currentNode.getOpcode()));
+      return false;
+    }
+    return true;
   }
   
   private boolean handleNumberInstruction(final AbstractInsnNode currentNode, final AbstractInsnNode node1,
