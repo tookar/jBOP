@@ -29,12 +29,14 @@ import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.ICONST_2;
+import static org.objectweb.asm.Opcodes.IFLE;
 import static org.objectweb.asm.Opcodes.IF_ICMPGE;
 import static org.objectweb.asm.Opcodes.IF_ICMPLT;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -601,5 +603,24 @@ public class ConstantIfInlinerTest {
     
     // ASSERT
     assertFalse(constantIfInliner.isOptimized());
+  }
+  
+  @Test
+  public void testConstantIf_IFLE() throws JBOPClassException {
+    final LabelNode labelEnd = new LabelNode();
+    // INIT
+    builder.//
+        add(ICONST_0).//
+        add(IFLE, labelEnd).//
+        add(NOP).//
+        addInsn(labelEnd).//
+        addReturn();
+    // RUN
+    constantIfInliner.optimize(method.instructions, method);
+    
+    // ASSERT
+    assertEquals(1, method.instructions.size());
+    assertEquals(RETURN, method.instructions.get(0).getOpcode());
+    
   }
 }

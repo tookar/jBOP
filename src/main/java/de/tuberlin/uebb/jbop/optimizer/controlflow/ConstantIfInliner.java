@@ -270,7 +270,7 @@ public class ConstantIfInliner implements IOptimizer, IInputObjectAware {
   private boolean evaluate(final AbstractInsnNode currentNode, final AbstractInsnNode node1, final Number op1,
       final Number op2) {
     final boolean eval;
-    if (NodeHelper.isIf(currentNode)) {
+    if (NodeHelper.isTwoValueIf(currentNode)) {
       eval = evalTwoOpValue(op2, op1, currentNode.getOpcode());
     } else {
       final Number operator = calculateOparator(node1, op1, op2);
