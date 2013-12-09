@@ -27,6 +27,7 @@ import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.DADD;
+import static org.objectweb.asm.Opcodes.DASTORE;
 import static org.objectweb.asm.Opcodes.DCONST_0;
 import static org.objectweb.asm.Opcodes.DLOAD;
 import static org.objectweb.asm.Opcodes.DSTORE;
@@ -47,7 +48,9 @@ import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.NEWARRAY;
 import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.T_DOUBLE;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -63,6 +66,8 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import de.tuberlin.uebb.jbop.optimizer.ClassNodeBuilder;
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 
 /**
@@ -428,7 +433,7 @@ public class LocalVarInlinerTest {
     // ASSERT
     assertFalse(optimizer.isOptimized());
   }
-
+  
   @Test
   public void testLocalVarInlinerArray() {
     // INIT
@@ -447,7 +452,7 @@ public class LocalVarInlinerTest {
     // ASSERT
     assertTrue(optimizer.isOptimized());
   }
-
+  
   @Test
   public void testLocalVarLoopMin() {
     // INIT
@@ -474,4 +479,29 @@ public class LocalVarInlinerTest {
     assertFalse(optimizer.isOptimized());
   }
   
+  @Test
+  public void testNewArray() {
+    // INIT
+    builder.//
+        //
+        addMethod("method", "()V").//
+        withAnnotation(Optimizable.class).//
+        withAnnotation(StrictLoops.class).//
+        //
+        add(ICONST_1).//
+        add(NEWARRAY, T_DOUBLE).//
+        add(ASTORE, 2).//
+        add(ALOAD, 2).//
+        add(ICONST_0).//
+        add(DCONST_0).//
+        add(DASTORE).//
+        addReturn();
+    
+    // RUN
+    optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertFalse(optimizer.isOptimized());
+    
+  }
 }
