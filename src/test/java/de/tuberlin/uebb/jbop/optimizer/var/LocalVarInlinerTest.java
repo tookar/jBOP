@@ -504,4 +504,5 @@ public class LocalVarInlinerTest {
     assertFalse(optimizer.isOptimized());
     
   }
+  
 }

@@ -23,6 +23,8 @@ import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.DREM;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.I2L;
 import static org.objectweb.asm.Opcodes.I2S;
 import static org.objectweb.asm.Opcodes.IADD;
@@ -31,13 +33,17 @@ import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.PUTSTATIC;
+import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.io.PrintStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.exception.NotANumberException;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -51,6 +57,7 @@ import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
@@ -1071,8 +1078,8 @@ public final class NodeHelper {
    * @param node
    *          the node
    */
-  public static void printMethod(final MethodNode node) {
-    printMethod(node, System.out);
+  public static void printMethod(final MethodNode node, final boolean build) {
+    printMethod(node, System.out, build);
   }
   
   /**
@@ -1083,13 +1090,153 @@ public final class NodeHelper {
    * @param stream
    *          the stream
    */
-  public static void printMethod(final MethodNode node, final PrintStream stream) {
-    
-    stream.println(Type.getReturnType(node.desc).toString() + " " + node.name + "("
-        + StringUtils.join(Type.getArgumentTypes(node.desc), ", ") + ")");
-    final Textifier p = new Textifier();
+  public static void printMethod(final MethodNode node, final PrintStream stream, final boolean build) {
+    if (build) {
+      stream.println("builder.//\naddMethod(\"" + node.name + "\", \"" + node.desc + "\").//");
+    }
+    final Printer p;
+    if (build) {
+      p = new ClassBuilderTextifier();
+    } else {
+      p = new Textifier();
+    }
     final TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(p);
     node.accept(traceMethodVisitor);
     stream.println(StringUtils.join(p.getText(), ""));
+  }
+  
+  private static class ClassBuilderTextifier extends Textifier {
+    
+    ClassBuilderTextifier() {
+      super();
+      
+    }
+    
+    @Override
+    public Textifier visitMethod(final int access, final String name, final String desc, final String signature,
+        final String[] exceptions) {
+      text.add("addMethod(");
+      return super.visitMethod(access, name, desc, signature, exceptions);
+    }
+    
+    @Override
+    public void visitInsn(final int opcode) {
+      buf.setLength(0);
+      if ((opcode >= IRETURN) && (opcode <= RETURN)) {
+        buf.append("addReturn().//\n");
+      } else {
+        buf.append("add(").append("Opcodes.").append(OPCODES[opcode]).append(").//\n");
+      }
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitIntInsn(final int opcode, final int operand) {
+      buf.setLength(0);
+      buf.append("add(").append("Opcodes.").append(OPCODES[opcode]).append(", ")
+          .append(opcode == Opcodes.NEWARRAY ? TYPES[operand] : Integer.toString(operand)).append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitVarInsn(final int opcode, final int var) {
+      buf.setLength(0);
+      buf.append("add(").append("Opcodes.").append(OPCODES[opcode]).append(", ").append(var).append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitTypeInsn(final int opcode, final String type) {
+      buf.setLength(0);
+      buf.append("add(").append("Opcodes.").append(OPCODES[opcode]).append(", ");
+      appendDescriptor(INTERNAL_NAME, type);
+      buf.append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitFieldInsn(final int opcode, final String owner, final String name, final String desc) {
+      buf.setLength(0);
+      buf.append("add").append(((opcode == GETFIELD) || (opcode == GETSTATIC)) ? "Get" : "Put")
+          .append(((opcode == PUTSTATIC) || (opcode == GETSTATIC)) ? "Static" : "Field").append("(\"");
+      appendDescriptor(INTERNAL_NAME, owner);
+      buf.append("\", \"").append(name).append("\", \"");
+      appendDescriptor(FIELD_DESCRIPTOR, desc);
+      buf.append("\").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+      buf.setLength(0);
+      
+      buf.append("invoke(\"").append("Opcodes.").append(OPCODES[opcode]).append("\", \"");
+      appendDescriptor(INTERNAL_NAME, owner);
+      buf.append("\", \"").append(name).append("\", \"");
+      appendDescriptor(METHOD_DESCRIPTOR, desc);
+      buf.append("\").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitJumpInsn(final int opcode, final Label label) {
+      buf.setLength(0);
+      buf.append("add(").append("Opcodes.").append(OPCODES[opcode]).append(", ");
+      appendLabel(label);
+      buf.append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitLabel(final Label label) {
+      buf.setLength(0);
+      buf.append("addInsn(");
+      appendLabel(label);
+      buf.append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitLdcInsn(final Object cst) {
+      buf.setLength(0);
+      buf.append("add(").append("LDC, ");
+      if (cst instanceof String) {
+        Printer.appendString(buf, (String) cst);
+      } else if (cst instanceof Type) {
+        buf.append(((Type) cst).getDescriptor()).append(".class");
+      } else {
+        buf.append(cst);
+      }
+      buf.append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    @Override
+    public void visitIincInsn(final int var, final int increment) {
+      buf.setLength(0);
+      buf.append("add(").append("Opcodes.IINC, ").append(var).append(", ").append(increment).append(").//\n");
+      text.add(buf.toString());
+    }
+    
+    /**
+     * Prints a disassembled view of the given annotation.
+     * 
+     * @param desc
+     *          the class descriptor of the annotation class.
+     * @param visible
+     *          <tt>true</tt> if the annotation is visible at runtime.
+     * @return a visitor to visit the annotation values.
+     */
+    @Override
+    public Textifier visitAnnotation(final String desc, final boolean visible) {
+      buf.setLength(0);
+      buf.append("withAnnotation(");
+      buf.append(StringUtils.replace(StringUtils.removeEnd(StringUtils.removeStart(desc, "L"), ";"), "/", "."));
+      buf.append(".class");
+      text.add(buf.toString());
+      text.add(").//\n");
+      return createTextifier();
+    }
+    
   }
 }

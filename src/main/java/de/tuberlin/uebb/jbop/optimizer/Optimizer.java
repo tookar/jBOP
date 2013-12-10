@@ -40,7 +40,6 @@ import de.tuberlin.uebb.jbop.optimizer.array.LocalArrayValueInliner;
 import de.tuberlin.uebb.jbop.optimizer.controlflow.ConstantIfInliner;
 import de.tuberlin.uebb.jbop.optimizer.loop.ForLoopUnroller;
 import de.tuberlin.uebb.jbop.optimizer.methodsplitter.MethodSplitter;
-//import de.tuberlin.uebb.jbop.optimizer.utils.NodeHelper;
 import de.tuberlin.uebb.jbop.optimizer.utils.predicates.OptimizablePredicate;
 import de.tuberlin.uebb.jbop.optimizer.var.FinalFieldInliner;
 import de.tuberlin.uebb.jbop.optimizer.var.LocalVarInliner;
@@ -120,18 +119,15 @@ public class Optimizer implements IOptimizerSuite {
     InsnList list = methodNode.instructions;
     while (canOptimize) {
       boolean optimized = false;
-//      NodeHelper.printMethod(methodNode);
       for (final IOptimizer optimizer : optimizers) {
         list = optimizer.optimize(list, methodNode);
         optimized |= optimizer.isOptimized();
         methodNode.instructions = list;
-//        NodeHelper.printMethod(methodNode);
       }
       canOptimize = optimized;
     }
     final MethodSplitter methodSplitter = new MethodSplitter(classNode, methodLength);
     methodNode.instructions = methodSplitter.optimize(list, methodNode);
-//    NodeHelper.printMethod(methodNode);
     return methodSplitter.getAdditionalMethods();
   }
   

@@ -254,7 +254,7 @@ public class NodeHelperTest {
         addField("f3", "[D").initArrayWith(1.0, 2.0).//
         getMethod("<init>");
     // RUN
-    NodeHelper.printMethod(node);
+    NodeHelper.printMethod(node, false);
     
     // ASSERT
     final String methodContent = byteArrayOutputStream.toString("UTF8");

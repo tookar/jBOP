@@ -42,6 +42,7 @@ import static org.objectweb.asm.Opcodes.LDC;
 import static org.objectweb.asm.Opcodes.NEWARRAY;
 import static org.objectweb.asm.Opcodes.NOP;
 import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.SALOAD;
 import static org.objectweb.asm.Opcodes.SASTORE;
 import static org.objectweb.asm.Opcodes.SIPUSH;
@@ -807,9 +808,7 @@ public final class ClassNodeBuilder {
     
     final FieldNode fieldNode = builder.getField(field);
     
-    final FieldInsnNode node = new FieldInsnNode(Opcodes.GETFIELD, builder.getClassNode().name, fieldNode.name,
-        fieldNode.desc);
-    return addInsn(node);
+    return addGetField(builder.getClassNode().name, fieldNode.name, fieldNode.desc);
   }
   
   /**
@@ -835,9 +834,7 @@ public final class ClassNodeBuilder {
    * @return the abstract optimizer test
    */
   public ClassNodeBuilder addPutClassField(final String field) {
-    final FieldNode fieldNode = getField(field);
-    final FieldInsnNode node = new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, field, fieldNode.desc);
-    return addInsn(node);
+    return addPutField(this, field);
   }
   
   /**
@@ -851,8 +848,22 @@ public final class ClassNodeBuilder {
    */
   public ClassNodeBuilder addPutField(final ClassNodeBuilder builder, final String field) {
     final FieldNode fieldNode = builder.getField(field);
-    final FieldInsnNode node = new FieldInsnNode(Opcodes.PUTFIELD, builder.classNode.name, field, fieldNode.desc);
-    return addInsn(node);
+    return addPutField(builder.classNode.name, field, fieldNode.desc);
+  }
+  
+  /**
+   * Adds the put field.
+   * 
+   * @param owner
+   *          the owner
+   * @param name
+   *          the name
+   * @param desc
+   *          the desc
+   * @return the class node builder
+   */
+  public ClassNodeBuilder addPutField(final String owner, final String name, final String desc) {
+    return addInsn(new FieldInsnNode(PUTFIELD, owner, name, desc));
   }
   
   /**
