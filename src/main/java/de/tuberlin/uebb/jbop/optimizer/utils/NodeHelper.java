@@ -21,6 +21,7 @@ package de.tuberlin.uebb.jbop.optimizer.utils;
 import static org.objectweb.asm.Opcodes.AALOAD;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ASM5;
 import static org.objectweb.asm.Opcodes.ASTORE;
 import static org.objectweb.asm.Opcodes.DREM;
 import static org.objectweb.asm.Opcodes.GETFIELD;
@@ -39,14 +40,17 @@ import static org.objectweb.asm.Opcodes.LDC;
 import static org.objectweb.asm.Opcodes.PUTSTATIC;
 import static org.objectweb.asm.Opcodes.RETURN;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.exception.NotANumberException;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
@@ -1072,6 +1076,16 @@ public final class NodeHelper {
     return localStackCounter;
   }
   
+  public static void toClassbuilder(final String methodName, final Class<?> ofClass) throws IOException {
+    final ClassNode classVisitor = new ClassNode(ASM5);
+    new ClassReader(ofClass.getName()).accept(classVisitor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    for (final MethodNode method : classVisitor.methods) {
+      if (methodName.equals(method.name)) {
+        NodeHelper.printMethod(method, true);
+      }
+    }
+  }
+  
   /**
    * Prints the method.
    * 
@@ -1091,12 +1105,9 @@ public final class NodeHelper {
    *          the stream
    */
   public static void printMethod(final MethodNode node, final PrintStream stream, final boolean build) {
-    if (build) {
-      stream.println("builder.//\naddMethod(\"" + node.name + "\", \"" + node.desc + "\").//");
-    }
     final Printer p;
     if (build) {
-      p = new ClassBuilderTextifier();
+      p = new ClassBuilderTextifier(node);
     } else {
       p = new Textifier();
     }
@@ -1107,9 +1118,12 @@ public final class NodeHelper {
   
   private static class ClassBuilderTextifier extends Textifier {
     
-    ClassBuilderTextifier() {
+    private int labelCounter = 0;
+    
+    ClassBuilderTextifier(final MethodNode node) {
       super();
-      
+      text.add("ClassNodeBuilder builder = ClassNodeBuilder.createClass(\"name.here\");\n");
+      text.add("builder.//\naddMethod(\"" + node.name + "\", \"" + node.desc + "\").//\n");
     }
     
     @Override
@@ -1194,6 +1208,7 @@ public final class NodeHelper {
       appendLabel(label);
       buf.append(").//\n");
       text.add(buf.toString());
+      text.add(labelCounter++, "LabelNode " + labelNames.get(label) + " = new LabelNode();\n");
     }
     
     @Override

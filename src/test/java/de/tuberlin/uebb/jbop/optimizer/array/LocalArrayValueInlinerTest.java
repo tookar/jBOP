@@ -19,6 +19,16 @@
 package de.tuberlin.uebb.jbop.optimizer.array;
 
 import static org.junit.Assert.assertEquals;
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.IALOAD;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.ICONST_2;
+import static org.objectweb.asm.Opcodes.ISTORE;
 
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
@@ -86,5 +96,53 @@ public class LocalArrayValueInlinerTest {
     
     // ASSERT STEP 2
     assertEquals(7, optimized2.size());
+  }
+  
+  @Test
+  public void test() throws Exception {
+    final ClassNodeBuilder builder = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.Test");
+    builder.addField("field", "[[[I").//
+        withModifiers(ACC_PRIVATE, ACC_FINAL).//
+        withAnnotation(ImmutableArray.class);
+    builder.removeMethod("<init>", "()V").//
+        addConstructor("([[[I)V", "()V").//
+        add(ALOAD, 0).//
+        add(ALOAD, 1).//
+        addPutClassField("field");
+    builder.//
+        addMethod("doit", "()V").//
+        addGetClassField("field").//
+        add(ICONST_0).//
+        add(AALOAD).//
+        add(ASTORE, 1).//
+        add(ALOAD, 1).//
+        add(ICONST_0).//
+        add(AALOAD).//
+        add(ASTORE, 2).//
+        add(ALOAD, 2).//
+        add(ICONST_1).//
+        add(IALOAD).//
+        add(ISTORE, 3).//
+        addReturn();
+    final Object instance = builder.instance(new Object[] {
+      new int[][][] {
+        {
+          {
+              1, 2, 3
+          }
+        }
+      }
+    });
+    
+    final LocalArrayValueInliner inliner = new LocalArrayValueInliner();
+    inliner.setInputObject(instance);
+    
+    final MethodNode method = builder.getMethod("doit");
+    final InsnList optimized = inliner.optimize(method.instructions, method);
+    method.instructions = optimized;
+    NodeHelper.printMethod(method, false);
+    assertEquals(12, optimized.size());
+    assertEquals(ICONST_2, optimized.get(9).getOpcode());
+    
   }
 }
