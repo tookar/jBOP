@@ -1093,7 +1093,7 @@ public final class NodeHelper {
    *          the node
    */
   public static void printMethod(final MethodNode node, final boolean build) {
-    printMethod(node, System.out, build);
+    printMethod(node, null, System.out, build);
   }
   
   /**
@@ -1104,26 +1104,44 @@ public final class NodeHelper {
    * @param stream
    *          the stream
    */
-  public static void printMethod(final MethodNode node, final PrintStream stream, final boolean build) {
+  public static void printMethod(final MethodNode node, final ClassNode classNode, final PrintStream stream,
+      final boolean build) {
     final Printer p;
     if (build) {
-      p = new ClassBuilderTextifier(node);
+      p = new ClassNodeBuilderTextifier(node, classNode);
     } else {
-      p = new Textifier();
+      p = new ExtendedTextifier(node, classNode);
     }
     final TraceMethodVisitor traceMethodVisitor = new TraceMethodVisitor(p);
     node.accept(traceMethodVisitor);
     stream.println(StringUtils.join(p.getText(), ""));
   }
   
-  private static class ClassBuilderTextifier extends Textifier {
+  private static class ExtendedTextifier extends Textifier {
+    
+    ExtendedTextifier(final MethodNode node, final ClassNode classNode) {
+      super();
+      final StringBuilder builder = new StringBuilder();
+      if (classNode != null) {
+        builder.append(classNode.name.replace("/", ".")).append(".");
+      }
+      builder.append(node.name).append(node.desc).append("\n");
+      text.add(builder.toString());
+    }
+  }
+  
+  private static class ClassNodeBuilderTextifier extends Textifier {
     
     private int labelCounter = 0;
     
-    ClassBuilderTextifier(final MethodNode node) {
+    ClassNodeBuilderTextifier(final MethodNode node, final ClassNode classNode) {
       super();
-      text.add("ClassNodeBuilder builder = ClassNodeBuilder.createClass(\"name.here\");\n");
+      if (classNode != null) {
+        text.add("ClassNodeBuilder builder = ClassNodeBuilder.createClass(\"" + classNode.name.replace("/", ".")
+            + "\");\n");
+      }
       text.add("builder.//\naddMethod(\"" + node.name + "\", \"" + node.desc + "\").//\n");
+      
     }
     
     @Override
@@ -1253,5 +1271,9 @@ public final class NodeHelper {
       return createTextifier();
     }
     
+    @Override
+    public void visitMaxs(final int maxStack, final int maxLocals) {
+      //
+    }
   }
 }

@@ -35,6 +35,7 @@ import static org.objectweb.asm.Opcodes.IASTORE;
 import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.IINC;
 import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.JSR;
@@ -406,6 +407,8 @@ public final class ClassNodeBuilder {
     } else {
       list.add(new VarInsnNode(ALOAD, 0));
       list.add(newObject(lastField.desc));
+      list.add(new MethodInsnNode(INVOKESPECIAL, StringUtils.removeEnd(StringUtils.removeStart(lastField.desc, "L"),
+          ";"), "<init>", "()V"));
       list.add(new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, lastField.name, lastField.desc));
       
     }
@@ -426,7 +429,6 @@ public final class ClassNodeBuilder {
     final TypeInsnNode node = new TypeInsnNode(Opcodes.NEW, fieldDesc);
     list.add(node);
     list.add(new InsnNode(DUP));
-    // list.add(new MethodInsnNode(INVOKESPECIAL, fieldDesc, "<init>", "()V"));
     return list;
   }
   

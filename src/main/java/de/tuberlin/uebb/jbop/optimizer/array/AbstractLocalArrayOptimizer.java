@@ -191,6 +191,9 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
     Object array;
     if (previous3 instanceof VarInsnNode) {
       array = knownArrays.get(Integer.valueOf(((VarInsnNode) previous3).var));
+      if (array == null) {
+        return false;
+      }
     } else {
       if (!(previous3 instanceof FieldInsnNode)) {
         return false;

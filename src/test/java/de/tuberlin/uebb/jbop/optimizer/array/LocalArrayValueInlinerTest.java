@@ -140,7 +140,6 @@ public class LocalArrayValueInlinerTest {
     final MethodNode method = builder.getMethod("doit");
     final InsnList optimized = inliner.optimize(method.instructions, method);
     method.instructions = optimized;
-    NodeHelper.printMethod(method, false);
     assertEquals(12, optimized.size());
     assertEquals(ICONST_2, optimized.get(9).getOpcode());
     

@@ -137,20 +137,28 @@ public class FieldArrayValueInlinerTest {
   @Test
   public void testFieldArrayValueInlinerWithFieldChain() throws Exception {
     // INIT
-    final ClassNodeBuilder builderC = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.C")
-        .addField("d", "[D").withModifiers(ACC_PRIVATE, ACC_FINAL).withAnnotation(ImmutableArray.class)
-        .initArrayWith(1.0).//
+    final ClassNodeBuilder builderC = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.C").//
+        addField("d", "[D").//
+        withModifiers(ACC_PRIVATE, ACC_FINAL).//
+        withAnnotation(ImmutableArray.class).//
+        initArrayWith(1.0).//
         toClass();
-    final ClassNodeBuilder builderB = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.B")
-        .addField("c", Type.getDescriptor(builderC.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
-        .initWith(null).toClass();
-    final ClassNodeBuilder builderA = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.A")
-        .addField("b", Type.getDescriptor(builderB.getBuildedClass())).withModifiers(ACC_PRIVATE, ACC_FINAL)
-        .initWith(null).toClass();
+    final ClassNodeBuilder builderB = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.B").//
+        addField("c", Type.getDescriptor(builderC.getBuildedClass())).//
+        withModifiers(ACC_PRIVATE, ACC_FINAL).//
+        initWith(null).//
+        toClass();
+    final ClassNodeBuilder builderA = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.A").//
+        addField("b", Type.getDescriptor(builderB.getBuildedClass())).//
+        withModifiers(ACC_PRIVATE, ACC_FINAL).//
+        initWith(null).//
+        toClass();
     final ClassNodeBuilder builderTestClass = ClassNodeBuilder
-        .createClass("de.tuberlin.uebb.jbop.optimizer.array.ChainedTestClass")
-        .addField("a", "[" + Type.getDescriptor(builderA.getBuildedClass())).withAnnotation(ImmutableArray.class)
-        .withModifiers(ACC_PRIVATE, ACC_FINAL).addToConstructor(initArray()).//
+        .createClass("de.tuberlin.uebb.jbop.optimizer.array.ChainedTestClass").//
+        addField("a", "[" + Type.getDescriptor(builderA.getBuildedClass())).//
+        withAnnotation(ImmutableArray.class).//
+        withModifiers(ACC_PRIVATE, ACC_FINAL).//
+        addToConstructor(initArray()).//
         addMethod("get", "()D").//
         addGetClassField("a").// ;
         addInsn(new InsnNode(ICONST_0)).//
@@ -192,4 +200,5 @@ public class FieldArrayValueInlinerTest {
         "[Lde/tuberlin/uebb/jbop/optimizer/array/A;"));
     return list;
   }
+  
 }
