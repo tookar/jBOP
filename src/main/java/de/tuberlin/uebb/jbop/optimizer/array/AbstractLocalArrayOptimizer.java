@@ -99,7 +99,11 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
     final Map<Integer, Object> knownArrays = new TreeMap<>();
     while (iterator.hasNext()) {
       final AbstractInsnNode currentNode = iterator.next();
-      if (registerValues(currentNode, knownArrays)) {
+      final int registerValues = registerValues(currentNode, knownArrays);
+      if (registerValues > 0) {
+        if (registerValues > 1) {
+          iterator.next();
+        }
         continue;
       }
       optimized |= handleValues(original, knownArrays, currentNode);
@@ -132,7 +136,7 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
    * @throws JBOPClassException
    *           the jBOP class exception
    */
-  protected boolean registerValues(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
+  protected int registerValues(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
       throws JBOPClassException {
     if (currentNode.getOpcode() == Opcodes.ASTORE) {
       return registerGetArray(currentNode, knownArrays);
@@ -150,9 +154,9 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
    *          the known arrays
    * @return false;
    */
-  protected boolean registerAdditionalValues(@SuppressWarnings("unused") final AbstractInsnNode currentNode,
+  protected int registerAdditionalValues(@SuppressWarnings("unused") final AbstractInsnNode currentNode,
       @SuppressWarnings("unused") final Map<Integer, Object> knownArrays) {
-    return false;
+    return 0;
   }
   
   /**
@@ -166,7 +170,7 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
    * @throws JBOPClassException
    *           the jBOP class exception
    */
-  protected boolean registerGetArray(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
+  protected int registerGetArray(final AbstractInsnNode currentNode, final Map<Integer, Object> knownArrays)
       throws JBOPClassException {
     final List<AbstractInsnNode> previous = new ArrayList<>();
     final List<AbstractInsnNode> previous2 = new ArrayList<>();
@@ -174,12 +178,14 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
     while (true) {
       final AbstractInsnNode previousx = NodeHelper.getPrevious(previous2x);
       if (previousx.getOpcode() != Opcodes.AALOAD) {
-        return false;
+        knownArrays.remove(Integer.valueOf(NodeHelper.getVarIndex(currentNode)));
+        return 0;
       }
       previous.add(previousx);
       previous2x = NodeHelper.getPrevious(previousx);
       if (!NodeHelper.isNumberNode(previous2x)) {
-        return false;
+        knownArrays.remove(Integer.valueOf(NodeHelper.getVarIndex(currentNode)));
+        return 0;
       }
       previous2.add(previous2x);
       final AbstractInsnNode previous2xtmp = NodeHelper.getPrevious(previous2x);
@@ -192,15 +198,18 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
     if (previous3 instanceof VarInsnNode) {
       array = knownArrays.get(Integer.valueOf(((VarInsnNode) previous3).var));
       if (array == null) {
-        return false;
+        knownArrays.remove(Integer.valueOf(NodeHelper.getVarIndex(currentNode)));
+        return 0;
       }
     } else {
       if (!(previous3 instanceof FieldInsnNode)) {
-        return false;
+        knownArrays.remove(Integer.valueOf(NodeHelper.getVarIndex(currentNode)));
+        return 0;
       }
       final AbstractInsnNode previous4 = NodeHelper.getPrevious(previous3);
       if (!NodeHelper.isAload0(previous4)) {
-        return false;
+        knownArrays.remove(Integer.valueOf(NodeHelper.getVarIndex(currentNode)));
+        return 0;
       }
       final String fieldName = ((FieldInsnNode) previous3).name;
       
@@ -219,7 +228,7 @@ abstract class AbstractLocalArrayOptimizer implements IOptimizer, IInputObjectAw
       array = Array.get(array, index1);
     }
     knownArrays.put(varIndex, array);
-    return true;
+    return 1;
   }
   
   @Override

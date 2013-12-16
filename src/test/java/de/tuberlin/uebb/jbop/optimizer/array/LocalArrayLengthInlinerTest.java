@@ -57,7 +57,7 @@ public class LocalArrayLengthInlinerTest {
    *           the exception
    */
   @Test
-  public void testLocalArrayLengthInliner() throws Exception {
+  public void test_newarrayAndSubarray() throws Exception {
     // INIT
     final String owner = "de.tuberlin.uebb.jbop.optimizer.array.LocalArrayLengthTestClass";
     final ClassNodeBuilder builder = ClassNodeBuilder.createClass(owner).//
@@ -82,9 +82,10 @@ public class LocalArrayLengthInlinerTest {
     final MethodNode method = builder.getMethod("getArrayLength");
     assertEquals(14, method.instructions.size());
     final InsnList optimized = inliner.optimize(method.instructions, method);
+    method.instructions = optimized;
     
     // ASSERT STEP 1
-    
+    NodeHelper.printMethod(method, false);
     assertEquals(12, optimized.size());
     assertEquals(15, NodeHelper.getNumberValue(optimized.get(3)).intValue());
     assertEquals(42, NodeHelper.getNumberValue(optimized.get(9)).intValue());
@@ -97,8 +98,8 @@ public class LocalArrayLengthInlinerTest {
   }
   
   @Test
-  public void test() throws Exception {
-    final ClassNodeBuilder builder = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.Test");
+  public void test_multiArray() throws Exception {
+    final ClassNodeBuilder builder = ClassNodeBuilder.createClass("de.tuberlin.uebb.jbop.optimizer.array.Test1");
     builder.addField("field", "[[[I").//
         withModifiers(ACC_PRIVATE, ACC_FINAL).//
         withAnnotation(ImmutableArray.class);
@@ -146,4 +147,5 @@ public class LocalArrayLengthInlinerTest {
     assertEquals(ICONST_1, optimized.get(13).getOpcode());
     assertEquals(ICONST_3, optimized.get(14).getOpcode());
   }
+  
 }

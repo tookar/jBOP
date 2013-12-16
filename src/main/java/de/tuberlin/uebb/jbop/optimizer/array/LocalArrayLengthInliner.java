@@ -126,11 +126,11 @@ public class LocalArrayLengthInliner extends AbstractLocalArrayOptimizer {
    * @return true, if successful
    */
   @Override
-  protected boolean registerAdditionalValues(final AbstractInsnNode currentNode, //
+  protected int registerAdditionalValues(final AbstractInsnNode currentNode, //
       final Map<Integer, Object> knownArrays) {
     final int opcode = currentNode.getOpcode();
     if (!((opcode == Opcodes.NEWARRAY) || (opcode == Opcodes.ANEWARRAY) || (opcode == Opcodes.MULTIANEWARRAY))) {
-      return false;
+      return 0;
     }
     int dims = 1;
     if (currentNode.getOpcode() == Opcodes.MULTIANEWARRAY) {
@@ -142,21 +142,21 @@ public class LocalArrayLengthInliner extends AbstractLocalArrayOptimizer {
     for (int i = 0; i < dims; ++i) {
       previous = NodeHelper.getPrevious(previous);
       if (!NodeHelper.isIntNode(previous)) {
-        return false;
+        return 0;
       }
       try {
         final int value = NodeHelper.getNumberValue(previous).intValue();
         sizes[i] = value;
       } catch (final NotANumberException nane) {
-        return false;
+        return 0;
       }
     }
     final AbstractInsnNode next = NodeHelper.getNext(currentNode);
     if (!(next instanceof VarInsnNode)) {
-      return false;
+      return 0;
     }
     final int index = ((VarInsnNode) next).var;
     knownArrays.put(Integer.valueOf(index), Array.newInstance(Object.class, sizes));
-    return true;
+    return 2;
   }
 }
