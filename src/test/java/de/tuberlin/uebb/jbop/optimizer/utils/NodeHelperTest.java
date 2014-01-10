@@ -38,10 +38,6 @@ import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-
 import org.junit.Test;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
@@ -237,54 +233,4 @@ public class NodeHelperTest {
     assertEquals(method.instructions.get(0), firstOfStack);
   }
   
-  /**
-   * Tests that printMethod() of the Testobject is working correctly.
-   * 
-   * @throws UnsupportedEncodingException
-   *           the unsupported encoding exception
-   */
-  @Test
-  public void testPrintMethod() throws UnsupportedEncodingException {
-    // INIT
-    final ClassNodeBuilder classNodeBuilder = ClassNodeBuilder.createClass("de.tuberlin.Class").//
-        addField("f1", "I").initWith(1).//
-        addField("f2", "D").initWith(2.0).//
-        addField("f3", "[D").initArrayWith(1.0, 2.0);
-    final MethodNode node = classNodeBuilder.//
-        getMethod("<init>");
-    // RUN
-    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    final PrintStream printStream = new PrintStream(byteArrayOutputStream);
-    NodeHelper.printMethod(node, classNodeBuilder.getClassNode(), printStream, false);
-    
-    final ByteArrayOutputStream byteArrayOutputStream2 = new ByteArrayOutputStream();
-    final PrintStream printStream2 = new PrintStream(byteArrayOutputStream2);
-    NodeHelper.printMethod(node, classNodeBuilder.getClassNode(), printStream2, true);
-    
-    // ASSERT
-    final String methodContent = byteArrayOutputStream.toString("UTF8");
-    assertEquals(
-        "de.tuberlin.Class.<init>()V\n    ALOAD 0\n" + "    INVOKESPECIAL java/lang/Object.<init> ()V\n"
-            + "    ALOAD 0\n" + "    ICONST_1\n" + "    PUTFIELD de/tuberlin/Class.f1 : I\n" + "    ALOAD 0\n"
-            + "    LDC 2.0\n" + "    PUTFIELD de/tuberlin/Class.f2 : D\n" + "    ALOAD 0\n" + "    ICONST_2\n"
-            + "    NEWARRAY T_DOUBLE\n" + "    ASTORE 1\n" + "    ALOAD 1\n"
-            + "    PUTFIELD de/tuberlin/Class.f3 : [D\n" + "    ALOAD 1\n" + "    ICONST_0\n" + "    DCONST_1\n"
-            + "    DASTORE\n" + "    ALOAD 1\n" + "    ICONST_1\n" + "    LDC 2.0\n" + "    DASTORE\n" + "    RETURN\n"
-            + "    MAXSTACK = 0\n" + "    MAXLOCALS = 0\n" + "\n" + "", methodContent);
-    
-    // ASSERT
-    final String methodContent2 = byteArrayOutputStream2.toString("UTF8");
-    assertEquals("ClassNodeBuilder builder = ClassNodeBuilder.createClass(\"de.tuberlin.Class\");\n" + "builder.//\n"
-        + "addMethod(\"<init>\", \"()V\").//\n" + "add(Opcodes.ALOAD, 0).//\n"
-        + "invoke(\"Opcodes.INVOKESPECIAL\", \"java/lang/Object\", \"<init>\", \"()V\").//\n"
-        + "add(Opcodes.ALOAD, 0).//\n" + "add(Opcodes.ICONST_1).//\n"
-        + "addPutField(\"de/tuberlin/Class\", \"f1\", \"I\").//\n" + "add(Opcodes.ALOAD, 0).//\n"
-        + "add(LDC, 2.0).//\n" + "addPutField(\"de/tuberlin/Class\", \"f2\", \"D\").//\n"
-        + "add(Opcodes.ALOAD, 0).//\n" + "add(Opcodes.ICONST_2).//\n" + "add(Opcodes.NEWARRAY, T_DOUBLE).//\n"
-        + "add(Opcodes.ASTORE, 1).//\n" + "add(Opcodes.ALOAD, 1).//\n"
-        + "addPutField(\"de/tuberlin/Class\", \"f3\", \"[D\").//\n" + "add(Opcodes.ALOAD, 1).//\n"
-        + "add(Opcodes.ICONST_0).//\n" + "add(Opcodes.DCONST_1).//\n" + "add(Opcodes.DASTORE).//\n"
-        + "add(Opcodes.ALOAD, 1).//\n" + "add(Opcodes.ICONST_1).//\n" + "add(LDC, 2.0).//\n"
-        + "add(Opcodes.DASTORE).//\n" + "addReturn().//\n\n", methodContent2);
-  }
 }
