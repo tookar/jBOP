@@ -23,7 +23,16 @@ import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM5;
 import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.D2F;
+import static org.objectweb.asm.Opcodes.D2I;
+import static org.objectweb.asm.Opcodes.D2L;
 import static org.objectweb.asm.Opcodes.DREM;
+import static org.objectweb.asm.Opcodes.F2D;
+import static org.objectweb.asm.Opcodes.F2I;
+import static org.objectweb.asm.Opcodes.F2L;
+import static org.objectweb.asm.Opcodes.I2B;
+import static org.objectweb.asm.Opcodes.I2D;
+import static org.objectweb.asm.Opcodes.I2F;
 import static org.objectweb.asm.Opcodes.I2L;
 import static org.objectweb.asm.Opcodes.I2S;
 import static org.objectweb.asm.Opcodes.IADD;
@@ -33,6 +42,9 @@ import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.L2D;
+import static org.objectweb.asm.Opcodes.L2F;
+import static org.objectweb.asm.Opcodes.L2I;
 import static org.objectweb.asm.Opcodes.LDC;
 
 import java.io.IOException;
@@ -177,7 +189,7 @@ public final class NodeHelper {
       case CONST_5:
         return new InsnNode(Opcodes.ICONST_5);
       default:
-        if ((newNumber.intValue() >= CONST_LOW_INT) && (newNumber.intValue() <= CONST_HIGH_INT)) {
+        if (newNumber.intValue() >= CONST_LOW_INT && newNumber.intValue() <= CONST_HIGH_INT) {
           return new IntInsnNode(getopcodePush(newNumber.intValue()), newNumber.intValue());
         }
         return new LdcInsnNode(newNumber);
@@ -205,7 +217,7 @@ public final class NodeHelper {
    * @return the opcode push
    */
   public static int getopcodePush(final int newNumber) {
-    if ((newNumber >= CONST_LOW_BYTE) && (newNumber <= CONST_HIGH_BYTE)) {
+    if (newNumber >= CONST_LOW_BYTE && newNumber <= CONST_HIGH_BYTE) {
       return Opcodes.BIPUSH;
     }
     return Opcodes.SIPUSH;
@@ -225,7 +237,7 @@ public final class NodeHelper {
     AbstractInsnNode current = node;
     do {
       current = current.getNext();
-      if ((current != null) && !((current instanceof LineNumberNode) || (current instanceof LabelNode))) {
+      if (current != null && !(current instanceof LineNumberNode || current instanceof LabelNode)) {
         break;
       }
     } while (current != null);
@@ -246,7 +258,7 @@ public final class NodeHelper {
     AbstractInsnNode current = node;
     do {
       current = current.getPrevious();
-      if ((current != null) && !((current instanceof LineNumberNode) || (current instanceof LabelNode))) {
+      if (current != null && !(current instanceof LineNumberNode || current instanceof LabelNode)) {
         break;
       }
     } while (current != null);
@@ -345,7 +357,7 @@ public final class NodeHelper {
     if (node == null) {
       return false;
     }
-    return (node.getOpcode() >= (Opcodes.ICONST_M1)) && (node.getOpcode() <= (Opcodes.ICONST_5));
+    return node.getOpcode() >= Opcodes.ICONST_M1 && node.getOpcode() <= Opcodes.ICONST_5;
   }
   
   /**
@@ -362,7 +374,7 @@ public final class NodeHelper {
       return false;
     }
     if (node instanceof InsnNode) {
-      return node.getOpcode() == (Opcodes.ICONST_0 + i);
+      return node.getOpcode() == Opcodes.ICONST_0 + i;
     }
     return false;
   }
@@ -448,7 +460,7 @@ public final class NodeHelper {
     }
     if (node instanceof VarInsnNode) {
       final boolean isIstore = ((VarInsnNode) node).getOpcode() == Opcodes.ISTORE;
-      final boolean isRightNumber = (((VarInsnNode) node).var == i) || (i == CONST_M1);
+      final boolean isRightNumber = ((VarInsnNode) node).var == i || i == CONST_M1;
       return isIstore && isRightNumber;
     }
     return false;
@@ -531,7 +543,7 @@ public final class NodeHelper {
     }
     if (node instanceof VarInsnNode) {
       final boolean isIload = node.getOpcode() == Opcodes.ILOAD;
-      return (isIload && ((((VarInsnNode) node).var == i))) || (i == CONST_M1);
+      return isIload && ((VarInsnNode) node).var == i || i == CONST_M1;
     }
     return false;
   }
@@ -647,8 +659,12 @@ public final class NodeHelper {
     if (node == null) {
       return false;
     }
+    AbstractInsnNode checkNode = node;
+    if (isCast(node)) {
+      checkNode = node.getPrevious();
+    }
     try {
-      NodeHelper.getValue(node);
+      NodeHelper.getValue(checkNode);
       return true;
     } catch (final NotANumberException nane) {
       return false;
@@ -672,6 +688,63 @@ public final class NodeHelper {
     }
   }
   
+  public static Number cast(final Number number, final AbstractInsnNode numberNode, final AbstractInsnNode castNode) {
+    if (castNode == null) {
+      return null;
+    }
+    if (castNode == numberNode) {
+      return number;
+    }
+    final int opcode = castNode.getOpcode();
+    if (opcode == I2B) {
+      return (byte) number.intValue();
+    }
+    // if(opcode==I2C) {
+    // return (char)number.intValue();
+    // }
+    if (opcode == I2L) {
+      return (long) number.intValue();
+    }
+    if (opcode == I2S) {
+      return (short) number.intValue();
+    }
+    if (opcode == I2D) {
+      return (double) number.intValue();
+    }
+    if (opcode == I2F) {
+      return (float) number.intValue();
+    }
+    if (opcode == D2F) {
+      return (float) number.doubleValue();
+    }
+    if (opcode == D2I) {
+      return (int) number.doubleValue();
+    }
+    if (opcode == D2L) {
+      return (long) number.doubleValue();
+    }
+    if (opcode == F2D) {
+      return (double) number.floatValue();
+    }
+    if (opcode == F2I) {
+      return (int) number.floatValue();
+    }
+    if (opcode == F2L) {
+      return (long) number.floatValue();
+    }
+    if (opcode == L2D) {
+      return (long) number.longValue();
+    }
+    if (opcode == L2F) {
+      return (float) number.longValue();
+    }
+    if (opcode == L2I) {
+      return (int) number.longValue();
+    }
+    
+    return number;
+  }
+  
   /**
    * Gets the value.
    * 
@@ -685,34 +758,38 @@ public final class NodeHelper {
     if (node == null) {
       throw new NotANumberException();
     }
-    if (isIconst(node)) {
-      return Integer.valueOf(node.getOpcode() - Opcodes.ICONST_0);
+    AbstractInsnNode checkNode = node;
+    if (isCast(node)) {
+      checkNode = node.getPrevious();
     }
-    if (node.getOpcode() == Opcodes.LCONST_0) {
-      return Long.valueOf(0);
+    if (isIconst(checkNode)) {
+      return cast(Integer.valueOf(checkNode.getOpcode() - Opcodes.ICONST_0), checkNode, node);
     }
-    if (node.getOpcode() == Opcodes.LCONST_1) {
-      return Long.valueOf(1);
+    if (checkNode.getOpcode() == Opcodes.LCONST_0) {
+      return cast(Long.valueOf(0), checkNode, node);
     }
-    if (node.getOpcode() == Opcodes.FCONST_0) {
-      return Float.valueOf(0);
+    if (checkNode.getOpcode() == Opcodes.LCONST_1) {
+      return cast(Long.valueOf(1), checkNode, node);
     }
-    if (node.getOpcode() == Opcodes.FCONST_1) {
-      return Float.valueOf(1);
+    if (checkNode.getOpcode() == Opcodes.FCONST_0) {
+      return cast(Float.valueOf(0), checkNode, node);
     }
-    if (node.getOpcode() == Opcodes.FCONST_2) {
-      return Float.valueOf(1);
+    if (checkNode.getOpcode() == Opcodes.FCONST_1) {
+      return cast(Float.valueOf(1), checkNode, node);
     }
-    if (node.getOpcode() == Opcodes.DCONST_0) {
-      return Double.valueOf(0);
+    if (checkNode.getOpcode() == Opcodes.FCONST_2) {
+      return cast(Float.valueOf(1), checkNode, node);
     }
-    if (node.getOpcode() == Opcodes.DCONST_1) {
-      return Double.valueOf(1);
+    if (checkNode.getOpcode() == Opcodes.DCONST_0) {
+      return cast(Double.valueOf(0), checkNode, node);
     }
-    if (node instanceof IntInsnNode) {
-      return Integer.valueOf(((IntInsnNode) node).operand);
+    if (checkNode.getOpcode() == Opcodes.DCONST_1) {
+      return cast(Double.valueOf(1), checkNode, node);
     }
-    return getConstantValue(node, Number.class);
+    if (checkNode instanceof IntInsnNode) {
+      return cast(Integer.valueOf(((IntInsnNode) checkNode).operand), checkNode, node);
+    }
+    return cast(getConstantValue(checkNode, Number.class), checkNode, node);
   }
   
   /**
@@ -833,7 +910,7 @@ public final class NodeHelper {
     if (node == null) {
       return false;
     }
-    return isIconst(node) || isBipush(node) || isSipush(node) || (node instanceof LdcInsnNode);
+    return isIconst(node) || isBipush(node) || isSipush(node) || node instanceof LdcInsnNode;
   }
   
   /**
@@ -877,7 +954,7 @@ public final class NodeHelper {
     if (numberNode == null) {
       return false;
     }
-    if ((numberNode.getOpcode() >= I2L) && (numberNode.getOpcode() <= I2S)) {
+    if (numberNode.getOpcode() >= I2L && numberNode.getOpcode() <= I2S) {
       return true;
     }
     return false;
@@ -930,7 +1007,7 @@ public final class NodeHelper {
     if (node.getOpcode() == Opcodes.IFNONNULL) {
       return true;
     }
-    if ((node.getOpcode() >= Opcodes.IFEQ) && (node.getOpcode() <= Opcodes.IFLE)) {
+    if (node.getOpcode() >= Opcodes.IFEQ && node.getOpcode() <= Opcodes.IFLE) {
       return true;
     }
     return false;
@@ -947,7 +1024,7 @@ public final class NodeHelper {
     if (node == null) {
       return false;
     }
-    return ((node.getOpcode() >= Opcodes.IF_ICMPEQ) && (node.getOpcode() <= Opcodes.IF_ACMPNE));
+    return node.getOpcode() >= Opcodes.IF_ICMPEQ && node.getOpcode() <= Opcodes.IF_ACMPNE;
   }
   
   /**
@@ -1022,7 +1099,7 @@ public final class NodeHelper {
       return null;
     }
     int opcode = node.getOpcode();
-    if ((opcode < ISTORE) || (opcode > ASTORE)) {
+    if (opcode < ISTORE || opcode > ASTORE) {
       return null;
     }
     
@@ -1042,15 +1119,15 @@ public final class NodeHelper {
   
   private static int getStackCounter(final int opcode, final int currentStackCounter, final AbstractInsnNode prev) {
     int localStackCounter = currentStackCounter;
-    if ((opcode >= ACONST_NULL) && (opcode <= LDC)) {
+    if (opcode >= ACONST_NULL && opcode <= LDC) {
       localStackCounter--;
-    } else if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
+    } else if (opcode >= ILOAD && opcode <= ALOAD) {
       localStackCounter--;
-    } else if ((opcode >= IALOAD) && (opcode <= AALOAD)) {
+    } else if (opcode >= IALOAD && opcode <= AALOAD) {
       localStackCounter++;
-    } else if ((opcode >= IADD) && (opcode <= DREM)) {
+    } else if (opcode >= IADD && opcode <= DREM) {
       localStackCounter++;
-    } else if ((opcode >= INVOKEVIRTUAL) && (opcode <= INVOKEDYNAMIC)) {
+    } else if (opcode >= INVOKEVIRTUAL && opcode <= INVOKEDYNAMIC) {
       final String desc = ((MethodInsnNode) prev).desc;
       final Type methodType = Type.getMethodType(desc);
       final Type[] argumentTypes = methodType.getArgumentTypes();

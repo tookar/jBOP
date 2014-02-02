@@ -113,7 +113,7 @@ public class LocalVarInliner implements IOptimizer {
   private AbstractInsnNode handleNodes(final AbstractInsnNode first, final AbstractInsnNode last,
       final InsnList original, final Map<Integer, Object> knownValues, final MethodNode methodNode) {
     AbstractInsnNode currentNode = first;
-    while ((currentNode != null) && (currentNode != last)) {
+    while (currentNode != null && currentNode != last) {
       currentNode = handleNode(original, currentNode, knownValues, methodNode);
     }
     return currentNode;
@@ -122,17 +122,22 @@ public class LocalVarInliner implements IOptimizer {
   private AbstractInsnNode handleNode(final InsnList original, final AbstractInsnNode currentNode,
       final Map<Integer, Object> knownValues, final MethodNode methodNode) {
     final int opcode = currentNode.getOpcode();
-    if ((opcode >= ISTORE) && (opcode <= ASTORE)) {
+    if (opcode >= ISTORE && opcode <= ASTORE) {
       handleStore(currentNode, knownValues);
-    } else if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
-      hanldeLoad(original, currentNode, knownValues);
+    } else if (opcode >= ILOAD && opcode <= ALOAD) {
+      return hanldeLoad(original, currentNode, knownValues).getNext();
     } else if (opcode == IINC) {
       handleIInc(currentNode, knownValues);
     } else if (NodeHelper.isIf(currentNode)) {
       return handleIf(currentNode, knownValues, original, methodNode);
     } else if (opcode == GOTO) {
       if (LoopMatcher.isGotoOfLoop(currentNode)) {
-        return skipVars(currentNode, knownValues);
+        final AbstractInsnNode skipVars = skipVars(currentNode, knownValues);
+        final Pair<AbstractInsnNode, AbstractInsnNode> bodyBounds = LoopMatcher.getBodyBounds(currentNode);
+        if (bodyBounds != null) {
+          handleNodes(bodyBounds.getLeft(), bodyBounds.getRight(), original, new HashMap<>(knownValues), methodNode);
+        }
+        return skipVars;
       }
       return currentNode.getNext();
     }
@@ -151,9 +156,9 @@ public class LocalVarInliner implements IOptimizer {
   private Collection<Integer> getVarsInRange(final AbstractInsnNode start, final AbstractInsnNode end) {
     final Set<Integer> vars = new HashSet<>();
     AbstractInsnNode current = start;
-    while ((current != null) && (current != end)) {
+    while (current != null && current != end) {
       final int opcode = current.getOpcode();
-      if (((opcode >= ISTORE) && (opcode <= ASTORE)) || (opcode == IINC)) {
+      if (opcode >= ISTORE && opcode <= ASTORE || opcode == IINC) {
         vars.add(NodeHelper.getVarIndex(current));
       }
       current = current.getNext();
@@ -188,10 +193,10 @@ public class LocalVarInliner implements IOptimizer {
   private List<Integer> getStores(final AbstractInsnNode start, final AbstractInsnNode end) {
     AbstractInsnNode tmpNode = start;
     final List<Integer> stores = new ArrayList<>();
-    while ((tmpNode != null) && (tmpNode != end)) {
-      if ((tmpNode.getOpcode() >= ISTORE) && (tmpNode.getOpcode() <= ASTORE)) {
+    while (tmpNode != null && tmpNode != end) {
+      if (tmpNode.getOpcode() >= ISTORE && tmpNode.getOpcode() <= ASTORE) {
         stores.add(NodeHelper.getVarIndex(tmpNode));
-      } else if ((tmpNode.getOpcode() == IINC)) {
+      } else if (tmpNode.getOpcode() == IINC) {
         final IincInsnNode iinc = (IincInsnNode) tmpNode;
         final int index = iinc.var;
         stores.add(index);
@@ -214,15 +219,17 @@ public class LocalVarInliner implements IOptimizer {
     }
   }
   
-  private void hanldeLoad(final InsnList original, final AbstractInsnNode currentNode,
+  private AbstractInsnNode hanldeLoad(final InsnList original, final AbstractInsnNode currentNode,
       final Map<Integer, Object> knownValues) {
     final int index = NodeHelper.getVarIndex(currentNode);
-    if (knownValues.containsKey(index)) {
+    if (knownValues.containsKey(index) && currentNode.getNext() != null && currentNode.getPrevious() != null) {
       final Object value = knownValues.get(index);
       final AbstractInsnNode replacement = NodeHelper.getInsnNodeFor(value);
       original.set(currentNode, replacement);
       optimized = true;
+      return replacement;
     }
+    return currentNode;
   }
   
   private void handleStore(final AbstractInsnNode currentNode, final Map<Integer, Object> knownValues) {
@@ -232,7 +239,7 @@ public class LocalVarInliner implements IOptimizer {
       return;
     }
     final AbstractInsnNode previous = currentNode.getPrevious();
-    if ((previous.getOpcode() != NEWARRAY) && NodeHelper.isValue(previous)) {
+    if (previous.getOpcode() != NEWARRAY && NodeHelper.isValue(previous)) {
       final Object value = NodeHelper.getValue(previous);
       knownValues.put(index, value);
     } else {

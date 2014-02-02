@@ -300,7 +300,7 @@ public final class ClassNodeBuilder {
   
   private int getEffectiveModifier(final int... modifiers) {
     int modifier = 0;
-    if ((modifiers == null) || (modifiers.length == 0)) {
+    if (modifiers == null || modifiers.length == 0) {
       modifier = Opcodes.ACC_PUBLIC;
     } else {
       for (int i = 0; i < modifiers.length; ++i) {
@@ -322,7 +322,7 @@ public final class ClassNodeBuilder {
    */
   public ClassNodeBuilder withAnnotation(final Class<?> annotationClass, final Object... values) {
     final AnnotationNode annotationNode = new AnnotationNode(Type.getDescriptor(annotationClass));
-    if ((values != null) && (values.length > 0)) {
+    if (values != null && values.length > 0) {
       annotationNode.values = Arrays.asList(values);
     }
     if (lastElement instanceof MethodNode) {
@@ -395,12 +395,12 @@ public final class ClassNodeBuilder {
       return this;
     }
     final InsnList list = new InsnList();
-    if ((object instanceof String) || (object instanceof Number) || (object instanceof Boolean)
-        || (object instanceof Character)) {
+    if (object instanceof String || object instanceof Number || object instanceof Boolean
+        || object instanceof Character) {
       list.add(new VarInsnNode(Opcodes.ALOAD, 0));
       final AbstractInsnNode numberNode = NodeHelper.getInsnNodeFor(object);
       list.add(numberNode);
-      if (lastField.desc.startsWith("L") && (object instanceof Number)) {
+      if (lastField.desc.startsWith("L") && object instanceof Number) {
         list.add(ConstructorBuilder.getBoxingNode(lastField));
       }
       list.add(new FieldInsnNode(Opcodes.PUTFIELD, classNode.name, lastField.name, lastField.desc));
@@ -500,7 +500,7 @@ public final class ClassNodeBuilder {
     final InsnList list = new InsnList();
     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
     list.add(new FieldInsnNode(Opcodes.GETFIELD, classNode.name, lastField.name, lastField.desc));
-    for (int i = 0; i < (indexes.length - 1); ++i) {
+    for (int i = 0; i < indexes.length - 1; ++i) {
       list.add(NodeHelper.getInsnNodeFor(indexes[i]));
       list.add(new InsnNode(Opcodes.AALOAD));
     }
@@ -573,7 +573,7 @@ public final class ClassNodeBuilder {
       list.add(indexNode);
       final AbstractInsnNode numberNode = NodeHelper.getInsnNodeFor(number);
       list.add(numberNode);
-      if ((number instanceof Number) && (opcode == Opcodes.ASTORE)) {
+      if (number instanceof Number && opcode == Opcodes.ASTORE) {
         list.add(ConstructorBuilder.getBoxingNode(lastField));
       }
       list.add(new InsnNode(opcode));
@@ -669,7 +669,7 @@ public final class ClassNodeBuilder {
       return this;
     }
     addInsn(new VarInsnNode(Opcodes.ALOAD, lastMethodVarIndex));
-    for (int i = 0; i < (indexes.length - 1); ++i) {
+    for (int i = 0; i < indexes.length - 1; ++i) {
       addInsn(NodeHelper.getInsnNodeFor(indexes[i]));
       addInsn(new InsnNode(Opcodes.AALOAD));
     }
@@ -1063,8 +1063,8 @@ public final class ClassNodeBuilder {
    * @return the class node builder
    */
   public ClassNodeBuilder load(final int index) {
-    if ((index == 0) && ((lastMethod.access & ACC_STATIC) == 0)) {
-      addInsn(new VarInsnNode((ALOAD), 0));
+    if (index == 0 && (lastMethod.access & ACC_STATIC) == 0) {
+      addInsn(new VarInsnNode(ALOAD, 0));
       return this;
     }
     addInsn(new VarInsnNode(getType(index).getOpcode(ILOAD), getVarIndex(index)));
@@ -1134,24 +1134,23 @@ public final class ClassNodeBuilder {
     if (opcode == IINC) {
       return addInsn(new IincInsnNode((Integer) args[0], (Integer) args[1]));
     }
-    if (((opcode >= NOP) && (opcode <= DCONST_1)) || ((opcode >= POP) && (opcode <= DCMPG))
-        || ((opcode >= IALOAD) && (opcode <= SALOAD)) || ((opcode >= IASTORE) && (opcode <= SASTORE))
-        || (opcode == ARRAYLENGTH) || (opcode == ATHROW)) {
+    if (opcode >= NOP && opcode <= DCONST_1 || opcode >= POP && opcode <= DCMPG || opcode >= IALOAD && opcode <= SALOAD
+        || opcode >= IASTORE && opcode <= SASTORE || opcode == ARRAYLENGTH || opcode == ATHROW) {
       return addInsn(new InsnNode(opcode));
     }
-    if (((opcode >= BIPUSH) && (opcode <= SIPUSH)) || (opcode == NEWARRAY)) {
+    if (opcode >= BIPUSH && opcode <= SIPUSH || opcode == NEWARRAY) {
       return addInsn(new IntInsnNode(opcode, (Integer) args[0]));
     }
     if (opcode == LDC) {
       return loadConstant(args[0]);
     }
-    if ((opcode >= ILOAD) && (opcode <= ALOAD)) {
+    if (opcode >= ILOAD && opcode <= ALOAD) {
       return addInsn(new VarInsnNode(opcode, (Integer) args[0]));
     }
-    if ((opcode >= ISTORE) && (opcode <= ASTORE)) {
+    if (opcode >= ISTORE && opcode <= ASTORE) {
       return addInsn(new VarInsnNode(opcode, (Integer) args[0]));
     }
-    if ((opcode >= IFEQ) && (opcode <= JSR)) {
+    if (opcode >= IFEQ && opcode <= JSR) {
       return jump(opcode, (LabelNode) args[0]);
     }
     return this;
@@ -1302,6 +1301,18 @@ public final class ClassNodeBuilder {
    */
   public ClassNodeBuilder implementInterface(final String desc) {
     classNode.interfaces.add(desc);
+    return this;
+  }
+  
+  /**
+   * With signature.
+   * 
+   * @param signature
+   *          the signature
+   * @return the class node builder
+   */
+  public ClassNodeBuilder withSignature(final String signature) {
+    classNode.signature = signature;
     return this;
   }
   

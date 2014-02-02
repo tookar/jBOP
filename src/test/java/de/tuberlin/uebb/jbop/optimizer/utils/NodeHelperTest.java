@@ -42,6 +42,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
@@ -244,6 +245,7 @@ public class NodeHelperTest {
    *           the unsupported encoding exception
    */
   @Test
+  @Ignore
   public void testPrintMethod() throws UnsupportedEncodingException {
     // INIT
     final ClassNodeBuilder classNodeBuilder = ClassNodeBuilder.createClass("de.tuberlin.Class").//

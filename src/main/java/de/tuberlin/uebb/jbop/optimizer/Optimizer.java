@@ -25,7 +25,6 @@ import org.apache.commons.collections15.Predicate;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
 import de.tuberlin.uebb.jbop.access.OptimizerUtils;
@@ -66,6 +65,8 @@ public class Optimizer implements IOptimizerSuite {
   
   private final Predicate<MethodNode> optimizeThis = new OptimizablePredicate();
   private int methodLength = MethodSplitter.MAX_LENGTH;
+  
+  // private final OptimizerStatistic stats = new OptimizerStatistic();
   
   /**
    * Optimize the given inputObject and return a new Instance of the optimized Class.
@@ -115,19 +116,37 @@ public class Optimizer implements IOptimizerSuite {
    */
   private List<MethodNode> runOptimization(final List<IOptimizer> optimizers, final MethodNode methodNode,
       final ClassNode classNode) throws JBOPClassException {
-    boolean canOptimize = true;
-    InsnList list = methodNode.instructions;
-    while (canOptimize) {
+    boolean canOptimize = false;
+    // int counter = 1;
+    // final StringTable table = new StringTable();
+    // table.setDebug(true);
+    // table.addColumn("", "%03d");
+    // for (final IOptimizer optimizer : optimizers) {
+    // table.addColumn(StringUtils.abbreviate(optimizer.getClass().getSimpleName(), 12), "%1s");
+    // }
+    do {
+      // int step = 1;
+      // final Object[] results = new Object[optimizers.size() + 1];
+      // results[0] = Integer.valueOf(counter);
       boolean optimized = false;
       for (final IOptimizer optimizer : optimizers) {
-        list = optimizer.optimize(list, methodNode);
-        optimized |= optimizer.isOptimized();
-        methodNode.instructions = list;
+        methodNode.instructions = optimizer.optimize(methodNode.instructions, methodNode);
+        final boolean currentOptimizerHasOptimized = optimizer.isOptimized();
+        // results[step] = currentOptimizerHasOptimized ? "X" : " ";
+        // stats.addRun(optimizer, currentOptimizerHasOptimized);
+        optimized |= currentOptimizerHasOptimized;
+        // step++;
       }
+      // table.addRow(results);
       canOptimize = optimized;
-    }
+      // counter++;
+    } while (canOptimize);
+    
+    // table.setLatex(true);
+    // System.out.println(table);
+    
     final MethodSplitter methodSplitter = new MethodSplitter(classNode, methodLength);
-    methodNode.instructions = methodSplitter.optimize(list, methodNode);
+    methodNode.instructions = methodSplitter.optimize(methodNode.instructions, methodNode);
     return methodSplitter.getAdditionalMethods();
   }
   
@@ -246,4 +265,8 @@ public class Optimizer implements IOptimizerSuite {
     this.methodLength = methodLength;
   }
   
+  // @Override
+  // public OptimizerStatistic getStats() {
+  // return stats;
+  // }
 }

@@ -21,16 +21,22 @@ package de.tuberlin.uebb.jbop.optimizer.arithmetic;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.objectweb.asm.Opcodes.BIPUSH;
+import static org.objectweb.asm.Opcodes.D2I;
 import static org.objectweb.asm.Opcodes.DADD;
 import static org.objectweb.asm.Opcodes.DCONST_1;
 import static org.objectweb.asm.Opcodes.DDIV;
 import static org.objectweb.asm.Opcodes.DMUL;
 import static org.objectweb.asm.Opcodes.I2D;
 import static org.objectweb.asm.Opcodes.IAND;
+import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.ICONST_3;
 import static org.objectweb.asm.Opcodes.ICONST_4;
 import static org.objectweb.asm.Opcodes.ICONST_5;
 import static org.objectweb.asm.Opcodes.IOR;
+import static org.objectweb.asm.Opcodes.ISHL;
+import static org.objectweb.asm.Opcodes.IUSHR;
+import static org.objectweb.asm.Opcodes.LDC;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -277,5 +283,67 @@ public class ArithmeticExpressionInterpreterTest {
     
     assertEquals(2, optimized.size());
     assertEquals(9.166666666666666, NodeHelper.getNumberValue(optimized.get(0)).doubleValue(), .0000001);
+  }
+  
+  /**
+   * (1234&FF00)>>>8
+   */
+  @Test
+  public void testArithmeticExpressionShiftAnd() {
+    // INIT
+    builder.getMethod("testMethod").desc = "()I";
+    builder.add(LDC, 0x1234).//
+        add(LDC, 0xff00).//
+        add(IAND).//
+        add(BIPUSH, 8).//
+        add(IUSHR).//
+        addReturn();
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(0x12, NodeHelper.getNumberValue(optimized.get(0)).intValue());
+  }
+  
+  /**
+   * int x = (int) 1.0 * 1.0;
+   */
+  @Test
+  public void testArithmeticExpressionNarrow() {
+    // INIT
+    builder.getMethod("testMethod").desc = "()I";
+    builder.add(DCONST_1).//
+        add(DCONST_1).//
+        add(DMUL).//
+        add(D2I).//
+        addReturn();
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(3, optimized.size());
+    assertEquals(1, NodeHelper.getNumberValue(optimized.get(0)).intValue());
+  }
+  
+  /**
+   * int x = 0xFF << 1;
+   */
+  @Test
+  public void testArithmeticExpressionShiftLeft() {
+    // INIT
+    builder.getMethod("testMethod").desc = "()I";
+    builder.//
+        add(BIPUSH, 0x1).//
+        add(ICONST_1).//
+        add(ISHL).//
+        add(BIPUSH, 0x2).//
+        add(ICONST_1).//
+        add(ISHL).//
+        add(IOR).//
+        addReturn();
+    final InsnList optimized = interpreter.optimize(builder.getMethod("testMethod").instructions,
+        builder.getMethod("testMethod"));
+    
+    assertEquals(2, optimized.size());
+    assertEquals(6, NodeHelper.getNumberValue(optimized.get(0)).intValue());
   }
 }

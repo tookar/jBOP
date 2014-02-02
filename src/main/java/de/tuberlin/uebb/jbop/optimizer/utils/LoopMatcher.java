@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2013 uebb.tu-berlin.de.
- *
+ * 
  * This file is part of JBOP (Java Bytecode OPtimizer).
- *
+ * 
  * JBOP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * JBOP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with JBOP. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,6 +31,8 @@ import static org.objectweb.asm.Opcodes.IF_ICMPLE;
 import static org.objectweb.asm.Opcodes.IF_ICMPLT;
 import static org.objectweb.asm.Opcodes.IF_ICMPNE;
 import static org.objectweb.asm.Opcodes.ISTORE;
+
+import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -206,6 +208,25 @@ public final class LoopMatcher {
     return isStoreOfLoop(getStoreOfLoopForGoto(node));
   }
   
+  /**
+   * Gets the body bounds.
+   * 
+   * @param gotoNode
+   *          the goto node
+   * @return the body bounds
+   */
+  public static Pair<AbstractInsnNode, AbstractInsnNode> getBodyBounds(final AbstractInsnNode gotoNode) {
+    final Loop loop = getLoop(getStoreOfLoopForGoto(gotoNode));
+    if (loop == null) {
+      return null;
+    }
+    final List<AbstractInsnNode> body = loop.getBody();
+    if (body == null || body.isEmpty()) {
+      return null;
+    }
+    return Pair.of(body.get(0), body.get(body.size() - 1));
+  }
+  
   private static AbstractInsnNode getStoreOfLoopForGoto(final AbstractInsnNode node) {
     if (node == null) {
       return null;
@@ -332,7 +353,7 @@ public final class LoopMatcher {
     
     while (currentNode != null) {
       
-      if (NodeHelper.isGoto(currentNode) && (((JumpInsnNode) currentNode).label == label)) {
+      if (NodeHelper.isGoto(currentNode) && ((JumpInsnNode) currentNode).label == label) {
         return currentNode;
       }
       

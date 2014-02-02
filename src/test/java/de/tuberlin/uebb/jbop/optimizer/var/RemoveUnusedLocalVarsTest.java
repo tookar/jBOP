@@ -20,6 +20,7 @@ package de.tuberlin.uebb.jbop.optimizer.var;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASTORE;
@@ -34,6 +35,7 @@ import static org.objectweb.asm.Opcodes.DSUB;
 import static org.objectweb.asm.Opcodes.FCONST_1;
 import static org.objectweb.asm.Opcodes.FSTORE;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.I2D;
 import static org.objectweb.asm.Opcodes.IALOAD;
 import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
@@ -118,9 +120,9 @@ public class RemoveUnusedLocalVarsTest {
     assertEquals(4, optimized.size());
     assertEquals(ICONST_1, optimized.get(0).getOpcode());
     assertEquals(ISTORE, optimized.get(1).getOpcode());
-    assertEquals(1, (((VarInsnNode) optimized.get(1)).var));
+    assertEquals(1, ((VarInsnNode) optimized.get(1)).var);
     assertEquals(ILOAD, optimized.get(2).getOpcode());
-    assertEquals(1, (((VarInsnNode) optimized.get(2)).var));
+    assertEquals(1, ((VarInsnNode) optimized.get(2)).var);
     assertEquals(IRETURN, optimized.get(3).getOpcode());
   }
   
@@ -260,6 +262,24 @@ public class RemoveUnusedLocalVarsTest {
     
     // ASSERT
     assertFalse(optimizer.isOptimized());
+  }
+  
+  /**
+   * Tests that RemoveUnusedLocalVars is working correctly.
+   */
+  @Test
+  public void testRemoveUnusedLocalVarsWithCast() {
+    // INIT
+    builder.add(ICONST_0)//
+        .add(I2D).add(DSTORE, 1)//
+        .addReturn();
+    // RUN
+    
+    methodNode.instructions = optimizer.optimize(methodNode.instructions, methodNode);
+    
+    // ASSERT
+    assertEquals(1, methodNode.instructions.size());
+    assertTrue(optimizer.isOptimized());
   }
   
   /**

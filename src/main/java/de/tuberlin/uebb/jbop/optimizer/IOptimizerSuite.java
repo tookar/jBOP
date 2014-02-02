@@ -11,4 +11,9 @@ public interface IOptimizerSuite {
    * Optimize the given Object.
    */
   <T> T optimize(final T input, String suffix) throws JBOPClassException;
+  
+  // /**
+  // * return a statistic of the used steps
+  // */
+  // OptimizerStatistic getStats();
 }

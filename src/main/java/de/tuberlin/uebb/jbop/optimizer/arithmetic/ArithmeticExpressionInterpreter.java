@@ -31,14 +31,20 @@ import static org.objectweb.asm.Opcodes.IAND;
 import static org.objectweb.asm.Opcodes.IDIV;
 import static org.objectweb.asm.Opcodes.IMUL;
 import static org.objectweb.asm.Opcodes.IOR;
+import static org.objectweb.asm.Opcodes.ISHL;
+import static org.objectweb.asm.Opcodes.ISHR;
 import static org.objectweb.asm.Opcodes.ISUB;
+import static org.objectweb.asm.Opcodes.IUSHR;
 import static org.objectweb.asm.Opcodes.IXOR;
 import static org.objectweb.asm.Opcodes.LADD;
 import static org.objectweb.asm.Opcodes.LAND;
 import static org.objectweb.asm.Opcodes.LDIV;
 import static org.objectweb.asm.Opcodes.LMUL;
 import static org.objectweb.asm.Opcodes.LOR;
+import static org.objectweb.asm.Opcodes.LSHL;
+import static org.objectweb.asm.Opcodes.LSHR;
 import static org.objectweb.asm.Opcodes.LSUB;
+import static org.objectweb.asm.Opcodes.LUSHR;
 import static org.objectweb.asm.Opcodes.LXOR;
 
 import java.util.Iterator;
@@ -151,28 +157,67 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   
   private AbstractInsnNode getReplacement(final Number one, final Number two, final AbstractInsnNode op) {
     final int opcode = op.getOpcode();
-    if ((opcode >= IADD) && (opcode <= DADD)) {
+    if (opcode >= IADD && opcode <= DADD) {
       return handleAdd(opcode, one, two);
     }
-    if ((opcode >= ISUB) && (opcode <= DSUB)) {
+    if (opcode >= ISUB && opcode <= DSUB) {
       return handleSub(opcode, one, two);
     }
-    if ((opcode >= IMUL) && (opcode <= DMUL)) {
+    if (opcode >= IMUL && opcode <= DMUL) {
       return handleMul(opcode, one, two);
     }
-    if ((opcode >= IDIV) && (opcode <= DDIV)) {
+    if (opcode >= IDIV && opcode <= DDIV) {
       return handleDiv(opcode, one, two);
     }
-    if ((opcode == IOR) || (opcode == LOR)) {
+    if (opcode == IOR || opcode == LOR) {
       return handleOr(opcode, one, two);
     }
-    if ((opcode == IXOR) || (opcode == LXOR)) {
+    if (opcode == IXOR || opcode == LXOR) {
       return handleXOr(opcode, one, two);
     }
-    if ((opcode == IAND) || (opcode == LAND)) {
+    if (opcode == IAND || opcode == LAND) {
       return handleAnd(opcode, one, two);
     }
+    if (opcode == IUSHR || opcode == LUSHR) {
+      return handleLogicalShiftRight(opcode, one, two);
+    }
+    if (opcode == ISHR || opcode == LSHR) {
+      return handleArithmeticShiftRight(opcode, one, two);
+    }
+    if (opcode == ISHL || opcode == LSHL) {
+      return handleShiftLeft(opcode, one, two);
+    }
     return null;
+  }
+  
+  private AbstractInsnNode handleShiftLeft(final int opcode, final Number one, final Number two) {
+    final Number number;
+    if (opcode == ISHL) {
+      number = Integer.valueOf(one.intValue() << two.intValue());
+    } else {
+      number = Long.valueOf(one.longValue() << two.longValue());
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleArithmeticShiftRight(final int opcode, final Number one, final Number two) {
+    final Number number;
+    if (opcode == ISHR) {
+      number = Integer.valueOf(one.intValue() >> two.intValue());
+    } else {
+      number = Long.valueOf(one.longValue() >> two.longValue());
+    }
+    return NodeHelper.getInsnNodeFor(number);
+  }
+  
+  private AbstractInsnNode handleLogicalShiftRight(final int opcode, final Number one, final Number two) {
+    final Number number;
+    if (opcode == IUSHR) {
+      number = Integer.valueOf(one.intValue() >>> two.intValue());
+    } else {
+      number = Long.valueOf(one.longValue() >>> two.longValue());
+    }
+    return NodeHelper.getInsnNodeFor(number);
   }
   
   private AbstractInsnNode handleAnd(final int opcode, final Number one, final Number two) {
@@ -208,16 +253,16 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   private AbstractInsnNode handleDiv(final int opcode, final Number one, final Number two) {
     final Number number;
     switch (opcode) {
-      case (IDIV):
+      case IDIV:
         number = Integer.valueOf(one.intValue() / two.intValue());
         break;
-      case (DDIV):
+      case DDIV:
         number = Double.valueOf(one.doubleValue() / two.doubleValue());
         break;
-      case (FDIV):
+      case FDIV:
         number = Float.valueOf(one.floatValue() / two.floatValue());
         break;
-      case (LDIV):
+      case LDIV:
         number = Long.valueOf(one.longValue() / two.longValue());
         break;
       default:
@@ -229,16 +274,16 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   private AbstractInsnNode handleMul(final int opcode, final Number one, final Number two) {
     final Number number;
     switch (opcode) {
-      case (IMUL):
+      case IMUL:
         number = Integer.valueOf(one.intValue() * two.intValue());
         break;
-      case (DMUL):
+      case DMUL:
         number = Double.valueOf(one.doubleValue() * two.doubleValue());
         break;
-      case (FMUL):
+      case FMUL:
         number = Float.valueOf(one.floatValue() * two.floatValue());
         break;
-      case (LMUL):
+      case LMUL:
         number = Long.valueOf(one.longValue() * two.longValue());
         break;
       default:
@@ -250,16 +295,16 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   private AbstractInsnNode handleSub(final int opcode, final Number one, final Number two) {
     final Number number;
     switch (opcode) {
-      case (ISUB):
+      case ISUB:
         number = Integer.valueOf(one.intValue() - two.intValue());
         break;
-      case (DSUB):
+      case DSUB:
         number = Double.valueOf(one.doubleValue() - two.doubleValue());
         break;
-      case (FSUB):
+      case FSUB:
         number = Float.valueOf(one.floatValue() - two.floatValue());
         break;
-      case (LSUB):
+      case LSUB:
         number = Long.valueOf(one.longValue() - two.longValue());
         break;
       default:
@@ -271,16 +316,16 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
   private AbstractInsnNode handleAdd(final int opcode, final Number one, final Number two) {
     final Number number;
     switch (opcode) {
-      case (IADD):
+      case IADD:
         number = Integer.valueOf(one.intValue() + two.intValue());
         break;
-      case (DADD):
+      case DADD:
         number = Double.valueOf(one.doubleValue() + two.doubleValue());
         break;
-      case (FADD):
+      case FADD:
         number = Float.valueOf(one.floatValue() + two.floatValue());
         break;
-      case (LADD):
+      case LADD:
         number = Long.valueOf(one.longValue() + two.longValue());
         break;
       default:
@@ -331,6 +376,12 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
       return true;
     } else if (opcode == IAND) {
       return true;
+    } else if (opcode == IUSHR) {
+      return true;
+    } else if (opcode == ISHR) {
+      return true;
+    } else if (opcode == ISHL) {
+      return true;
     }
     return false;
   }
@@ -362,6 +413,12 @@ public class ArithmeticExpressionInterpreter implements IOptimizer {
     } else if (opcode == LXOR) {
       return true;
     } else if (opcode == LAND) {
+      return true;
+    } else if (opcode == LUSHR) {
+      return true;
+    } else if (opcode == LSHR) {
+      return true;
+    } else if (opcode == LSHL) {
       return true;
     }
     

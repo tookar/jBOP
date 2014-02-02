@@ -68,21 +68,9 @@ public class FieldArrayLengthInlinerTest {
     final MethodNode method = builder.getMethod("sumArrayLength");
     final InsnList optimized = inliner.optimize(method.instructions, method);
     
-    // ASSERT STEP 1
-    assertEquals(6, optimized.size());
-    
-    // RUN STEP 2
-    final InsnList optimized2 = inliner.optimize(method.instructions, method);
-    
     // ASSERT STEP 2
-    assertEquals(4, optimized2.size());
-    assertEquals(15, NodeHelper.getNumberValue(optimized2.getFirst()).intValue());
-    assertEquals(23, NodeHelper.getNumberValue(optimized2.getFirst().getNext()).intValue());
-    
-    // RUN STEP 3
-    final InsnList optimized3 = inliner.optimize(method.instructions, method);
-    
-    // ASSERT STEP 3
-    assertEquals(4, optimized3.size());
+    assertEquals(4, optimized.size());
+    assertEquals(15, NodeHelper.getNumberValue(optimized.getFirst()).intValue());
+    assertEquals(23, NodeHelper.getNumberValue(optimized.getFirst().getNext()).intValue());
   }
 }
